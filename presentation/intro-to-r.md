@@ -21,9 +21,9 @@ The main objective of this R bootcamp is to introduce R programming to incoming 
 
 There are thousands of packages (bundles of codes) available on [CRAN](https://cran.r-project.org/). If you are struggling to accomplish a certain task, it is very likely that someone has already created a function or a package to do it for you. 
 
-To install a package, you use the command `install.package("package_name")` - do not forget the quotation marks! To install multiple packages at once, you can use the code `install.packages(c("package_1", "package_2", ...))`. 
+To install a package, use the command `install.package("package_name")` - do not forget the quotation marks! To install multiple packages at once, you can use the code `install.packages(c("package_1", "package_2", ...))`. 
 
-A big difference between R and Stata is that you have to load the package you will (or plan to use) use every time you start a new R session. To load a package, the command is `library(package_name)` - the quotation marks are now optional. You can write a function to load multiple libraries at once.
+A big difference between R and Stata is that you have to load the package you will (or plan to use) use every time you start a new R session. To load a package, use the command `library(package_name)` - the quotation marks are now optional. You can write a function to load multiple libraries at once.
 
 The `pacman` package allows you to install and load packages in R more efficiently. The function `p_load()` checks whether a package is already installed, and if not, installs the package and loads it. The function can also be applied to several package at once, so you save a few (or many) lines of codes. 
 
@@ -67,7 +67,11 @@ We can also get output from R by typing logic statements in the console.
 3 + 4 != 4 + 3 # The "!" is negation
 ```
 
-To do useful things, we assign values to objects. `<-` is the assignment operator in R. To create an object, the syntax we use is `object_name <- value`. When we assign values to an object, R does not automatically print the object. Objects are one of the main differences of R with Stata. 
+To do useful things, we assign values to objects. `<-` is the assignment operator in R. Objects are one of the main differences of R with Stata. 
+
+To create an object, the syntax is `object_name <- value`. When assigning values to an object, R does not automatically print the object; you will have to print this object to see the value or output. 
+
+It is also smart to comment on your code. In R, the `#` symbol indicates the start of the comment. 
 
 
 ```r
@@ -102,17 +106,21 @@ logical_var <- TRUE
 
 ## Vectors
 
-Multiple observations of the same time are called vectors. You use the `c()` function to concatenate observations. 
+Multiple observations of the same type are called vectors. You use the `c()` function to concatenate values.  
+
+For example, we can create a vector of the emissions of three countries and assign it to a new object called `emissions`. 
 
 
 ```r
-firstvector <- c(1, 3, 5, 7)
-firstvector
+emissions <- c(53700, 14300, 5250000)
+emissions
 ```
 
 ```
-## [1] 1 3 5 7
+## [1]   53700   14300 5250000
 ```
+
+We can also create a character vector called `countries`. Quotes around the text are important to indicate the data is of the type character. If not, R will think it is an object. Since these objects don't exist in R, you will get an error. 
 
 
 ```r
@@ -124,23 +132,7 @@ countries
 ## [1] "Canada"        "Kenya"         "United States"
 ```
 
-```r
-emissions <- c(53700, 14300, 5250000)
-emissions
-```
-
-```
-## [1]   53700   14300 5250000
-```
-
-```r
-# length(emissions)
-# class(countries)
-# class(emissions)
-# str(emissions)
-# str(countries)
-```
-
+You can also add values to existing vectors.
 
 ```r
 countries <- c(countries, "China")
@@ -151,6 +143,44 @@ countries
 ## [1] "Canada"        "Kenya"         "United States" "China"
 ```
 
+Here are some functions to inspect the content of a vector. 
+
+```r
+length(countries) # inspect the number of elements in a vector
+```
+
+```
+## [1] 4
+```
+
+```r
+class(countries) # type/class of an object
+```
+
+```
+## [1] "character"
+```
+
+```r
+class(emissions)
+```
+
+```
+## [1] "numeric"
+```
+
+```r
+# The str() function provides the structure of an object and a preview of its elements. This function is useful when inspecting large and complex objects. 
+str(emissions) 
+```
+
+```
+##  num [1:3] 53700 14300 5250000
+```
+
+Vectors must always be of the same type. If we try to mix different types (character, numeric, logical, etc.) in a vector, R will force the content to be the same. 
+
+
 ```r
 trythis <- c(1, 2, 3, "a")
 class(trythis)
@@ -160,9 +190,125 @@ class(trythis)
 ## [1] "character"
 ```
 
+### Subsetting Vectors
+
+We use the index position of an element in square brackets to extract one or more elements from a vector. Note that the index starts at 1. 
+
+
 ```r
-trythis <- c("a", 1, TRUE, "b")
-class(trythis)
+# to extract the first element
+emissions[1]
+```
+
+```
+## [1] 53700
+```
+
+```r
+# to extract the first and third element
+emissions[c(1,3)]
+```
+
+```
+## [1]   53700 5250000
+```
+
+```r
+# to extract the second and third element
+emissions[c(2:3)]
+```
+
+```
+## [1]   14300 5250000
+```
+
+We can also use logical tests to subset vectors. 
+
+
+```r
+# to select emissions greater than 100000
+emissions[emissions > 100000]
+```
+
+```
+## [1] 5250000
+```
+
+```r
+# to select emissions that are greater than 0 and less than 55000
+emissions[emissions > 0 & emissions < 55000]
+```
+
+```
+## [1] 53700 14300
+```
+
+We can also use `%in` to check whether an object is contained within or matches with a list of items. 
+
+
+```r
+emissions %in% c("Canada")
+```
+
+```
+## [1] FALSE FALSE FALSE
+```
+
+```r
+countries %in% c("Canada", "United States")
+```
+
+```
+## [1]  TRUE FALSE  TRUE FALSE
+```
+
+```r
+emissions %in% c(14300, 50000)
+```
+
+```
+## [1] FALSE  TRUE FALSE
+```
+
+## Lists
+
+A list is a flexible R object that is a collection of different objects. You can extract sub-objects using `[[]]` or `$`. A common example of a list object you will interact with often is regression objects (more on this later!). 
+
+
+```r
+first_list <- list(a = 1:5, b = 6:10, c = c("food", "resource", "economics"))
+first_list #print the output
+```
+
+```
+## $a
+## [1] 1 2 3 4 5
+## 
+## $b
+## [1]  6  7  8  9 10
+## 
+## $c
+## [1] "food"      "resource"  "economics"
+```
+
+```r
+class(first_list)
+```
+
+```
+## [1] "list"
+```
+
+```r
+class(first_list$a)
+```
+
+```
+## [1] "integer"
+```
+
+```r
+class(first_list[["c"]])
 ```
 
 ```
@@ -170,18 +316,213 @@ class(trythis)
 ```
 
 ```r
-numeric_var <- 1
-character_var <- "one"
-factor_var <- factor(c(1,2,2,1,1), labels = c('male', 'female'))
+first_list[["a"]] # extract elements in a using [[]]
+```
 
-first_vector <- c(1, 20, 4, 4)
-second_vector <- c(first_vector, c(1:20))
+```
+## [1] 1 2 3 4 5
+```
+
+```r
+first_list$c #extract elements in c using $ 
+```
+
+```
+## [1] "food"      "resource"  "economics"
+```
+
+## Data Frames
+
+In MFRE, we will work a lot with data frames. A data frame is a list composed of vectors of equal length. Data frames can story different data types in each column. For example, the first column can be a character vector, and the second column is a numeric vector. You can createa data frame object using the function `data.frame()`.
 
 
+```r
 first_df <- data.frame(countries = c("Canada", "Kenya", "United States"),
                        emissions = c(53700, 14300, 5250000))
 
+first_df
+```
+
+```
+##       countries emissions
+## 1        Canada     53700
+## 2         Kenya     14300
+## 3 United States   5250000
+```
+
+```r
+# class(first_df)
+# extract values in country column: first_df[["countries]] or first_df$countries
+```
+
+A special type of data frame we will work with in this bootcamp is called tibbles; you can read more about it [here](https://r4ds.had.co.nz/tibbles.html). 
+
+We can convert the `first_df` into a tibble using the `as_tibble()` function and call it `first_tibble`. We can also create a new tibble, which we will call `second_tibble` 
+
+
+```r
 first_tibble <- as_tibble(first_df)
+first_tibble 
+```
+
+```
+## # A tibble: 3 x 2
+##   countries     emissions
+##   <chr>             <dbl>
+## 1 Canada            53700
+## 2 Kenya             14300
+## 3 United States   5250000
+```
+
+```r
+class(first_tibble)
+```
+
+```
+## [1] "tbl_df"     "tbl"        "data.frame"
+```
+
+```r
+# first_tibble[["countries"]] or first_tibble$countries to extract the data in the countries column
+
+second_tibble <- tibble(countries = c("Peru", "Mexico", "China"),
+                        emissions = c(61700, 480000, 10300000))
+```
+
+## Functions
+
+Functions are scripts that automate complicated commands. You can write your own function, or you can also use functions that are available in R packages. A function gets one or more inputs called *arguments*. Functions often, but not always, return a value. One example of a function is the `sqrt()`. If you type in `?sqrt()` in the console, you will the documentation on the lower right panel under the 'Help` tab. You learn that the input (argument) must be numeric, and running the function will return the square root of the number. 
+
+
+```r
+a <- sqrt(100)
+a
+```
+
+```
+## [1] 10
+```
+
+In the example above, the value 100 is given to the `sqrt()` function. The `sqrt()` function calculates the square root, and returns the value assigned to the object `a`. 
+
+Arguments differ per function, and you can look up the documentation using the `?function_name` command in your console. Some functions take arguments that must be specified by the user, and if not, will use a default value - these are called options. Options are ways to change how the function works. 
+
+Let's try a function that takes multiple arguments -- `round()`. 
+
+
+```r
+round(3.14159)
+```
+
+```
+## [1] 3
+```
+
+Here, we used the `round()` function with just one argument, `3.14159`. The function returned a value of 3. If we look at the documentation in `?round`, we see that the default option is `digits = 0` or to round up to the nearest whole number. If we want to round up to only 2 decimal places, we can type in `digits = 2`. 
+
+
+```r
+round(3.14159, digits = 2)
+```
+
+```
+## [1] 3.14
+```
+
+If you provide the arguments in the same order as they are defined, i.e. `round(x, digits = 0)`, then you don't need to include `digits =` anymore. 
+
+
+```r
+round(3.14159, 2)
+```
+
+```
+## [1] 3.14
+```
+
+You can find some built in R functions [here](https://www.statmethods.net/management/functions.html). Common ones we will use are `mean()`, `median()`, `min()`, `max()`. The code below shows you can take the mean of the emissions variable in the `first_tibble` tibble. 
+
+
+```r
+mean(first_tibble$emissions)
+```
+
+```
+## [1] 1772667
+```
+
+For these statistical functions, you will have to indicate how the function will treat missing values. In R, missing data are represented in vectors as `NA`. If you don't specify how the function will treat missing values, the function will return NA. 
+
+Let's return to our `first_tibble` object. Let's say we want to add Peru's emissions, but we don't have the data yet. We can use the `add_row()` function to do this step. Notice that I also have a `%>%` operator there. It is called the pipe. The pipe operator allows you to express a series of operators clearly (more info [here](https://r4ds.had.co.nz/pipes.html)). It takes the output on the left of the `%>%` and pass it to the function on the right. In the code below, `first_tibble` (left of the `%>%`) is passed on to another function, which is the `add_row` function. Then we are assigning it back to `first_tibble`, overwriting our initial data. If we don't use the assignment operator `<-`, then we have not overwritten `first_tibble`
+
+
+```r
+# let's first add a row with missing data in first_tibble
+# no assignment operator
+first_tibble %>% 
+  add_row(countries = "Peru", emissions = NA)
+```
+
+```
+## # A tibble: 4 x 2
+##   countries     emissions
+##   <chr>             <dbl>
+## 1 Canada            53700
+## 2 Kenya             14300
+## 3 United States   5250000
+## 4 Peru                 NA
+```
+
+```r
+first_tibble # Peru is not saved in first_tibble
+```
+
+```
+## # A tibble: 3 x 2
+##   countries     emissions
+##   <chr>             <dbl>
+## 1 Canada            53700
+## 2 Kenya             14300
+## 3 United States   5250000
+```
+
+```r
+first_tibble <- first_tibble %>% 
+  add_row(countries = "Peru", emissions = NA)
+
+first_tibble 
+```
+
+```
+## # A tibble: 4 x 2
+##   countries     emissions
+##   <chr>             <dbl>
+## 1 Canada            53700
+## 2 Kenya             14300
+## 3 United States   5250000
+## 4 Peru                 NA
+```
+
+Now, let's try to take the mean of emissions. 
+
+
+```r
+mean(first_tibble$emissions)
+```
+
+```
+## [1] NA
+```
+
+Notice that you `NA` as the output. This feature makes it harder to overlook cases where you are dealing with missing data. If you take a look at the documentation (`?mean`), you can see that the default is `na.rm = FALSE`. By adding in `na.rm = TRUE`, then you are asking R to calculate the mean and that NA values should be ignored. Now the output will show 1.7726667\times 10^{6}
+
+
+```r
+mean(first_tibble$emissions, na.rm = T)
+```
+
+```
+## [1] 1772667
 ```
 
   ** Note to self: Need to add a few notes on functions in prep for FRE501. 
