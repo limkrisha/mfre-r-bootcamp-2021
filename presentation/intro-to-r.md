@@ -525,26 +525,105 @@ mean(first_tibble$emissions, na.rm = T)
 ## [1] 1772667
 ```
 
-  ** Note to self: Need to add a few notes on functions in prep for FRE501. 
+### Writing your own functions
 
-# Data 
+You may consider writing your own functions to automate certain tasks and to reuse them later on. Read more about it [here](http://environmentalcomputing.net/writing-simple-functions/). If you find yourself repeating the same steps (in your current or across multiple scripts), writing a function may help you save time and also avoid mistakes. 
 
-By the end of this section, students will be able to 
+The syntax of a function is 
 
-* Load data in 5 ways
-  * csv
-  * xlsx
-  * .dta files (Stata)
-  * Google Sheet
-  * API (Statistics Canada, Quandl)
 
-## Load data  
+```r
+function_name <- function(arg1, arg2, ...){
+  statements # do something interesting
+  object # return value
+}
+```
+
+  * The `function_name` is the name you will provide to the function. You can call it anything you want, as long as it is not a keyword in R. Also, provide a meaningful name, such as a short description of the function. It is best not to call it `f1` or `func1`. 
+
+  * The `arg1, arg2,...` are the arguments of the function. A function can have multiple arguments and can take in different data types. 
+
+  * The code between the `{}` contains the body of the function, and will contain the code that will run everytime you call `function_name`. 
+
+  * The `object` is the value to be returned by the function. Some people may write `return(object)` or `object` or do not specify. 
+
+Let's take a look at an example. R does not have a built in function to calculate standard error. Recall that the formula of the standard error is $ SE_\tilde{x} =  \sqrt{var/ n} $
+
+
+```r
+first_tibble %<>% add_column(gdp = c(50300, 1090, 52100, 6110))
+```
+
+Let's say we want to calculate the standard error for emissions.
+
+
+```r
+sqrt(var(first_tibble$emissions, na.rm = T) / length(first_tibble$emissions))
+```
+
+```
+## [1] 1505762
+```
+
+Not too bad! But what if you want to calculate the standard error for multiple variables, then you'd have to write the code above multiple times. Even if you copy paste the code and change the variable names, this process may be prone to errors. A better approach would be to make it a function. Following the syntax, we can write the standard error function as follows. 
+
+
+```r
+std_error <- function(x){
+  sqrt(var(x, na.rm = T) / length(x))
+  # because the calculation will return an output, we no longer have to indicate the return value 
+}
+```
+
+Here, `std_error` is the function name. It takes `x` as the argument, which in our case would be a vector. Then everytime we pass a vector to this function, it will calculate the formula provided in the body. 
+
+Now we can call use this function similar to the built-in functions of R introduced earlier. 
+
+
+```r
+std_error(first_tibble$emissions)
+```
+
+```
+## [1] 1505762
+```
+
+```r
+std_error(first_tibble$gdp)
+```
+
+```
+## [1] 13783.99
+```
+
+# Data Import
+
+You will likely work with existing data in the MFRE program and beyond. In this section, you will learn how to load data from 5 different sources : 
+
+ * csv 
+ * xlsx
+ * dta files (Stata)
+ * Google Sheet
+ * API (Statistics Canada, Quandl)
+
+It's common for people to save data in spreadsheets as comma-separated values, or csv. To open a csv file in R, we use the `read_csv([insert_file_path_here])` function of the tidyverse package. 
+
+The code below shows that we are reading the file "yearly_co2_emissions.csv" saved in our data folder and assigning it to the data object called `carbon`. Assigning data to objects is one of the big difference between R and Stata, as R allows you to work with multiple data sets at once. 
+
 
 ```r
 carbon <- read_csv("../data/yearly_co2_emissions.csv")
+```
 
+  * Notice the quotation marks around the file path. The file path is relative to the location of the R project folder. My R project folder is called 2021-r-bootcamp, and in it I have multiple folders including "code" (where my current script is saved) and "data" (where data files are saved). The `../' in the file path means that R has to go two folders up from where the current script lives (i.e. go to "code" then go to "2021-r-bootcamp") to find the "data" folder and the file name itself. 
+
+
+```r
 temp <- read_csv("../data/temperature.csv", skip = 4, na = "-99")
+```
 
+
+```r
 energy_hist <- read_xlsx("../data/energy_use_per_person.xlsx", sheet = 1)
 energy_recent <- read_xlsx("../data/energy_use_per_person.xlsx", sheet = 2)
 energy <- full_join(energy_hist, energy_recent, by = c("country"))
