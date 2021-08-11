@@ -30,7 +30,7 @@ The `pacman` package allows you to install and load packages in R more efficient
 
 ```r
 # install.packages("pacman")
-pacman::p_load(tidyverse, readxl, googlesheets4, readstata13, magrittr, cansim, Quandl, stats, broom, modelsummary)
+pacman::p_load(tidyverse, readxl, googlesheets4, readstata13, magrittr, cansim, stats, broom, modelsummary)
 ```
  
 
@@ -598,54 +598,123 @@ std_error(first_tibble$gdp)
 
 # Data Import
 
-You will likely work with existing data in the MFRE program and beyond. In this section, you will learn how to load data from 5 different sources : 
+You will likely have to import data into R for your MFRE courses, instead of typing the data by hand. In this section, you will learn how to load data from 5 different sources: 
 
- * csv 
+ * csv
  * xlsx
- * dta files (Stata)
+ * Stata data format (dta)
  * Google Sheet
- * API (Statistics Canada, Quandl)
+ * API (Statistics Canada)
 
-It's common for people to save data in spreadsheets as comma-separated values, or csv. To open a csv file in R, we use the `read_csv([insert_file_path_here])` function of the tidyverse package. 
+## csv
+
+It's common for people to save data in spreadsheets as comma-separated values (csv). To open a csv file in R, we use the `read_csv()` function of the `{tidyverse}` package, and the `here()` function of the `{here}` package. The `here()` function takes the folder and file names as inputs, which are enclosed by quotation marks and you wouldn't have to worry about to use back or forward slashes. 
 
 The code below shows that we are reading the file "yearly_co2_emissions.csv" saved in our data folder and assigning it to the data object called `carbon`. Assigning data to objects is one of the big difference between R and Stata, as R allows you to work with multiple data sets at once. 
 
 
 ```r
-carbon <- read_csv("../data/yearly_co2_emissions.csv")
+carbon <- read_csv(here("data", "yearly_co2_emissions.csv"))
 ```
 
-  * Notice the quotation marks around the file path. The file path is relative to the location of the R project folder. My R project folder is called 2021-r-bootcamp, and in it I have multiple folders including "code" (where my current script is saved) and "data" (where data files are saved). The `../' in the file path means that R has to go two folders up from where the current script lives (i.e. go to "code" then go to "2021-r-bootcamp") to find the "data" folder and the file name itself. 
+  * If you don't use the `here()` function, you have to specify the full file path relative to the location of the R project (my working directory). For example, my R project folder is called 2021-r-bootcamp, and in it I have multiple folders including "code" (where my current script is saved) and "data" (where data files are saved). To import the carbon emissions file, I will have to type in `carbon <- read_csv("data/yearly_co2_emissions.csv")`
+  
+  * Note: The `read_csv` function assumes fields are delimited by comma. If you want a more flexible way of reading text files, look up the `{readr}` package for other [functions](https://readr.tidyverse.org/). 
+  
+  * In FRE 501, Dr. Vercammen uses the base R `read.csv` function. It is doing the same thing as the `read_csv` function. The additional arguments you will see are `header = TRUE` meaning that the first row will be treated as columns, and `sep = ","` meaning that the file is delimited by comma. 
+  
+## Excel xlsx format
+
+Another way that spreadsheets are stored is in the Excel xlsx format. Sometimes, there are multiple sheets in one Excel file. The `read_xlsx()` function of the `{readxl}` package allows us to read files in xlsx format. 
 
 
 ```r
-temp <- read_csv("../data/temperature.csv", skip = 4, na = "-99")
+gdp <- read_xlsx(here("data", "gdp_per_capita_yearly_growth.xlsx"))
 ```
+
+Sometimes there are multiple sheets in one spreadsheet. We use the argument `sheet = insert_sheet_number` to indicate the sheet we are importing. 
 
 
 ```r
-energy_hist <- read_xlsx("../data/energy_use_per_person.xlsx", sheet = 1)
-energy_recent <- read_xlsx("../data/energy_use_per_person.xlsx", sheet = 2)
+energy_hist <- read_xlsx(here("data", "energy_use_per_person.xlsx"), sheet = 1)
+energy_recent <- read_xlsx(here("data", "energy_use_per_person.xlsx"), sheet = 2)
+```
+
+If you look at the two imported sheets (either by typing `View(energy_hist)` or clicking the `energy_hist` object in the Environment tab in the upper right panel of RStudio), they contain data for the same countries. The only difference is that in the first sheet (`energy_hist`), the data is from 1960-1999, and the data in the second sheet (`energy_recent`) is from 2000-2015. We want to join `energy_hist` and `energy_recent`. There are many types of [joins](https://dplyr.tidyverse.org/reference/join.html), but for now we will do a full join, meaning the new data frame called `energy` will include all rows and columns in both `energy_hist` and `energy_recent`. The variable `country` is the common variable in both data frames that I used to link them together. 
+
+
+```r
 energy <- full_join(energy_hist, energy_recent, by = c("country"))
+```
 
-politics <- read.dta13("../data/political_party.dta")
+There are many ways to do the same thing in R. In FRE 501, Dr. Vercammen's uses the base R `merge` function. You can look at the full documentation for more details (`?merge`). The syntax is `merge(x, y)` where `x` and `y` are both the names of your dataframes. If you want to keep all observations in `x` and only merge `y` based on a common variable (`country`), I will use the `all.x = TRUE` argument. Since we want to do a full join (although the output would be the same anyway), we will use the `all.x = TRUE, all.y = TRUE` arguments to indicate that we want all rows in `x` and all rows in `y` in the output. 
+  
 
+```r
+energy_basemerge <- merge(energy_hist, energy_recent, by = c("country"), all.x = TRUE, all.y = TRUE)
+```
+
+  * If you look at `energy` and `energy_basemerge` in your Environment tab, you will notice that both of them have the same dimensions. 
+  
+## Stata dta format
+
+Because you will use Stata in some of your classes, you may read in a Stata data format into R as well. We will use the `read.dta13` of the `{readstata13}` package. This function allows you to read Stata file formats from version 17 and older. 
+
+
+```r
+politics <- read.dta13(here("data", "politics.dta"), nonint.factors = TRUE)
+```
+
+  * The argument `nonint.factors = TRUE` is to keep factor labels instead of the value itself. You can try loading the data with and without that argument to see the difference. 
+  
+It is also common now to share data using Google Sheets. We will use the `read_sheet("insert_link_here")` function of the `{googlesheets4}` package. This function will prompt you to provide authorization to the tidyverse API and log in with your Gmail credentials. One way to get around this step would be to add in the function `gs4_deauth()` before you use the `read_sheet()` function. 
+
+## Google Sheets 
+
+
+```r
 gs4_deauth() # so no need to sign in
 disasters <- read_sheet("https://docs.google.com/spreadsheets/d/17s15o7jdDpGSKgsIboZdnYU2UxHtU9DHKNRmYVVgwJo/edit#gid=0", skip = 2) 
+```
+* When you open the Google sheet link in your browser, you will notice that the first two rows are the notes or the title of the table. The data actually starts in row 3. Because of this reason, we add the argument `skip = 2` to tell R to start reading the data from the third row.
 
+## API - Statistics Canada
 
-gdp <- read_xlsx("../data/gdp_per_capita_yearly_growth.xlsx")
+When you look for data online, you usually have the option to download the tables as a csv or xlsx file. You may also want to check online if someone has already written a package that connects to the data's server directly and load it into R. The advantage of doing this approach is that you can work with 'updated' data whenever you run the code, and you also save yourself time from having to save the table as a spreadsheet every time the table is updated. 
 
+For exapmle, you want to download the Estimated areas, yield, production, average farm price, and total farm value of principal field crops table from [Statistics Canada](https://www150.statcan.gc.ca/t1/tbl1/en/tv.action?pid=3210035901). A quick Google Search of "import stats can table in R" will reveal that someone already wrote the `{cansim}` package to do just that. The function we will use is called `get_cansim('insert_table_number_here'_)`. 
+
+```r
 ag <- get_cansim('32-10-0359-01')
-
-corn <- Quandl("CHRIS/LIFFE_EMA1")
-
-politics <- read.dta13("../data/politics.dta", nonint.factors = TRUE)
 ```
 
-  ** Note to self: Need to add about how to call different datasets and variables using the `$` operator
+There are other many other ways to import data into R, but these are the ones you will most likely need to know for your MFRE courses. 
+
+# Data Exploration
+
+As noted earlier, you can view your data with the command `View(dataframe_name)` or click the data object in the Environment tab in the upper right panel of RStudio. These two actions will open a new tab in the upper left panel of RStudio. If you want to see your data in the console, simply type in the name of the data object into your console. 
+
+Here are a few functions to inspect your data. We will use the  `politics` data as an example. 
+
+Size: 
+  * `dim(politics)` returns a vector with the number of rows in the first element, and the number of columns in the second element
+  * `nrow(politics)` returns the number of rows
+  * `ncol(politics)` returns the number of columns 
   
-## View Data
+Content:
+  * `head(politics)` returns the first 5 observations 
+  * `tail(politics)` returns the last 5 observations
+  * `politics %>% slice_head(n = 6)` returns the first 6 observations 
+  * `politics %>% slice_tail(n = 7)` returns the last 7 observations
+  * `politics %>% slice_sample(n = 10)` returns 10 observations selected at random 
+  
+Column Names:
+  * `names(politics)` returns the column names 
+  
+Summary:
+  * `str(politics)` shows the structure of the object and information about the class, length, and content of each column
+  * `summary(politics)` returns the summary statistics of each column
+  * `glimpse(politics)` returns the dimension of the data, the names and class of each column, and previous as many values per column. 
 
 The following functions can be used to explore your dataset
 
@@ -658,50 +727,28 @@ str(politics)
 glimpse(politics)
 ```
 
-Using `dplyr`
+## Indexing and Subsetting Data Frames
 
+To extract certain columns and rows from our data, we use `[]` or `[[]]` or `$` symbols. 
+  
+  * `politics[1, 2]` To extract the first element in the second column of the table as a vector
+  * `politics[[1]]` To extract the first column as a vector 
+  * `politics[3,]` To extract the third row of the table as a data frame
+  * `politics[,3]` To extract the third column of the table as a data frame
+  * `politics[, -1]` To extract all the columns except the first column as a data frame
+    * `politics[c(5:10), ]` To extract rows to 5 and all of the columns as a data frame. If you do not include a comma, you will get an error. By not specifying a value after the comma, you indicate that you want all the columns. 
+  * `politics[, c(3:4)]` To extract the third and fourth columns as a data frame. Notice that there is a comma in front to indicate that we want all the rows. 
+  * `politics["country_name"]` To extract the `country_name` column as a data frame 
+    * `politics$country_name` To extract the `country_name` column as a vector
 
-```r
-carbon %>% 
-  select(country, `2010`:`2014`) %>%
-  slice_head(n = 5)
-```
+As you can see, there are so many different ways to extract values. The most common way we extract values in MFRE classes would be last point, `politics$country_name`.   
 
-```
-## # A tibble: 5 x 6
-##   country     `2010` `2011` `2012` `2013` `2014`
-##   <chr>        <dbl>  <dbl>  <dbl>  <dbl>  <dbl>
-## 1 Afghanistan   8460  12200  10800  10000   9810
-## 2 Albania       4600   5240   4910   5060   5720
-## 3 Algeria     119000 121000 130000 134000 145000
-## 4 Andorra        517    491    488    477    462
-## 5 Angola       29100  30300  33400  32600  34800
-```
+## Shoud I add something about Factors?
 
-```r
-set.seed(2021)
-carbon %>% 
-  select(country, `2010`:`2014`) %>%
-  slice_sample(n = 10)
-```
-
-```
-## # A tibble: 10 x 6
-##    country       `2010` `2011` `2012` `2013` `2014`
-##    <chr>          <dbl>  <dbl>  <dbl>  <dbl>  <dbl>
-##  1 Peru           57600  49600  55100  57200  61700
-##  2 Sweden         52000  51700  47000  44800  43400
-##  3 Tonga            117    103    106    114    121
-##  4 Uzbekistan    104000 114000 116000 103000 105000
-##  5 Romania        79400  84900  81700  70900  70000
-##  6 Guinea-Bissau    238    246    253    257    271
-##  7 Zambia          2690   2940   3670   3960   4500
-##  8 Malawi          1140   1180   1100   1220   1280
-##  9 Mexico        464000 484000 496000 490000 480000
-## 10 Guinea          2600   2780   2580   2300   2450
-```
-
+  
 ## Basic data exploration
+
+We might want to take 
 
 The `modelsummary` package allows you to produce very nice summary statistic plots for tidy data. You can read more [here](https://vincentarelbundock.github.io/modelsummary/articles/datasummary.html). 
 
@@ -1295,49 +1342,14 @@ We will now clean the temperature data
 
 # If we look at the 'Date' variable of the temperature data, we see that it is 6 digits and somehow all end with 12 
 # let's first check whether the length of each data entry is indeed 6
-str_length(temp$Date)
-```
+#str_length(temp$Date)
 
-```
-##   [1] 6 6 6 6 6 6 6 6 6 6 6 6 6 6 6 6 6 6 6 6 6 6 6 6 6 6 6 6 6 6 6 6 6 6 6 6 6
-##  [38] 6 6 6 6 6 6 6 6 6 6 6 6 6 6 6 6 6 6 6 6 6 6 6 6 6 6 6 6 6 6 6 6 6 6 6 6 6
-##  [75] 6 6 6 6 6 6 6 6 6 6 6 6 6 6 6 6 6 6 6 6 6 6 6 6 6 6 6 6 6 6 6 6 6 6 6 6 6
-## [112] 6 6 6 6 6 6 6 6 6 6 6 6 6 6
-```
-
-```r
 # let's now check whether the last 2 characters of each Date entry is indeed 12
-str_ends(temp$Date, pattern = "12")
-```
+#str_ends(temp$Date, pattern = "12")
 
-```
-##   [1] TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE
-##  [16] TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE
-##  [31] TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE
-##  [46] TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE
-##  [61] TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE
-##  [76] TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE
-##  [91] TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE
-## [106] TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE
-## [121] TRUE TRUE TRUE TRUE TRUE
-```
-
-```r
 # Now we will overwrite the Date variable to only get the first 4 digits
-temp %<>% mutate(Date = str_sub(Date, start = 1, end = 4))
-head(temp)
-```
-
-```
-## # A tibble: 6 x 3
-##   Date  Value Anomaly
-##   <chr> <dbl>   <dbl>
-## 1 1895   50.3   -1.68
-## 2 1896   52.0   -0.03
-## 3 1897   51.6   -0.46
-## 4 1898   51.4   -0.59
-## 5 1899   51.0   -1.01
-## 6 1900   52.8    0.75
+#temp %<>% mutate(Date = str_sub(Date, start = 1, end = 4))
+#head(temp)
 ```
 
 ## Tidy temperature dataset
@@ -1346,25 +1358,13 @@ We will (a) drop the Anomaly variable, (b) rename Date to year, (c) make year nu
 
 
 ```r
-temp %<>% 
-  rename(temp = Value) %>%
-  mutate(year = as.numeric(Date),
-         country = "United States") %>%
-  select(year, country, temp)
-
-head(temp)
-```
-
-```
-## # A tibble: 6 x 3
-##    year country        temp
-##   <dbl> <chr>         <dbl>
-## 1  1895 United States  50.3
-## 2  1896 United States  52.0
-## 3  1897 United States  51.6
-## 4  1898 United States  51.4
-## 5  1899 United States  51.0
-## 6  1900 United States  52.8
+# temp %<>% 
+#   rename(temp = Value) %>%
+#   mutate(year = as.numeric(Date),
+#          country = "United States") %>%
+#   select(year, country, temp)
+# 
+# head(temp)
 ```
 
 ## Joining data - full join
@@ -1421,12 +1421,12 @@ data %>% filter(country == "United States") %>%
 
 
 ```r
-usa <- carbon_long %>%
-  filter(country == "United States") %>%
-  left_join(gdp_long, by = c("country", "year")) %>%
-  left_join(energy_long, by = c("country", "year")) %>%
-  full_join(temp, by = c("country", "year")) %>%
-  full_join(disasters, by = c("country", "year"))
+# usa <- carbon_long %>%
+#   filter(country == "United States") %>%
+#   left_join(gdp_long, by = c("country", "year")) %>%
+#   left_join(energy_long, by = c("country", "year")) %>%
+#   full_join(temp, by = c("country", "year")) %>%
+#   full_join(disasters, by = c("country", "year"))
 ```
 
 # Data Visualization
@@ -1437,7 +1437,7 @@ usa <- carbon_long %>%
 plot(data$year, data$emissions)
 ```
 
-![](intro-to-r_files/figure-html/unnamed-chunk-19-1.png)<!-- -->
+![](intro-to-r_files/figure-html/unnamed-chunk-18-1.png)<!-- -->
 
 ## ggpplot
 
@@ -1450,7 +1450,7 @@ data %>% group_by(year) %>%
   geom_line(size = 1.5)
 ```
 
-![](intro-to-r_files/figure-html/unnamed-chunk-20-1.png)<!-- -->
+![](intro-to-r_files/figure-html/unnamed-chunk-19-1.png)<!-- -->
 
 
 ```r
@@ -1464,7 +1464,7 @@ data %>% group_by(year) %>%
   theme_classic()
 ```
 
-![](intro-to-r_files/figure-html/unnamed-chunk-21-1.png)<!-- -->
+![](intro-to-r_files/figure-html/unnamed-chunk-20-1.png)<!-- -->
 
 Are certain countries contribute more emissions than others? 
 
@@ -1475,7 +1475,7 @@ data %>%
   theme_classic()
 ```
 
-![](intro-to-r_files/figure-html/unnamed-chunk-22-1.png)<!-- -->
+![](intro-to-r_files/figure-html/unnamed-chunk-21-1.png)<!-- -->
 
 Change the transparency of the lines due to overlapping lines
 
@@ -1487,7 +1487,7 @@ data %>%
   theme_classic()
 ```
 
-![](intro-to-r_files/figure-html/unnamed-chunk-23-1.png)<!-- -->
+![](intro-to-r_files/figure-html/unnamed-chunk-22-1.png)<!-- -->
 
 Compare USA to the rest of the world
 
@@ -1499,7 +1499,7 @@ data %>%
   theme_classic()
 ```
 
-![](intro-to-r_files/figure-html/unnamed-chunk-24-1.png)<!-- -->
+![](intro-to-r_files/figure-html/unnamed-chunk-23-1.png)<!-- -->
 
 ## Visualize carbon emissions over the years for the top 10 countries with the highest emissions in 2014
 
@@ -1521,7 +1521,7 @@ ggplot(top10data, aes(x = year, y = emissions, color = country)) +
   theme_classic()
 ```
 
-![](intro-to-r_files/figure-html/unnamed-chunk-25-1.png)<!-- -->
+![](intro-to-r_files/figure-html/unnamed-chunk-24-1.png)<!-- -->
 
 # Data Analysis
 
@@ -1535,74 +1535,39 @@ By the end of this section, the students will be able to:
 ## Summary Statistics
 
 ```r
-usa %>% summarise(mean_emissions = mean(emissions, na.rm = T), 
-                  mean_temp = mean(temp, na.rm = T),
-                  sd_emissions = sd(emissions, na.rm = T),
-                  sd_temp = sd(temp, na.rm = T))
-```
-
-```
-## # A tibble: 1 x 4
-##   mean_emissions mean_temp sd_emissions sd_temp
-##            <dbl>     <dbl>        <dbl>   <dbl>
-## 1       1748376.      52.2     1951916.   0.987
+# usa %>% summarise(mean_emissions = mean(emissions, na.rm = T), 
+#                   mean_temp = mean(temp, na.rm = T),
+#                   sd_emissions = sd(emissions, na.rm = T),
+#                   sd_temp = sd(temp, na.rm = T))
 ```
 
 ## Correlation
 
 ```r
-usa <- usa %>% drop_na()
-
-usa %>%
-  summarize(r = cor(x = emissions,
-                    y = temp,
-                    method = "pearson")) %>%
-  pull(r)
-```
-
-```
-## [1] 0.4711717
-```
-
-```r
-cortest <- cor.test(pull(usa, emissions), 
-                    pull(usa, temp))
-
-# see the structure of the data
-# str(cortest)
-cortest$statistic
-```
-
-```
-##        t 
-## 3.068649
-```
-
-```r
-cortest$p.value
-```
-
-```
-## [1] 0.004277393
-```
-
-```r
-# tidy the results
-tidy(cortest)
-```
-
-```
-## # A tibble: 1 x 8
-##   estimate statistic p.value parameter conf.low conf.high method     alternative
-##      <dbl>     <dbl>   <dbl>     <int>    <dbl>     <dbl> <chr>      <chr>      
-## 1    0.471      3.07 0.00428        33    0.164     0.695 Pearson's~ two.sided
+# usa <- usa %>% drop_na()
+# 
+# usa %>%
+#   summarize(r = cor(x = emissions,
+#                     y = temp,
+#                     method = "pearson")) %>%
+#   pull(r)
+# 
+# cortest <- cor.test(pull(usa, emissions), 
+#                     pull(usa, temp))
+# 
+# # see the structure of the data
+# # str(cortest)
+# cortest$statistic
+# cortest$p.value
+# # tidy the results
+# tidy(cortest)
 ```
 
 
 ```r
-politics %<>% rename(country = country_name)
-data2 <- data %>% full_join(politics, by =c("country", "year"))
-data2$gdp2 <- data2$gdp * data2$gdp
+# politics %<>% rename(country = country_name)
+# data2 <- data %>% full_join(politics, by =c("country", "year"))
+# data2$gdp2 <- data2$gdp * data2$gdp
 ```
 
 ## Regressions
@@ -1610,86 +1575,16 @@ data2$gdp2 <- data2$gdp * data2$gdp
 ```r
 # run the regression
 
-reg1 <- lm(emissions ~ gdp, data = usa)
-# stargazer(reg1, type = 'html')
-summary(reg1)
-```
-
-```
-## 
-## Call:
-## lm(formula = emissions ~ gdp, data = usa)
-## 
-## Residuals:
-##     Min      1Q  Median      3Q     Max 
-## -865769 -338037   14430  409582  651790 
-## 
-## Coefficients:
-##             Estimate Std. Error t value Pr(>|t|)    
-## (Intercept)  5154372      99767  51.664   <2e-16 ***
-## gdp            -7588      39629  -0.191    0.849    
-## ---
-## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
-## 
-## Residual standard error: 457100 on 33 degrees of freedom
-## Multiple R-squared:  0.00111,	Adjusted R-squared:  -0.02916 
-## F-statistic: 0.03666 on 1 and 33 DF,  p-value: 0.8493
-```
-
-```r
-reg2 <- lm(emissions ~ log(energy) + gdp + gdp2 +v2x_libdem, data = data2)
-summary(reg2)
-```
-
-```
-## 
-## Call:
-## lm(formula = emissions ~ log(energy) + gdp + gdp2 + v2x_libdem, 
-##     data = data2)
-## 
-## Residuals:
-##      Min       1Q   Median       3Q      Max 
-##  -390392  -124870   -76765   -18701 10071571 
-## 
-## Coefficients:
-##               Estimate Std. Error t value Pr(>|t|)    
-## (Intercept) -354595.68   45110.82  -7.861 4.59e-15 ***
-## log(energy)   73092.41    6759.05  10.814  < 2e-16 ***
-## gdp            3757.54    1017.34   3.693 0.000223 ***
-## gdp2            -40.82      16.70  -2.444 0.014543 *  
-## v2x_libdem   -84982.83   24451.62  -3.476 0.000514 ***
-## ---
-## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
-## 
-## Residual standard error: 465300 on 5368 degrees of freedom
-##   (22285 observations deleted due to missingness)
-## Multiple R-squared:  0.02394,	Adjusted R-squared:  0.02321 
-## F-statistic: 32.92 on 4 and 5368 DF,  p-value: < 2.2e-16
+# reg1 <- lm(emissions ~ gdp, data = usa)
+# # stargazer(reg1, type = 'html')
+# summary(reg1)
+# 
+# reg2 <- lm(emissions ~ log(energy) + gdp + gdp2 +v2x_libdem, data = data2)
+# summary(reg2)
 ```
 
 
 ```r
-sum(residuals(reg2)^2)
-```
-
-```
-## [1] 1.162e+15
-```
-
-```r
-anova(reg2)
-```
-
-```
-## Analysis of Variance Table
-## 
-## Response: emissions
-##               Df     Sum Sq    Mean Sq  F value    Pr(>F)    
-## log(energy)    1 2.3141e+13 2.3141e+13 106.9034 < 2.2e-16 ***
-## gdp            1 1.7958e+12 1.7958e+12   8.2958 0.0039894 ** 
-## gdp2           1 9.5075e+11 9.5075e+11   4.3921 0.0361521 *  
-## v2x_libdem     1 2.6148e+12 2.6148e+12  12.0794 0.0005138 ***
-## Residuals   5368 1.1620e+15 2.1647e+11                       
-## ---
-## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+# sum(residuals(reg2)^2)
+# anova(reg2)
 ```
