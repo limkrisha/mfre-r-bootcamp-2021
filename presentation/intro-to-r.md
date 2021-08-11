@@ -692,7 +692,7 @@ There are other many other ways to import data into R, but these are the ones yo
 
 # Data Exploration
 
-As noted earlier, you can view your data with the command `View(dataframe_name)` or click the data object in the Environment tab in the upper right panel of RStudio. These two actions will open a new tab in the upper left panel of RStudio. If you want to see your data in the console, simply type in the name of the data object into your console. 
+You can view your data with the command `View(dataframe_name)` or click the data object in the Environment tab in the upper right panel of RStudio. These two actions will open a new tab in the upper left panel of RStudio. If you want to see your data in the console, simply type in the name of the data object into your console. 
 
 Here are a few functions to inspect your data. We will use the  `politics` data as an example. 
 
@@ -716,17 +716,6 @@ Summary:
   * `summary(politics)` returns the summary statistics of each column
   * `glimpse(politics)` returns the dimension of the data, the names and class of each column, and previous as many values per column. 
 
-The following functions can be used to explore your dataset
-
-```r
-head(politics)
-tail(politics)
-names(politics)
-dim(politics)
-str(politics)
-glimpse(politics)
-```
-
 ## Indexing and Subsetting Data Frames
 
 To extract certain columns and rows from our data, we use `[]` or `[[]]` or `$` symbols. 
@@ -743,32 +732,381 @@ To extract certain columns and rows from our data, we use `[]` or `[[]]` or `$` 
 
 As you can see, there are so many different ways to extract values. The most common way we extract values in MFRE classes would be last point, `politics$country_name`.   
 
-## Shoud I add something about Factors?
+## Shoud I add something about factors?
 
-  
-## Basic data exploration
+# Data Wrangling
 
-We might want to take 
+  * Selecting columns/variables and filtering rows
+  * Reshaping Data
+  * Renaming columns
+  * Changing data types
+  * Creating new variables
+  * Filtering observations
+  * Selecting columns/variables
+  * String manipulation
+  * Joining/Merging datasets (need to modify to just use merge())
 
-The `modelsummary` package allows you to produce very nice summary statistic plots for tidy data. You can read more [here](https://vincentarelbundock.github.io/modelsummary/articles/datasummary.html). 
+We will only work with 3 data frames: `carbon`, `politics`, and `gdp`. 
+
+There are many packages you can use to wrangle data. In this case study, I will mostly use packages in the `{tidyverse}` library, but I will also show you alternatives that you might encounter in some MFRE courses. 
+
+You will see that I will use the pipe operator `%>%` frequently. The operator allows us to chain functions together. It takes the function specified to the left of the operator and allows you to pass the intermediate output to the function specified to the right of the operator. You can read more about it [here](https://www.datacamp.com/community/tutorials/pipe-r-tutorial).
+
+## Selecting columns/variables and filtering rows 
+
+In the `politics` data frame, let's say I only want to keep the `country_name`, `year`, `v2x_libdem`, `v2x_regime`, and `region` variables. We will use the `select(col1, col2, ...)` function. 
 
 
 ```r
-politics %>% group_by(region) %>% summarize(mean(v2x_libdem, na.rm = T))
+politics %>% select(country_name, year, v2x_libdem, v2x_regime, region)
+```
+
+Alternatively, we can also drop the columns we do not want by adding a `-` symbol before the column name/s. 
+
+
+```r
+politics %>% select(-country_text_id, -v2psnatpar_ord)
+```
+
+The output from the two codes above is a dataframe of all the rows of the columns we selected But the original data `politics` remains unchanged. To "save" this new dataframe, we have to use the assignment operator `<-`. In the code below, we will just overwrite the original `politics` data.
+
+
+```r
+politics <- politics %>% select(country_name, year, v2x_libdem, v2x_regime, region)
+```
+
+Running the command `dim(politics)`, you will notice that we only have 5 columns left in our dataframe. 
+
+If we want to keep observations to those from years 1991 onwards, we use the `filter()` function. 
+
+
+```r
+politics <- politics %>% filter(year > 1991)
+
+# To filter observations where region = Africa
+# politics %>% filter(region == "Africa") 
+```
+
+We can use the pipe operator to chain the `select()` and `filter()` functions. Running this code will not change anything anymore because we already used the assignment operator. But it may be something you may want to do in the future and save yourself a few lines of code. 
+
+
+```r
+politics <- politics %>% 
+  select(country_name, year, v2x_libdem, v2x_regime, region) %>%
+  filter(year > 1991)
+```
+
+## Renaming columns
+
+Let's say we want to rename the `country_name` column to `country`, `v2x_libdem` to `democracy`, and `v2x_regime` to regime. The function is `rename(new_name = old_name)`.
+
+
+```r
+politics <- politics %>% 
+  rename(country = country_name,
+         democracy = v2x_libdem,
+         regime = v2x_regime)
+```
+
+  * In Dr. Vercammen's code, you will see that he renames variables using the `names()` and `which()` functions -- `names(politics)[which(names(politics) == "country")] = "country_name"`. 
+  
+## Reshaping Data
+
+### Pivoting wider
+
+In the `politics` data, each row contains the values of variables associated with each country and year. This dataframe is said to be in the "long" data format. 
+
+If you look at the `carbon` and `gdp` dataframes, you will notice that they are in the wide format. Each row is a country, and the columns are the different years we have observations for. 
+
+Most R functions expect your data to be in the "long" data format because it is more machine readable and is closer to the formatting of databases. In the `tidyr` package, we can use the `pivot_longer()` and `pivot_wider` columns to reshape our data. 
+
+
+```r
+carbon %>% 
+  slice_sample(n = 3)
 ```
 
 ```
-## # A tibble: 7 x 2
-##   region                  `mean(v2x_libdem, na.rm = T)`
-##   <chr>                                           <dbl>
-## 1 ""                                             0.162 
-## 2 "Africa"                                       0.141 
-## 3 "Americas"                                     0.224 
-## 4 "Eastern Mediterranean"                        0.0881
-## 5 "Europe"                                       0.372 
-## 6 "South-East Asia"                              0.152 
-## 7 "Western Pacific"                              0.245
+## # A tibble: 3 x 265
+##   country  `1751` `1752` `1753` `1754` `1755` `1756` `1757` `1758` `1759` `1760`
+##   <chr>     <dbl>  <dbl>  <dbl>  <dbl>  <dbl>  <dbl>  <dbl>  <dbl>  <dbl>  <dbl>
+## 1 Maurita~     NA     NA     NA     NA     NA     NA     NA     NA     NA     NA
+## 2 Cambodia     NA     NA     NA     NA     NA     NA     NA     NA     NA     NA
+## 3 Singapo~     NA     NA     NA     NA     NA     NA     NA     NA     NA     NA
+## # ... with 254 more variables: 1761 <dbl>, 1762 <dbl>, 1763 <dbl>, 1764 <dbl>,
+## #   1765 <dbl>, 1766 <dbl>, 1767 <dbl>, 1768 <dbl>, 1769 <dbl>, 1770 <dbl>,
+## #   1771 <dbl>, 1772 <dbl>, 1773 <dbl>, 1774 <dbl>, 1775 <dbl>, 1776 <dbl>,
+## #   1777 <dbl>, 1778 <dbl>, 1779 <dbl>, 1780 <dbl>, 1781 <dbl>, 1782 <dbl>,
+## #   1783 <dbl>, 1784 <dbl>, 1785 <dbl>, 1786 <dbl>, 1787 <dbl>, 1788 <dbl>,
+## #   1789 <dbl>, 1790 <dbl>, 1791 <dbl>, 1792 <dbl>, 1793 <dbl>, 1794 <dbl>,
+## #   1795 <dbl>, 1796 <dbl>, 1797 <dbl>, 1798 <dbl>, 1799 <dbl>, 1800 <dbl>,
+## #   1801 <dbl>, 1802 <dbl>, 1803 <dbl>, 1804 <dbl>, 1805 <dbl>, 1806 <dbl>,
+## #   1807 <dbl>, 1808 <dbl>, 1809 <dbl>, 1810 <dbl>, 1811 <dbl>, 1812 <dbl>,
+## #   1813 <dbl>, 1814 <dbl>, 1815 <dbl>, 1816 <dbl>, 1817 <dbl>, 1818 <dbl>,
+## #   1819 <dbl>, 1820 <dbl>, 1821 <dbl>, 1822 <dbl>, 1823 <dbl>, 1824 <dbl>,
+## #   1825 <dbl>, 1826 <dbl>, 1827 <dbl>, 1828 <dbl>, 1829 <dbl>, 1830 <dbl>,
+## #   1831 <dbl>, 1832 <dbl>, 1833 <dbl>, 1834 <dbl>, 1835 <dbl>, 1836 <dbl>,
+## #   1837 <dbl>, 1838 <dbl>, 1839 <dbl>, 1840 <dbl>, 1841 <dbl>, 1842 <dbl>,
+## #   1843 <dbl>, 1844 <dbl>, 1845 <dbl>, 1846 <dbl>, 1847 <dbl>, 1848 <dbl>,
+## #   1849 <dbl>, 1850 <dbl>, 1851 <dbl>, 1852 <dbl>, 1853 <dbl>, 1854 <dbl>,
+## #   1855 <dbl>, 1856 <dbl>, 1857 <dbl>, 1858 <dbl>, 1859 <dbl>, 1860 <dbl>, ...
 ```
+
+  * *Note*: Something else you might notice is that the column names start with a number. If you create your own dataframe in the future, I strongly recommend that you DO NOT use numbers as the first character of your variable name. To refer to the last column of the `carbon` data, for example, whose variable/column name is 2014, you will have to wrap the column name with a backtick. 
+
+
+
+```r
+head(carbon$`2014`)
+```
+
+```
+## [1]   9810   5720 145000    462  34800    532
+```
+
+### Pivoting longer
+
+The `pivot_longer()` function takes four main arguments:
+  * the (wide) data
+  * *cols* are the names of the columns we use to fill the new values variable (or to drop)
+  * the *names_to* column variable we wish to create the *cols* provided
+  * the *values_to* column variable we wish to create and fill with values associated with the *cols* provided
+  
+Let's now reshape the `carbon` data longer to create new columns for `year` and `emissions`. 
+
+To create a long format of the `carbon` data, we use the following
+  * the (wide) data - `carbon` 
+  * *cols* include all columns except the country variable, so we can just put `-country`. Usually you can put the column names of interest as in `cols = col1:col5` or `cols = c(col1, col2, col5)`, but because our variable names start as numbers, it is not allowing us to use this format. 
+  * the *names_to* column variable will be a character string of the name the column names these columns (1762:2014) will collapse into - `"year"`
+  * the *values_to* column variable will be a character string of the name of the column the values of the collapsed columns will be inserted into - `"emissions"`
+  
+
+```r
+carbon_long <- carbon %>%
+  pivot_longer(cols = -country,
+               names_to = "year",
+               values_to = "emissions")
+```
+
+Now we can take a look at the long data format. 
+
+
+```r
+head(carbon_long)
+```
+
+```
+## # A tibble: 6 x 3
+##   country     year  emissions
+##   <chr>       <chr>     <dbl>
+## 1 Afghanistan 1751         NA
+## 2 Afghanistan 1752         NA
+## 3 Afghanistan 1753         NA
+## 4 Afghanistan 1754         NA
+## 5 Afghanistan 1755         NA
+## 6 Afghanistan 1756         NA
+```
+
+```r
+# To always get the same random sample, use set.seed(number)
+# set.seed(2021)
+carbon_long %>% 
+  slice_sample(n = 10)
+```
+
+```
+## # A tibble: 10 x 3
+##    country             year  emissions
+##    <chr>               <chr>     <dbl>
+##  1 Denmark             1760      NA   
+##  2 Iceland             1972    1490   
+##  3 Sweden              1779      NA   
+##  4 Belgium             2004  111000   
+##  5 South Korea         1959   11200   
+##  6 Romania             1861       7.33
+##  7 Germany             1805    1040   
+##  8 St. Kitts and Nevis 1836      NA   
+##  9 North Korea         2002   69200   
+## 10 Argentina           1866      NA
+```
+
+```r
+str(carbon_long)
+```
+
+```
+## tibble [50,688 x 3] (S3: tbl_df/tbl/data.frame)
+##  $ country  : chr [1:50688] "Afghanistan" "Afghanistan" "Afghanistan" "Afghanistan" ...
+##  $ year     : chr [1:50688] "1751" "1752" "1753" "1754" ...
+##  $ emissions: num [1:50688] NA NA NA NA NA NA NA NA NA NA ...
+```
+Notice that the `year` variable is of the `character (chr)` type, so we want to recode that variable to numeric. To create or modify columns as a function of existing columns, we use the `mutate(new_var_name = function_of_existing_vars)` function. To change the data type to numeric, we use the `as.numeric()` function.  
+
+
+```r
+carbon_long <- carbon_long %>%
+  mutate(year = as.numeric(year))
+```
+
+The `gdp` data is in the same format, so let's do reshape that one too.
+
+
+```r
+gdp_long <- gdp %>%
+  pivot_longer(cols = -country, 
+               names_to = "year",
+               values_to = "gdp") %>%
+  mutate(year = as.numeric(year))
+head(gdp_long)
+```
+
+```
+## # A tibble: 6 x 3
+##   country      year   gdp
+##   <chr>       <dbl> <dbl>
+## 1 Afghanistan  1801    NA
+## 2 Afghanistan  1802    NA
+## 3 Afghanistan  1803    NA
+## 4 Afghanistan  1804    NA
+## 5 Afghanistan  1805    NA
+## 6 Afghanistan  1806    NA
+```
+
+
+### Pivoting wider
+
+In the case that we want to reshape the `carbon_long` back to its original "wide" data format, we can use the `pivot_wider()` function. This function takes three main arguments. 
+
+  1. the data
+  2. the *names_from* column whose values will become new column names
+  3. the *values_from* column whose values will fill the new column variables. 
+  
+
+```r
+carbon_wide <- carbon_long %>%
+  pivot_wider(names_from = "year",
+              values_from = "emissions")
+
+head(carbon)
+```
+
+```
+## # A tibble: 6 x 265
+##   country  `1751` `1752` `1753` `1754` `1755` `1756` `1757` `1758` `1759` `1760`
+##   <chr>     <dbl>  <dbl>  <dbl>  <dbl>  <dbl>  <dbl>  <dbl>  <dbl>  <dbl>  <dbl>
+## 1 Afghani~     NA     NA     NA     NA     NA     NA     NA     NA     NA     NA
+## 2 Albania      NA     NA     NA     NA     NA     NA     NA     NA     NA     NA
+## 3 Algeria      NA     NA     NA     NA     NA     NA     NA     NA     NA     NA
+## 4 Andorra      NA     NA     NA     NA     NA     NA     NA     NA     NA     NA
+## 5 Angola       NA     NA     NA     NA     NA     NA     NA     NA     NA     NA
+## 6 Antigua~     NA     NA     NA     NA     NA     NA     NA     NA     NA     NA
+## # ... with 254 more variables: 1761 <dbl>, 1762 <dbl>, 1763 <dbl>, 1764 <dbl>,
+## #   1765 <dbl>, 1766 <dbl>, 1767 <dbl>, 1768 <dbl>, 1769 <dbl>, 1770 <dbl>,
+## #   1771 <dbl>, 1772 <dbl>, 1773 <dbl>, 1774 <dbl>, 1775 <dbl>, 1776 <dbl>,
+## #   1777 <dbl>, 1778 <dbl>, 1779 <dbl>, 1780 <dbl>, 1781 <dbl>, 1782 <dbl>,
+## #   1783 <dbl>, 1784 <dbl>, 1785 <dbl>, 1786 <dbl>, 1787 <dbl>, 1788 <dbl>,
+## #   1789 <dbl>, 1790 <dbl>, 1791 <dbl>, 1792 <dbl>, 1793 <dbl>, 1794 <dbl>,
+## #   1795 <dbl>, 1796 <dbl>, 1797 <dbl>, 1798 <dbl>, 1799 <dbl>, 1800 <dbl>,
+## #   1801 <dbl>, 1802 <dbl>, 1803 <dbl>, 1804 <dbl>, 1805 <dbl>, 1806 <dbl>,
+## #   1807 <dbl>, 1808 <dbl>, 1809 <dbl>, 1810 <dbl>, 1811 <dbl>, 1812 <dbl>,
+## #   1813 <dbl>, 1814 <dbl>, 1815 <dbl>, 1816 <dbl>, 1817 <dbl>, 1818 <dbl>,
+## #   1819 <dbl>, 1820 <dbl>, 1821 <dbl>, 1822 <dbl>, 1823 <dbl>, 1824 <dbl>,
+## #   1825 <dbl>, 1826 <dbl>, 1827 <dbl>, 1828 <dbl>, 1829 <dbl>, 1830 <dbl>,
+## #   1831 <dbl>, 1832 <dbl>, 1833 <dbl>, 1834 <dbl>, 1835 <dbl>, 1836 <dbl>,
+## #   1837 <dbl>, 1838 <dbl>, 1839 <dbl>, 1840 <dbl>, 1841 <dbl>, 1842 <dbl>,
+## #   1843 <dbl>, 1844 <dbl>, 1845 <dbl>, 1846 <dbl>, 1847 <dbl>, 1848 <dbl>,
+## #   1849 <dbl>, 1850 <dbl>, 1851 <dbl>, 1852 <dbl>, 1853 <dbl>, 1854 <dbl>,
+## #   1855 <dbl>, 1856 <dbl>, 1857 <dbl>, 1858 <dbl>, 1859 <dbl>, 1860 <dbl>, ...
+```
+
+## Joining our data together
+
+Now we will join the three dataframes together. Like before, we will use the `full_join` function. 
+
+
+```r
+politics$country <- politics$country_name
+
+data <- politics %>%
+  full_join(carbon_long, by = c("country", "year")) %>%
+  full_join(gdp_long, by = c("country", "year"))
+
+head(data)
+```
+
+```
+##   country_name year v2x_libdem          v2x_regime                region
+## 1  Afghanistan 2007      0.227 Electoral Autocracy Eastern Mediterranean
+## 2  Afghanistan 2014      0.224 Electoral Autocracy Eastern Mediterranean
+## 3  Afghanistan 2012      0.224 Electoral Autocracy Eastern Mediterranean
+## 4  Afghanistan 2003      0.096    Closed Autocracy Eastern Mediterranean
+## 5  Afghanistan 2015      0.227 Electoral Autocracy Eastern Mediterranean
+## 6  Afghanistan 2009      0.226 Electoral Autocracy Eastern Mediterranean
+##       country emissions    gdp
+## 1 Afghanistan      2270 10.800
+## 2 Afghanistan      9810  0.837
+## 3 Afghanistan     10800 11.200
+## 4 Afghanistan      1200  8.040
+## 5 Afghanistan        NA  2.110
+## 6 Afghanistan      6770 17.300
+```
+
+## Summary Statistics
+
+To take a look at some summary statistics, we can use the built-in R functions.
+  * `mean(joindata$emissions, na.rm = T)` - mean of `emissions`
+  * `table(joindata$country)` to know the number of observations per country
+  * `summary(joindata)` - summary statistics of the columns
+  * `summary(joindata$emissions)` - summary statistics of the `emissions` variable
+  
+We can also look at some summary statistics by region. We use the `group_by()` function to group the observations. We use the `summarize()` function to calculate summary statistics. In the code below, `avg_emissions` is the column name I will assign to the mean emissions. 
+
+
+```r
+data %>% group_by(region) %>%
+  summarize(avg_emissions = mean(emissions, na.rm = T))
+```
+
+```
+## # A tibble: 8 x 2
+##   region                  avg_emissions
+##   <chr>                           <dbl>
+## 1 ""                             75649.
+## 2 "Africa"                       17118.
+## 3 "Americas"                     75294.
+## 4 "Eastern Mediterranean"        80377.
+## 5 "Europe"                      145051.
+## 6 "South-East Asia"             217400.
+## 7 "Western Pacific"             538052.
+## 8  <NA>                          70314.
+```
+
+I can request for multiple summary statistics in one command too.
+
+
+```r
+data %>% group_by(region) %>%
+  summarize(n = n(),
+            avg_emissions = mean(emissions, na.rm = T),
+            median_emissions = median(emissions, na.rm = T))
+```
+
+```
+## # A tibble: 8 x 4
+##   region                      n avg_emissions median_emissions
+##   <chr>                   <int>         <dbl>            <dbl>
+## 1 ""                        413        75649.           110000
+## 2 "Africa"                 1228        17118.             1770
+## 3 "Americas"                754        75294.            11100
+## 4 "Eastern Mediterranean"   609        80377.            36400
+## 5 "Europe"                 1414       145051.            49150
+## 6 "South-East Asia"         261       217400.            35700
+## 7 "Western Pacific"         464       538052.            38800
+## 8  <NA>                   47603        70314.             3140
+```
+
+The `modelsummary` package allows you to produce very nice summary statistic plots for tidy data. You can read more [here](https://vincentarelbundock.github.io/modelsummary/articles/datasummary.html). 
+
 
 ```r
 datasummary_skim(politics)
@@ -791,12 +1129,12 @@ datasummary_skim(politics)
 <tbody>
   <tr>
    <td style="text-align:left;"> year </td>
-   <td style="text-align:right;"> 233 </td>
+   <td style="text-align:right;"> 29 </td>
    <td style="text-align:right;"> 0 </td>
-   <td style="text-align:right;"> 1927.2 </td>
-   <td style="text-align:right;"> 64.0 </td>
-   <td style="text-align:right;"> 1789.0 </td>
-   <td style="text-align:right;"> 1937.0 </td>
+   <td style="text-align:right;"> 2006.1 </td>
+   <td style="text-align:right;"> 8.4 </td>
+   <td style="text-align:right;"> 1992.0 </td>
+   <td style="text-align:right;"> 2006.0 </td>
    <td style="text-align:right;"> 2020.0 </td>
    <td style="text-align:right;">  <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" class="svglite" width="48.00pt" height="12.00pt" viewBox="0 0 48.00 12.00"><defs><style type="text/css">
     .svglite line, .svglite polyline, .svglite polygon, .svglite path, .svglite rect, .svglite circle {
@@ -807,17 +1145,17 @@ datasummary_skim(politics)
       stroke-miterlimit: 10.00;
     }
   </style></defs><rect width="100%" height="100%" style="stroke: none; fill: none;"></rect><defs><clipPath id="cpMC4wMHw0OC4wMHwwLjAwfDEyLjAw"><rect x="0.00" y="0.00" width="48.00" height="12.00"></rect></clipPath></defs><g clip-path="url(#cpMC4wMHw0OC4wMHwwLjAwfDEyLjAw)">
-</g><defs><clipPath id="cpMC4wMHw0OC4wMHwyLjg4fDEyLjAw"><rect x="0.00" y="2.88" width="48.00" height="9.12"></rect></clipPath></defs><g clip-path="url(#cpMC4wMHw0OC4wMHwyLjg4fDEyLjAw)"><rect x="0.046" y="9.81" width="3.85" height="1.86" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="3.89" y="8.39" width="3.85" height="3.27" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="7.74" y="7.94" width="3.85" height="3.72" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="11.59" y="7.61" width="3.85" height="4.05" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="15.44" y="8.18" width="3.85" height="3.49" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="19.29" y="8.26" width="3.85" height="3.40" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="23.13" y="5.29" width="3.85" height="6.37" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="26.98" y="4.45" width="3.85" height="7.21" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="30.83" y="4.38" width="3.85" height="7.28" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="34.68" y="4.23" width="3.85" height="7.43" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="38.53" y="3.75" width="3.85" height="7.91" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="42.37" y="3.22" width="3.85" height="8.44" style="stroke-width: 0.38; fill: #000000;"></rect></g></svg>
+</g><defs><clipPath id="cpMC4wMHw0OC4wMHwyLjg4fDEyLjAw"><rect x="0.00" y="2.88" width="48.00" height="9.12"></rect></clipPath></defs><g clip-path="url(#cpMC4wMHw0OC4wMHwyLjg4fDEyLjAw)"><rect x="1.78" y="3.22" width="3.17" height="8.44" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="4.95" y="6.02" width="3.17" height="5.64" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="8.13" y="6.01" width="3.17" height="5.66" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="11.30" y="5.96" width="3.17" height="5.70" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="14.48" y="5.96" width="3.17" height="5.70" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="17.65" y="5.96" width="3.17" height="5.70" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="20.83" y="5.96" width="3.17" height="5.70" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="24.00" y="5.93" width="3.17" height="5.74" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="27.17" y="5.93" width="3.17" height="5.74" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="30.35" y="5.89" width="3.17" height="5.77" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="33.52" y="5.89" width="3.17" height="5.77" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="36.70" y="5.89" width="3.17" height="5.77" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="39.87" y="5.89" width="3.17" height="5.77" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="43.05" y="5.89" width="3.17" height="5.77" style="stroke-width: 0.38; fill: #000000;"></rect></g></svg>
 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> v2x_libdem </td>
-   <td style="text-align:right;"> 884 </td>
-   <td style="text-align:right;"> 10 </td>
-   <td style="text-align:right;"> 0.2 </td>
-   <td style="text-align:right;"> 0.2 </td>
+   <td style="text-align:right;"> 858 </td>
+   <td style="text-align:right;"> 0 </td>
+   <td style="text-align:right;"> 0.4 </td>
+   <td style="text-align:right;"> 0.3 </td>
    <td style="text-align:right;"> 0.0 </td>
-   <td style="text-align:right;"> 0.1 </td>
+   <td style="text-align:right;"> 0.3 </td>
    <td style="text-align:right;"> 0.9 </td>
    <td style="text-align:right;">  <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" class="svglite" width="48.00pt" height="12.00pt" viewBox="0 0 48.00 12.00"><defs><style type="text/css">
     .svglite line, .svglite polyline, .svglite polygon, .svglite path, .svglite rect, .svglite circle {
@@ -828,18 +1166,17 @@ datasummary_skim(politics)
       stroke-miterlimit: 10.00;
     }
   </style></defs><rect width="100%" height="100%" style="stroke: none; fill: none;"></rect><defs><clipPath id="cpMC4wMHw0OC4wMHwwLjAwfDEyLjAw"><rect x="0.00" y="0.00" width="48.00" height="12.00"></rect></clipPath></defs><g clip-path="url(#cpMC4wMHw0OC4wMHwwLjAwfDEyLjAw)">
-</g><defs><clipPath id="cpMC4wMHw0OC4wMHwyLjg4fDEyLjAw"><rect x="0.00" y="2.88" width="48.00" height="9.12"></rect></clipPath></defs><g clip-path="url(#cpMC4wMHw0OC4wMHwyLjg4fDEyLjAw)"><rect x="1.53" y="3.56" width="2.51" height="8.10" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="4.03" y="3.22" width="2.51" height="8.44" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="6.54" y="6.16" width="2.51" height="5.50" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="9.04" y="7.63" width="2.51" height="4.03" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="11.55" y="9.76" width="2.51" height="1.90" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="14.05" y="10.12" width="2.51" height="1.54" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="16.56" y="10.56" width="2.51" height="1.11" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="19.06" y="10.77" width="2.51" height="0.89" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="21.57" y="10.73" width="2.51" height="0.93" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="24.08" y="10.94" width="2.51" height="0.73" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="26.58" y="10.87" width="2.51" height="0.79" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="29.09" y="11.08" width="2.51" height="0.58" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="31.59" y="10.94" width="2.51" height="0.72" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="34.10" y="10.94" width="2.51" height="0.72" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="36.60" y="10.95" width="2.51" height="0.71" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="39.11" y="10.68" width="2.51" height="0.98" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="41.61" y="10.67" width="2.51" height="1.00" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="44.12" y="11.32" width="2.51" height="0.34" style="stroke-width: 0.38; fill: #000000;"></rect></g></svg>
+</g><defs><clipPath id="cpMC4wMHw0OC4wMHwyLjg4fDEyLjAw"><rect x="0.00" y="2.88" width="48.00" height="9.12"></rect></clipPath></defs><g clip-path="url(#cpMC4wMHw0OC4wMHwyLjg4fDEyLjAw)"><rect x="1.53" y="7.19" width="2.51" height="4.47" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="4.03" y="3.86" width="2.51" height="7.80" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="6.54" y="3.22" width="2.51" height="8.44" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="9.04" y="5.79" width="2.51" height="5.87" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="11.55" y="6.25" width="2.51" height="5.41" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="14.05" y="6.47" width="2.51" height="5.20" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="16.56" y="6.58" width="2.51" height="5.08" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="19.06" y="7.26" width="2.51" height="4.40" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="21.57" y="6.48" width="2.51" height="5.18" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="24.08" y="8.83" width="2.51" height="2.84" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="26.58" y="8.30" width="2.51" height="3.36" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="29.09" y="9.20" width="2.51" height="2.46" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="31.59" y="8.07" width="2.51" height="3.60" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="34.10" y="8.41" width="2.51" height="3.25" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="36.60" y="9.73" width="2.51" height="1.93" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="39.11" y="6.37" width="2.51" height="5.29" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="41.61" y="4.16" width="2.51" height="7.50" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="44.12" y="9.25" width="2.51" height="2.41" style="stroke-width: 0.38; fill: #000000;"></rect></g></svg>
 </td>
   </tr>
 </tbody>
 </table>
 
-  ** Note to self: Need to add in base R commands to prep for Dr. Vercammen's code
-
 We need to add an argument `type = categorical` to see summary statistics for non-numeric data.
 
+
 ```r
-datasummary_skim(politics, type = "categorical")
+datasummary_skim(data, type = "categorical")
 ```
 
 <table class="table" style="width: auto !important; margin-left: auto; margin-right: auto;">
@@ -853,581 +1190,73 @@ datasummary_skim(politics, type = "categorical")
  </thead>
 <tbody>
   <tr>
-   <td style="text-align:left;"> v2psnatpar_ord </td>
-   <td style="text-align:left;"> Unified coalition control </td>
-   <td style="text-align:right;"> 6448 </td>
-   <td style="text-align:right;"> 23.7 </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;">  </td>
-   <td style="text-align:left;"> Divided party control </td>
-   <td style="text-align:right;"> 4533 </td>
-   <td style="text-align:right;"> 16.7 </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;">  </td>
-   <td style="text-align:left;"> Unified party control </td>
-   <td style="text-align:right;"> 7762 </td>
-   <td style="text-align:right;"> 28.5 </td>
-  </tr>
-  <tr>
    <td style="text-align:left;"> v2x_regime </td>
    <td style="text-align:left;"> Closed Autocracy </td>
-   <td style="text-align:right;"> 9635 </td>
-   <td style="text-align:right;"> 35.4 </td>
+   <td style="text-align:right;"> 857 </td>
+   <td style="text-align:right;"> 1.6 </td>
   </tr>
   <tr>
    <td style="text-align:left;">  </td>
    <td style="text-align:left;"> Electoral Autocracy </td>
-   <td style="text-align:right;"> 4370 </td>
-   <td style="text-align:right;"> 16.1 </td>
+   <td style="text-align:right;"> 1693 </td>
+   <td style="text-align:right;"> 3.2 </td>
   </tr>
   <tr>
    <td style="text-align:left;">  </td>
    <td style="text-align:left;"> Electoral Democracy </td>
-   <td style="text-align:right;"> 2518 </td>
-   <td style="text-align:right;"> 9.2 </td>
+   <td style="text-align:right;"> 1505 </td>
+   <td style="text-align:right;"> 2.9 </td>
   </tr>
   <tr>
    <td style="text-align:left;">  </td>
    <td style="text-align:left;"> Liberal Democracy </td>
-   <td style="text-align:right;"> 2315 </td>
-   <td style="text-align:right;"> 8.5 </td>
+   <td style="text-align:right;"> 1086 </td>
+   <td style="text-align:right;"> 2.1 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> region </td>
    <td style="text-align:left;">  </td>
-   <td style="text-align:right;"> 3509 </td>
-   <td style="text-align:right;"> 12.9 </td>
+   <td style="text-align:right;"> 413 </td>
+   <td style="text-align:right;"> 0.8 </td>
   </tr>
   <tr>
    <td style="text-align:left;">  </td>
    <td style="text-align:left;"> Africa </td>
-   <td style="text-align:right;"> 5070 </td>
-   <td style="text-align:right;"> 18.6 </td>
+   <td style="text-align:right;"> 1228 </td>
+   <td style="text-align:right;"> 2.3 </td>
   </tr>
   <tr>
    <td style="text-align:left;">  </td>
    <td style="text-align:left;"> Americas </td>
-   <td style="text-align:right;"> 4958 </td>
-   <td style="text-align:right;"> 18.2 </td>
+   <td style="text-align:right;"> 754 </td>
+   <td style="text-align:right;"> 1.4 </td>
   </tr>
   <tr>
    <td style="text-align:left;">  </td>
    <td style="text-align:left;"> Eastern Mediterranean </td>
-   <td style="text-align:right;"> 3298 </td>
-   <td style="text-align:right;"> 12.1 </td>
+   <td style="text-align:right;"> 609 </td>
+   <td style="text-align:right;"> 1.2 </td>
   </tr>
   <tr>
    <td style="text-align:left;">  </td>
    <td style="text-align:left;"> Europe </td>
-   <td style="text-align:right;"> 6552 </td>
-   <td style="text-align:right;"> 24.1 </td>
+   <td style="text-align:right;"> 1414 </td>
+   <td style="text-align:right;"> 2.7 </td>
   </tr>
   <tr>
    <td style="text-align:left;">  </td>
    <td style="text-align:left;"> South-East Asia </td>
-   <td style="text-align:right;"> 1408 </td>
-   <td style="text-align:right;"> 5.2 </td>
+   <td style="text-align:right;"> 261 </td>
+   <td style="text-align:right;"> 0.5 </td>
   </tr>
   <tr>
    <td style="text-align:left;">  </td>
    <td style="text-align:left;"> Western Pacific </td>
-   <td style="text-align:right;"> 2427 </td>
-   <td style="text-align:right;"> 8.9 </td>
+   <td style="text-align:right;"> 464 </td>
+   <td style="text-align:right;"> 0.9 </td>
   </tr>
 </tbody>
 </table>
-
-# Data Wrangling
-
-  * Reshaping Data
-  * Renaming columns
-  * Changing data types
-  * Creating new variables
-  * Filtering observations
-  * Selecting columns/variables
-  * String manipulation
-  * Joining/Merging datasets (need to modify to just use merge())
-
-## Reshaping Data
-
-
-```r
-carbon_long <- carbon %>%
-  pivot_longer(cols = -country,
-               names_to = "Year",
-               values_to = "Emissions")
-
-head(carbon_long)
-```
-
-```
-## # A tibble: 6 x 3
-##   country     Year  Emissions
-##   <chr>       <chr>     <dbl>
-## 1 Afghanistan 1751         NA
-## 2 Afghanistan 1752         NA
-## 3 Afghanistan 1753         NA
-## 4 Afghanistan 1754         NA
-## 5 Afghanistan 1755         NA
-## 6 Afghanistan 1756         NA
-```
-
-```r
-set.seed(2021)
-carbon_long %>% 
-  slice_sample(n = 10)
-```
-
-```
-## # A tibble: 10 x 3
-##    country             Year  Emissions
-##    <chr>               <chr>     <dbl>
-##  1 Liberia             1952       55  
-##  2 Trinidad and Tobago 1778       NA  
-##  3 Grenada             1804       NA  
-##  4 Russia              1979  2090000  
-##  5 Georgia             1869       16.4
-##  6 Philippines         1873       NA  
-##  7 Grenada             1922       NA  
-##  8 Estonia             1969       NA  
-##  9 France              1907   146000  
-## 10 Moldova             1763       NA
-```
-
-## Renaming columns
-
-An alternative to using the assignment operator is `%<>%`.
-
-
-```r
-carbon_long %<>%
-	rename(year = Year,
-		      emissions = Emissions)
-
-set.seed(2021)
-carbon_long %>% 
-  slice_sample(n = 10)
-```
-
-```
-## # A tibble: 10 x 3
-##    country             year  emissions
-##    <chr>               <chr>     <dbl>
-##  1 Liberia             1952       55  
-##  2 Trinidad and Tobago 1778       NA  
-##  3 Grenada             1804       NA  
-##  4 Russia              1979  2090000  
-##  5 Georgia             1869       16.4
-##  6 Philippines         1873       NA  
-##  7 Grenada             1922       NA  
-##  8 Estonia             1969       NA  
-##  9 France              1907   146000  
-## 10 Moldova             1763       NA
-```
-
-
-## Changing Data types 
-
-
-```r
-#glimpse(carbon_long)
-str(carbon_long)
-```
-
-```
-## tibble [50,688 x 3] (S3: tbl_df/tbl/data.frame)
-##  $ country  : chr [1:50688] "Afghanistan" "Afghanistan" "Afghanistan" "Afghanistan" ...
-##  $ year     : chr [1:50688] "1751" "1752" "1753" "1754" ...
-##  $ emissions: num [1:50688] NA NA NA NA NA NA NA NA NA NA ...
-```
-
-```r
-carbon_long %<>% mutate(year = as.numeric(year))
-
-str(carbon_long)
-```
-
-```
-## tibble [50,688 x 3] (S3: tbl_df/tbl/data.frame)
-##  $ country  : chr [1:50688] "Afghanistan" "Afghanistan" "Afghanistan" "Afghanistan" ...
-##  $ year     : num [1:50688] 1751 1752 1753 1754 1755 ...
-##  $ emissions: num [1:50688] NA NA NA NA NA NA NA NA NA NA ...
-```
-
-## Creating new variables
-
-
-```r
-# create a new column that contains the average of that country's emissions 
-sample <- carbon_long %>%
-  group_by(country) %>%
-  mutate(avg_emissions = mean(emissions, na.rm = T))
-
-set.seed(2021)
-sample %>% 
-  slice_sample(n = 10)
-```
-
-```
-## # A tibble: 1,920 x 4
-## # Groups:   country [192]
-##    country      year emissions avg_emissions
-##    <chr>       <dbl>     <dbl>         <dbl>
-##  1 Afghanistan  1916        NA         2174.
-##  2 Afghanistan  1981      1980         2174.
-##  3 Afghanistan  1820        NA         2174.
-##  4 Afghanistan  1942        NA         2174.
-##  5 Afghanistan  2001       818         2174.
-##  6 Afghanistan  1852        NA         2174.
-##  7 Afghanistan  1860        NA         2174.
-##  8 Afghanistan  1853        NA         2174.
-##  9 Afghanistan  1855        NA         2174.
-## 10 Afghanistan  1773        NA         2174.
-## # ... with 1,910 more rows
-```
-
-## Filtering observations
-
-
-```r
-canada <- carbon_long %>% filter(country == "Canada") %>%
-  drop_na(emissions)
-```
-
-## Tidying the gdp and energy data
-
-Practice tidying the gdp data
-
-```r
-# glimpse(gdp)
-head(gdp)
-```
-
-```
-## # A tibble: 6 x 220
-##   country           `1801`   `1802`   `1803`   `1804`   `1805`   `1806`   `1807`
-##   <chr>              <dbl>    <dbl>    <dbl>    <dbl>    <dbl>    <dbl>    <dbl>
-## 1 Afghanistan     NA       NA       NA       NA       NA       NA       NA      
-## 2 Albania          0.104    0.104    0.104    0.104    0.104    0.104    0.104  
-## 3 Algeria         -0.00247 -0.00247 -0.00247 -0.00247 -0.00247 -0.00247 -0.00247
-## 4 Andorra          0.166    0.166    0.166    0.166    0.166    0.166    0.166  
-## 5 Angola           0.425    0.425    0.425    0.425    0.425    0.425    0.425  
-## 6 Antigua and Ba~ NA       NA       NA       NA       NA       NA       NA      
-## # ... with 212 more variables: 1808 <dbl>, 1809 <dbl>, 1810 <dbl>, 1811 <dbl>,
-## #   1812 <dbl>, 1813 <dbl>, 1814 <dbl>, 1815 <dbl>, 1816 <dbl>, 1817 <dbl>,
-## #   1818 <dbl>, 1819 <dbl>, 1820 <dbl>, 1821 <dbl>, 1822 <dbl>, 1823 <dbl>,
-## #   1824 <dbl>, 1825 <dbl>, 1826 <dbl>, 1827 <dbl>, 1828 <dbl>, 1829 <dbl>,
-## #   1830 <dbl>, 1831 <dbl>, 1832 <dbl>, 1833 <dbl>, 1834 <dbl>, 1835 <dbl>,
-## #   1836 <dbl>, 1837 <dbl>, 1838 <dbl>, 1839 <dbl>, 1840 <dbl>, 1841 <dbl>,
-## #   1842 <dbl>, 1843 <dbl>, 1844 <dbl>, 1845 <dbl>, 1846 <dbl>, 1847 <dbl>,
-## #   1848 <dbl>, 1849 <dbl>, 1850 <dbl>, 1851 <dbl>, 1852 <dbl>, 1853 <dbl>,
-## #   1854 <dbl>, 1855 <dbl>, 1856 <dbl>, 1857 <dbl>, 1858 <dbl>, 1859 <dbl>,
-## #   1860 <dbl>, 1861 <dbl>, 1862 <dbl>, 1863 <dbl>, 1864 <dbl>, 1865 <dbl>,
-## #   1866 <dbl>, 1867 <dbl>, 1868 <dbl>, 1869 <dbl>, 1870 <dbl>, 1871 <dbl>,
-## #   1872 <dbl>, 1873 <dbl>, 1874 <dbl>, 1875 <dbl>, 1876 <dbl>, 1877 <dbl>,
-## #   1878 <dbl>, 1879 <dbl>, 1880 <dbl>, 1881 <dbl>, 1882 <dbl>, 1883 <dbl>,
-## #   1884 <dbl>, 1885 <dbl>, 1886 <dbl>, 1887 <dbl>, 1888 <dbl>, 1889 <dbl>,
-## #   1890 <dbl>, 1891 <dbl>, 1892 <dbl>, 1893 <dbl>, 1894 <dbl>, 1895 <dbl>,
-## #   1896 <dbl>, 1897 <dbl>, 1898 <dbl>, 1899 <dbl>, 1900 <dbl>, 1901 <dbl>,
-## #   1902 <dbl>, 1903 <dbl>, 1904 <dbl>, 1905 <dbl>, 1906 <dbl>, 1907 <dbl>, ...
-```
-
-```r
-# str(gdp)
-
-gdp_long <- gdp %>% 
-  pivot_longer(cols = -country,
-               names_to = "year",
-               values_to = "gdp") %>%
-  mutate(year = as.numeric(year))
-
-head(gdp)
-```
-
-```
-## # A tibble: 6 x 220
-##   country           `1801`   `1802`   `1803`   `1804`   `1805`   `1806`   `1807`
-##   <chr>              <dbl>    <dbl>    <dbl>    <dbl>    <dbl>    <dbl>    <dbl>
-## 1 Afghanistan     NA       NA       NA       NA       NA       NA       NA      
-## 2 Albania          0.104    0.104    0.104    0.104    0.104    0.104    0.104  
-## 3 Algeria         -0.00247 -0.00247 -0.00247 -0.00247 -0.00247 -0.00247 -0.00247
-## 4 Andorra          0.166    0.166    0.166    0.166    0.166    0.166    0.166  
-## 5 Angola           0.425    0.425    0.425    0.425    0.425    0.425    0.425  
-## 6 Antigua and Ba~ NA       NA       NA       NA       NA       NA       NA      
-## # ... with 212 more variables: 1808 <dbl>, 1809 <dbl>, 1810 <dbl>, 1811 <dbl>,
-## #   1812 <dbl>, 1813 <dbl>, 1814 <dbl>, 1815 <dbl>, 1816 <dbl>, 1817 <dbl>,
-## #   1818 <dbl>, 1819 <dbl>, 1820 <dbl>, 1821 <dbl>, 1822 <dbl>, 1823 <dbl>,
-## #   1824 <dbl>, 1825 <dbl>, 1826 <dbl>, 1827 <dbl>, 1828 <dbl>, 1829 <dbl>,
-## #   1830 <dbl>, 1831 <dbl>, 1832 <dbl>, 1833 <dbl>, 1834 <dbl>, 1835 <dbl>,
-## #   1836 <dbl>, 1837 <dbl>, 1838 <dbl>, 1839 <dbl>, 1840 <dbl>, 1841 <dbl>,
-## #   1842 <dbl>, 1843 <dbl>, 1844 <dbl>, 1845 <dbl>, 1846 <dbl>, 1847 <dbl>,
-## #   1848 <dbl>, 1849 <dbl>, 1850 <dbl>, 1851 <dbl>, 1852 <dbl>, 1853 <dbl>,
-## #   1854 <dbl>, 1855 <dbl>, 1856 <dbl>, 1857 <dbl>, 1858 <dbl>, 1859 <dbl>,
-## #   1860 <dbl>, 1861 <dbl>, 1862 <dbl>, 1863 <dbl>, 1864 <dbl>, 1865 <dbl>,
-## #   1866 <dbl>, 1867 <dbl>, 1868 <dbl>, 1869 <dbl>, 1870 <dbl>, 1871 <dbl>,
-## #   1872 <dbl>, 1873 <dbl>, 1874 <dbl>, 1875 <dbl>, 1876 <dbl>, 1877 <dbl>,
-## #   1878 <dbl>, 1879 <dbl>, 1880 <dbl>, 1881 <dbl>, 1882 <dbl>, 1883 <dbl>,
-## #   1884 <dbl>, 1885 <dbl>, 1886 <dbl>, 1887 <dbl>, 1888 <dbl>, 1889 <dbl>,
-## #   1890 <dbl>, 1891 <dbl>, 1892 <dbl>, 1893 <dbl>, 1894 <dbl>, 1895 <dbl>,
-## #   1896 <dbl>, 1897 <dbl>, 1898 <dbl>, 1899 <dbl>, 1900 <dbl>, 1901 <dbl>,
-## #   1902 <dbl>, 1903 <dbl>, 1904 <dbl>, 1905 <dbl>, 1906 <dbl>, 1907 <dbl>, ...
-```
-
-```r
-# str(gdp)
-
-# glimpse(energy)
-head(energy)
-```
-
-```
-## # A tibble: 6 x 57
-##   country  `1960` `1961` `1962` `1963` `1964` `1965` `1966` `1967` `1968` `1969`
-##   <chr>     <dbl>  <dbl>  <dbl>  <dbl>  <dbl>  <dbl>  <dbl>  <dbl>  <dbl>  <dbl>
-## 1 Albania      NA     NA     NA     NA     NA     NA     NA     NA     NA     NA
-## 2 Algeria      NA     NA     NA     NA     NA     NA     NA     NA     NA     NA
-## 3 Angola       NA     NA     NA     NA     NA     NA     NA     NA     NA     NA
-## 4 Antigua~     NA     NA     NA     NA     NA     NA     NA     NA     NA     NA
-## 5 Argenti~     NA     NA     NA     NA     NA     NA     NA     NA     NA     NA
-## 6 Armenia      NA     NA     NA     NA     NA     NA     NA     NA     NA     NA
-## # ... with 46 more variables: 1970 <dbl>, 1971 <dbl>, 1972 <dbl>, 1973 <dbl>,
-## #   1974 <dbl>, 1975 <dbl>, 1976 <dbl>, 1977 <dbl>, 1978 <dbl>, 1979 <dbl>,
-## #   1980 <dbl>, 1981 <dbl>, 1982 <dbl>, 1983 <dbl>, 1984 <dbl>, 1985 <dbl>,
-## #   1986 <dbl>, 1987 <dbl>, 1988 <dbl>, 1989 <dbl>, 1990 <dbl>, 1991 <dbl>,
-## #   1992 <dbl>, 1993 <dbl>, 1994 <dbl>, 1995 <dbl>, 1996 <dbl>, 1997 <dbl>,
-## #   1998 <dbl>, 1999 <dbl>, 2000 <dbl>, 2001 <dbl>, 2002 <dbl>, 2003 <dbl>,
-## #   2004 <dbl>, 2005 <dbl>, 2006 <dbl>, 2007 <dbl>, 2008 <dbl>, 2009 <dbl>,
-## #   2010 <dbl>, 2011 <dbl>, 2012 <dbl>, 2013 <dbl>, 2014 <dbl>, 2015 <dbl>
-```
-
-```r
-energy_long <- energy %>%
-  pivot_longer(cols = -country,
-               names_to = "year", 
-               values_to = "energy") %>%
-  mutate(year = as.numeric(year))
-head(energy)
-```
-
-```
-## # A tibble: 6 x 57
-##   country  `1960` `1961` `1962` `1963` `1964` `1965` `1966` `1967` `1968` `1969`
-##   <chr>     <dbl>  <dbl>  <dbl>  <dbl>  <dbl>  <dbl>  <dbl>  <dbl>  <dbl>  <dbl>
-## 1 Albania      NA     NA     NA     NA     NA     NA     NA     NA     NA     NA
-## 2 Algeria      NA     NA     NA     NA     NA     NA     NA     NA     NA     NA
-## 3 Angola       NA     NA     NA     NA     NA     NA     NA     NA     NA     NA
-## 4 Antigua~     NA     NA     NA     NA     NA     NA     NA     NA     NA     NA
-## 5 Argenti~     NA     NA     NA     NA     NA     NA     NA     NA     NA     NA
-## 6 Armenia      NA     NA     NA     NA     NA     NA     NA     NA     NA     NA
-## # ... with 46 more variables: 1970 <dbl>, 1971 <dbl>, 1972 <dbl>, 1973 <dbl>,
-## #   1974 <dbl>, 1975 <dbl>, 1976 <dbl>, 1977 <dbl>, 1978 <dbl>, 1979 <dbl>,
-## #   1980 <dbl>, 1981 <dbl>, 1982 <dbl>, 1983 <dbl>, 1984 <dbl>, 1985 <dbl>,
-## #   1986 <dbl>, 1987 <dbl>, 1988 <dbl>, 1989 <dbl>, 1990 <dbl>, 1991 <dbl>,
-## #   1992 <dbl>, 1993 <dbl>, 1994 <dbl>, 1995 <dbl>, 1996 <dbl>, 1997 <dbl>,
-## #   1998 <dbl>, 1999 <dbl>, 2000 <dbl>, 2001 <dbl>, 2002 <dbl>, 2003 <dbl>,
-## #   2004 <dbl>, 2005 <dbl>, 2006 <dbl>, 2007 <dbl>, 2008 <dbl>, 2009 <dbl>,
-## #   2010 <dbl>, 2011 <dbl>, 2012 <dbl>, 2013 <dbl>, 2014 <dbl>, 2015 <dbl>
-```
-
-## Selecting columns based on text
-
-
-```r
-names(disasters)
-```
-
-```
-##  [1] "Year"                      "Drought Count"            
-##  [3] "Drought Cost"              "Drought Lower 75"         
-##  [5] "Drought Upper 75"          "Drought Lower 90"         
-##  [7] "Drought Upper 90"          "Drought Lower 95"         
-##  [9] "Drought Upper 95"          "Flooding Count"           
-## [11] "Flooding Cost"             "Flooding Lower 75"        
-## [13] "Flooding Upper 75"         "Flooding Lower 90"        
-## [15] "Flooding Upper 90"         "Flooding Lower 95"        
-## [17] "Flooding Upper 95"         "Freeze Count"             
-## [19] "Freeze Cost"               "Freeze Lower 75"          
-## [21] "Freeze Upper 75"           "Freeze Lower 90"          
-## [23] "Freeze Upper 90"           "Freeze Lower 95"          
-## [25] "Freeze Upper 95"           "Severe Storm Count"       
-## [27] "Severe Storm Cost"         "Severe Storm Lower 75"    
-## [29] "Severe Storm Upper 75"     "Severe Storm Lower 90"    
-## [31] "Severe Storm Upper 90"     "Severe Storm Lower 95"    
-## [33] "Severe Storm Upper 95"     "Tropical Cyclone Count"   
-## [35] "Tropical Cyclone Cost"     "Tropical Cyclone Lower 75"
-## [37] "Tropical Cyclone Upper 75" "Tropical Cyclone Lower 90"
-## [39] "Tropical Cyclone Upper 90" "Tropical Cyclone Lower 95"
-## [41] "Tropical Cyclone Upper 95" "Wildfire Count"           
-## [43] "Wildfire Cost"             "Wildfire Lower 75"        
-## [45] "Wildfire Upper 75"         "Wildfire Lower 90"        
-## [47] "Wildfire Upper 90"         "Wildfire Lower 95"        
-## [49] "Wildfire Upper 95"         "Winter Storm Count"       
-## [51] "Winter Storm Cost"         "Winter Storm Lower 75"    
-## [53] "Winter Storm Upper 75"     "Winter Storm Lower 90"    
-## [55] "Winter Storm Upper 90"     "Winter Storm Lower 95"    
-## [57] "Winter Storm Upper 95"
-```
-
-```r
-# Overwrite the disasters dataset to only contain Year and columns with the text 'count' in them
-
-disasters %<>% select(Year, contains("Count"))
-names(disasters)
-```
-
-```
-## [1] "Year"                   "Drought Count"          "Flooding Count"        
-## [4] "Freeze Count"           "Severe Storm Count"     "Tropical Cyclone Count"
-## [7] "Wildfire Count"         "Winter Storm Count"
-```
-
-```r
-disasters %<>% rename(year = Year,
-                      drought = `Drought Count`,
-                      flooding = `Flooding Count`,
-                      freeze = `Freeze Count`,
-                      severe_storm = `Severe Storm Count`,
-                      tropical_cyclone = `Tropical Cyclone Count`,
-                      wildfire_count = `Wildfire Count`,
-                      winter_storm = `Winter Storm Count`)
-names(disasters)
-```
-
-```
-## [1] "year"             "drought"          "flooding"         "freeze"          
-## [5] "severe_storm"     "tropical_cyclone" "wildfire_count"   "winter_storm"
-```
-
-## Creating a total count of disasters 
-
-
-```r
-# create a new variable that contains the total number of disasters per year
-disasters %<>%
- mutate(total_disasters = rowSums(select(., -year)))
-```
-
-## Select only the total_disasters column and create a new variable country to indicate this data is from USA
-
-
-```r
-disasters %<>%
-  mutate(country = "United States") %>%
-  select(year, country, total_disasters) 
-
-disasters %>%
-  slice_head(n = 5)
-```
-
-```
-## # A tibble: 5 x 3
-##    year country       total_disasters
-##   <dbl> <chr>                   <dbl>
-## 1  1980 United States               3
-## 2  1981 United States               2
-## 3  1982 United States               3
-## 4  1983 United States               5
-## 5  1984 United States               2
-```
-
-## String manipulation
-
-We will now clean the temperature data
-
-
-```r
-# glimpse(temp)
-
-# If we look at the 'Date' variable of the temperature data, we see that it is 6 digits and somehow all end with 12 
-# let's first check whether the length of each data entry is indeed 6
-#str_length(temp$Date)
-
-# let's now check whether the last 2 characters of each Date entry is indeed 12
-#str_ends(temp$Date, pattern = "12")
-
-# Now we will overwrite the Date variable to only get the first 4 digits
-#temp %<>% mutate(Date = str_sub(Date, start = 1, end = 4))
-#head(temp)
-```
-
-## Tidy temperature dataset
-
-We will (a) drop the Anomaly variable, (b) rename Date to year, (c) make year numeric) (c) rename Value to temp, (d) add a country variable 
-
-
-```r
-# temp %<>% 
-#   rename(temp = Value) %>%
-#   mutate(year = as.numeric(Date),
-#          country = "United States") %>%
-#   select(year, country, temp)
-# 
-# head(temp)
-```
-
-## Joining data - full join
-
-
-```r
-data <- carbon_long %>%
-  full_join(gdp_long, by = c("country", "year")) %>%
-  full_join(energy_long, by = c("country", "year")) 
-
-tail(data)
-```
-
-```
-## # A tibble: 6 x 5
-##   country   year emissions   gdp energy
-##   <chr>    <dbl>     <dbl> <dbl>  <dbl>
-## 1 Zambia    2019        NA  2.6      NA
-## 2 Zimbabwe  2015        NA  3.33     NA
-## 3 Zimbabwe  2016        NA  3.67     NA
-## 4 Zimbabwe  2017        NA  2.98     NA
-## 5 Zimbabwe  2018        NA  2.87     NA
-## 6 Zimbabwe  2019        NA  2.87     NA
-```
-
-```r
-# 
-# data_long <- data %>%
-#   pivot_longer(cols = c(-country, -year),
-#                names_to = "indicator", 
-#                values_to = "value")
-# 
-# head(data_long)
-```
-
-### Some more cleaning
-
-
-```r
-data %<>% mutate(region = case_when(country == "United States" ~ "United States",
-                                    country != "United States" ~ "Rest of the World")) %>%
-  drop_na()
-```
-
-## Data exploration
-
-
-```r
-data %>% filter(country == "United States") %>%
-  summarize(first(emissions), first(year))
-```
-
-## Joining data - left join
-
-
-```r
-# usa <- carbon_long %>%
-#   filter(country == "United States") %>%
-#   left_join(gdp_long, by = c("country", "year")) %>%
-#   left_join(energy_long, by = c("country", "year")) %>%
-#   full_join(temp, by = c("country", "year")) %>%
-#   full_join(disasters, by = c("country", "year"))
-```
 
 # Data Visualization
 
@@ -1437,7 +1266,7 @@ data %>% filter(country == "United States") %>%
 plot(data$year, data$emissions)
 ```
 
-![](intro-to-r_files/figure-html/unnamed-chunk-18-1.png)<!-- -->
+![](intro-to-r_files/figure-html/unnamed-chunk-3-1.png)<!-- -->
 
 ## ggpplot
 
@@ -1450,7 +1279,11 @@ data %>% group_by(year) %>%
   geom_line(size = 1.5)
 ```
 
-![](intro-to-r_files/figure-html/unnamed-chunk-19-1.png)<!-- -->
+```
+## Warning: Removed 270 row(s) containing missing values (geom_path).
+```
+
+![](intro-to-r_files/figure-html/unnamed-chunk-4-1.png)<!-- -->
 
 
 ```r
@@ -1464,7 +1297,11 @@ data %>% group_by(year) %>%
   theme_classic()
 ```
 
-![](intro-to-r_files/figure-html/unnamed-chunk-20-1.png)<!-- -->
+```
+## Warning: Removed 270 row(s) containing missing values (geom_path).
+```
+
+![](intro-to-r_files/figure-html/unnamed-chunk-5-1.png)<!-- -->
 
 Are certain countries contribute more emissions than others? 
 
@@ -1475,7 +1312,11 @@ data %>%
   theme_classic()
 ```
 
-![](intro-to-r_files/figure-html/unnamed-chunk-21-1.png)<!-- -->
+```
+## Warning: Removed 35157 row(s) containing missing values (geom_path).
+```
+
+![](intro-to-r_files/figure-html/unnamed-chunk-6-1.png)<!-- -->
 
 Change the transparency of the lines due to overlapping lines
 
@@ -1487,41 +1328,41 @@ data %>%
   theme_classic()
 ```
 
-![](intro-to-r_files/figure-html/unnamed-chunk-22-1.png)<!-- -->
+```
+## Warning: Removed 35157 row(s) containing missing values (geom_path).
+```
+
+![](intro-to-r_files/figure-html/unnamed-chunk-7-1.png)<!-- -->
 
 Compare USA to the rest of the world
 
 ```r
-data %>% 
-  ggplot(aes(x = year, y = emissions, group = country, color = region)) +
-  geom_line(size = 1) +
-  scale_colour_manual(values = c("grey", "black")) +
-  theme_classic()
+# data %>% 
+#   ggplot(aes(x = year, y = emissions, group = country, color = region)) +
+#   geom_line(size = 1) +
+#   scale_colour_manual(values = c("grey", "black")) +
+#   theme_classic()
 ```
-
-![](intro-to-r_files/figure-html/unnamed-chunk-23-1.png)<!-- -->
 
 ## Visualize carbon emissions over the years for the top 10 countries with the highest emissions in 2014
 
 
 ```r
 # Create a new object to identify the 10 countries with highest emissions in 2014
-top10countries <- data %>%
-  filter(year == 2014) %>%
-  mutate(rank = dense_rank(desc(emissions))) %>%
-  filter(rank <= 10) %>%
-  arrange(rank)
-
-# filter original data for countries in top10
-top10data <- data %>%
-  filter(country %in% pull(top10countries, country)) 
-
-ggplot(top10data, aes(x = year, y = emissions, color = country)) + 
-  geom_line() + 
-  theme_classic()
+# top10countries <- data %>%
+#   filter(year == 2014) %>%
+#   mutate(rank = dense_rank(desc(emissions))) %>%
+#   filter(rank <= 10) %>%
+#   arrange(rank)
+# 
+# # filter original data for countries in top10
+# top10data <- data %>%
+#   filter(country %in% pull(top10countries, country)) 
+# 
+# ggplot(top10data, aes(x = year, y = emissions, color = country)) + 
+#   geom_line() + 
+#   theme_classic()
 ```
-
-![](intro-to-r_files/figure-html/unnamed-chunk-24-1.png)<!-- -->
 
 # Data Analysis
 

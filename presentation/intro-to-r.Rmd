@@ -541,250 +541,145 @@ politics <- politics %>%
   
 ## Reshaping Data
 
-In the `politics` data, each row contains the values of variables associated with each country and year. This dataframe is said to be in the "long" data format.
+### Pivoting wider
+
+In the `politics` data, each row contains the values of variables associated with each country and year. This dataframe is said to be in the "long" data format. 
 
 If you look at the `carbon` and `gdp` dataframes, you will notice that they are in the wide format. Each row is a country, and the columns are the different years we have observations for. 
 
-Most R functions expect your data to be in the "long" data format because it is more machine readable and is closer to the formatting of databases. 
+Most R functions expect your data to be in the "long" data format because it is more machine readable and is closer to the formatting of databases. In the `tidyr` package, we can use the `pivot_longer()` and `pivot_wider` columns to reshape our data. 
 
-In the `tidyr` package, we can use the `pivot_longer()` and `pivot_wider` columns to reshape our data. 
+```{r carbon_sample}
+carbon %>% 
+  slice_sample(n = 3)
+```
+
+  * *Note*: Something else you might notice is that the column names start with a number. If you create your own dataframe in the future, I strongly recommend that you DO NOT use numbers as the first character of your variable name. To refer to the last column of the `carbon` data, for example, whose variable/column name is 2014, you will have to wrap the column name with a backtick. 
+
+
+```{r backticks}
+head(carbon$`2014`)
+```
 
 ### Pivoting longer
 
 The `pivot_longer()` function takes four main arguments:
-  * the data
+  * the (wide) data
   * *cols* are the names of the columns we use to fill the new values variable (or to drop)
-  * the *names_from* column variable whose values will become the new column names
-  * the *values_from* column variable whose values will fill the new column variables
+  * the *names_to* column variable we wish to create the *cols* provided
+  * the *values_to* column variable we wish to create and fill with values associated with the *cols* provided
   
 Let's now reshape the `carbon` data longer to create new columns for `year` and `emissions`. 
 
-```{r}
+To create a long format of the `carbon` data, we use the following
+  * the (wide) data - `carbon` 
+  * *cols* include all columns except the country variable, so we can just put `-country`. Usually you can put the column names of interest as in `cols = col1:col5` or `cols = c(col1, col2, col5)`, but because our variable names start as numbers, it is not allowing us to use this format. 
+  * the *names_to* column variable will be a character string of the name the column names these columns (1762:2014) will collapse into - `"year"`
+  * the *values_to* column variable will be a character string of the name of the column the values of the collapsed columns will be inserted into - `"emissions"`
+  
+```{r pivot_long_carbon}
 carbon_long <- carbon %>%
   pivot_longer(cols = -country,
-               names_to = "Year",
-               values_to = "Emissions")
+               names_to = "year",
+               values_to = "emissions")
+```
 
+Now we can take a look at the long data format. 
+
+```{r carbon_long_look}
 head(carbon_long)
 
-set.seed(2021)
+# To always get the same random sample, use set.seed(number)
+# set.seed(2021)
 carbon_long %>% 
   slice_sample(n = 10)
 
-```
-
-## Renaming columns
-
-An alternative to using the assignment operator is `%<>%`.
-
-```{r}
-carbon_long %<>%
-	rename(year = Year,
-		      emissions = Emissions)
-
-set.seed(2021)
-carbon_long %>% 
-  slice_sample(n = 10)
-```
-
-
-## Changing Data types 
-
-```{r}
-#glimpse(carbon_long)
 str(carbon_long)
+```
+Notice that the `year` variable is of the `character (chr)` type, so we want to recode that variable to numeric. To create or modify columns as a function of existing columns, we use the `mutate(new_var_name = function_of_existing_vars)` function. To change the data type to numeric, we use the `as.numeric()` function.  
 
-carbon_long %<>% mutate(year = as.numeric(year))
-
-str(carbon_long)
-
+```{r to_numeric}
+carbon_long <- carbon_long %>%
+  mutate(year = as.numeric(year))
 ```
 
-## Creating new variables
+The `gdp` data is in the same format, so let's do reshape that one too.
 
-```{r}
-# create a new column that contains the average of that country's emissions 
-sample <- carbon_long %>%
-  group_by(country) %>%
-  mutate(avg_emissions = mean(emissions, na.rm = T))
-
-set.seed(2021)
-sample %>% 
-  slice_sample(n = 10)
-```
-
-## Filtering observations
-
-```{r}
-canada <- carbon_long %>% filter(country == "Canada") %>%
-  drop_na(emissions)
-```
-
-## Tidying the gdp and energy data
-
-Practice tidying the gdp data
-```{r}
-# glimpse(gdp)
-head(gdp)
-# str(gdp)
-
-gdp_long <- gdp %>% 
-  pivot_longer(cols = -country,
+```{r pivot_long_gdp}
+gdp_long <- gdp %>%
+  pivot_longer(cols = -country, 
                names_to = "year",
                values_to = "gdp") %>%
   mutate(year = as.numeric(year))
-
-head(gdp)
-# str(gdp)
-
-# glimpse(energy)
-head(energy)
-
-energy_long <- energy %>%
-  pivot_longer(cols = -country,
-               names_to = "year", 
-               values_to = "energy") %>%
-  mutate(year = as.numeric(year))
-head(energy)
+head(gdp_long)
 ```
 
-## Selecting columns based on text
 
-```{r}
-names(disasters)
+### Pivoting wider
 
-# Overwrite the disasters dataset to only contain Year and columns with the text 'count' in them
+In the case that we want to reshape the `carbon_long` back to its original "wide" data format, we can use the `pivot_wider()` function. This function takes three main arguments. 
 
-disasters %<>% select(Year, contains("Count"))
-names(disasters)
+  1. the data
+  2. the *names_from* column whose values will become new column names
+  3. the *values_from* column whose values will fill the new column variables. 
+  
+```{r pivot_carbon_back}
+carbon_wide <- carbon_long %>%
+  pivot_wider(names_from = "year",
+              values_from = "emissions")
 
-disasters %<>% rename(year = Year,
-                      drought = `Drought Count`,
-                      flooding = `Flooding Count`,
-                      freeze = `Freeze Count`,
-                      severe_storm = `Severe Storm Count`,
-                      tropical_cyclone = `Tropical Cyclone Count`,
-                      wildfire_count = `Wildfire Count`,
-                      winter_storm = `Winter Storm Count`)
-names(disasters)
+head(carbon)
 ```
 
-## Creating a total count of disasters 
+## Joining our data together
 
-```{r}
-# create a new variable that contains the total number of disasters per year
-disasters %<>%
- mutate(total_disasters = rowSums(select(., -year)))
+Now we will join the three dataframes together. Like before, we will use the `full_join` function. 
+
+```{r join_all}
+
+politics$country <- politics$country_name
+
+data <- politics %>%
+  full_join(carbon_long, by = c("country", "year")) %>%
+  full_join(gdp_long, by = c("country", "year"))
+
+head(data)
 ```
-
-## Select only the total_disasters column and create a new variable country to indicate this data is from USA
-
-```{r}
-disasters %<>%
-  mutate(country = "United States") %>%
-  select(year, country, total_disasters) 
-
-disasters %>%
-  slice_head(n = 5)
-```
-
 
 ## Summary Statistics
 
-We might want to take 
+To take a look at some summary statistics, we can use the built-in R functions.
+  * `mean(joindata$emissions, na.rm = T)` - mean of `emissions`
+  * `table(joindata$country)` to know the number of observations per country
+  * `summary(joindata)` - summary statistics of the columns
+  * `summary(joindata$emissions)` - summary statistics of the `emissions` variable
+  
+We can also look at some summary statistics by region. We use the `group_by()` function to group the observations. We use the `summarize()` function to calculate summary statistics. In the code below, `avg_emissions` is the column name I will assign to the mean emissions. 
+
+```{r group_by}
+data %>% group_by(region) %>%
+  summarize(avg_emissions = mean(emissions, na.rm = T))
+```
+
+I can request for multiple summary statistics in one command too.
+
+```{r group_bymore}
+data %>% group_by(region) %>%
+  summarize(n = n(),
+            avg_emissions = mean(emissions, na.rm = T),
+            median_emissions = median(emissions, na.rm = T))
+```
 
 The `modelsummary` package allows you to produce very nice summary statistic plots for tidy data. You can read more [here](https://vincentarelbundock.github.io/modelsummary/articles/datasummary.html). 
 
 ```{r exploredata_cont, warning = FALSE, message = FALSE}
-politics %>% group_by(region) %>% summarize(mean(v2x_libdem, na.rm = T))
-
 datasummary_skim(politics)
 ```
 
 We need to add an argument `type = categorical` to see summary statistics for non-numeric data.
+
 ```{r exploredata_cat, warning = FALSE, message = FALSE}
-datasummary_skim(politics, type = "categorical")
-```
-
-
-  ** Note to self: Need to add in base R commands to prep for Dr. Vercammen's code
-  
-  
-## String manipulation
-
-We will now clean the temperature data
-
-```{r}
-# glimpse(temp)
-
-# If we look at the 'Date' variable of the temperature data, we see that it is 6 digits and somehow all end with 12 
-# let's first check whether the length of each data entry is indeed 6
-#str_length(temp$Date)
-
-# let's now check whether the last 2 characters of each Date entry is indeed 12
-#str_ends(temp$Date, pattern = "12")
-
-# Now we will overwrite the Date variable to only get the first 4 digits
-#temp %<>% mutate(Date = str_sub(Date, start = 1, end = 4))
-#head(temp)
-```
-
-## Tidy temperature dataset
-
-We will (a) drop the Anomaly variable, (b) rename Date to year, (c) make year numeric) (c) rename Value to temp, (d) add a country variable 
-
-```{r}
-# temp %<>% 
-#   rename(temp = Value) %>%
-#   mutate(year = as.numeric(Date),
-#          country = "United States") %>%
-#   select(year, country, temp)
-# 
-# head(temp)
-```
-
-## Joining data - full join
-
-```{r}
-data <- carbon_long %>%
-  full_join(gdp_long, by = c("country", "year")) %>%
-  full_join(energy_long, by = c("country", "year")) 
-
-tail(data)
-# 
-# data_long <- data %>%
-#   pivot_longer(cols = c(-country, -year),
-#                names_to = "indicator", 
-#                values_to = "value")
-# 
-# head(data_long)
-```
-
-### Some more cleaning
-
-```{r}
-data %<>% mutate(region = case_when(country == "United States" ~ "United States",
-                                    country != "United States" ~ "Rest of the World")) %>%
-  drop_na()
-
-```
-
-## Data exploration
-
-```{r, results = 'hide', echo = 'false'}
-data %>% filter(country == "United States") %>%
-  summarize(first(emissions), first(year))
-```
-
-## Joining data - left join
-
-```{r}
-# usa <- carbon_long %>%
-#   filter(country == "United States") %>%
-#   left_join(gdp_long, by = c("country", "year")) %>%
-#   left_join(energy_long, by = c("country", "year")) %>%
-#   full_join(temp, by = c("country", "year")) %>%
-#   full_join(disasters, by = c("country", "year"))
+datasummary_skim(data, type = "categorical")
 ```
 
 # Data Visualization
@@ -834,30 +729,30 @@ data %>%
 
 Compare USA to the rest of the world
 ```{r}
-data %>% 
-  ggplot(aes(x = year, y = emissions, group = country, color = region)) +
-  geom_line(size = 1) +
-  scale_colour_manual(values = c("grey", "black")) +
-  theme_classic()
+# data %>% 
+#   ggplot(aes(x = year, y = emissions, group = country, color = region)) +
+#   geom_line(size = 1) +
+#   scale_colour_manual(values = c("grey", "black")) +
+#   theme_classic()
 ```
 
 ## Visualize carbon emissions over the years for the top 10 countries with the highest emissions in 2014
 
 ```{r}
 # Create a new object to identify the 10 countries with highest emissions in 2014
-top10countries <- data %>%
-  filter(year == 2014) %>%
-  mutate(rank = dense_rank(desc(emissions))) %>%
-  filter(rank <= 10) %>%
-  arrange(rank)
-
-# filter original data for countries in top10
-top10data <- data %>%
-  filter(country %in% pull(top10countries, country)) 
-
-ggplot(top10data, aes(x = year, y = emissions, color = country)) + 
-  geom_line() + 
-  theme_classic()
+# top10countries <- data %>%
+#   filter(year == 2014) %>%
+#   mutate(rank = dense_rank(desc(emissions))) %>%
+#   filter(rank <= 10) %>%
+#   arrange(rank)
+# 
+# # filter original data for countries in top10
+# top10data <- data %>%
+#   filter(country %in% pull(top10countries, country)) 
+# 
+# ggplot(top10data, aes(x = year, y = emissions, color = country)) + 
+#   geom_line() + 
+#   theme_classic()
 ```
 
 # Data Analysis
