@@ -629,7 +629,7 @@ Another way that spreadsheets are stored is in the Excel xlsx format. Sometimes,
 
 
 ```r
-gdp <- read_xlsx(here("data", "gdp_per_capita_yearly_growth.xlsx"))
+gdp <- read_xlsx(here("data", "gdp_pc.xlsx"))
 ```
 
 Sometimes there are multiple sheets in one spreadsheet. We use the argument `sheet = insert_sheet_number` to indicate the sheet we are importing. 
@@ -765,7 +765,7 @@ Alternatively, we can also drop the columns we do not want by adding a `-` symbo
 
 
 ```r
-politics %>% select(-country_text_id, -v2psnatpar_ord)
+politics %>% select(-v2psnatpar_ord)
 ```
 
 The output from the two codes above is a dataframe of all the rows of the columns we selected But the original data `politics` remains unchanged. To "save" this new dataframe, we have to use the assignment operator `<-`. In the code below, we will just overwrite the original `politics` data.
@@ -812,8 +812,6 @@ politics <- politics %>%
   
 ## Reshaping Data
 
-### Pivoting wider
-
 In the `politics` data, each row contains the values of variables associated with each country and year. This dataframe is said to be in the "long" data format. 
 
 If you look at the `carbon` and `gdp` dataframes, you will notice that they are in the wide format. Each row is a country, and the columns are the different years we have observations for. 
@@ -830,9 +828,9 @@ carbon %>%
 ## # A tibble: 3 x 265
 ##   country  `1751` `1752` `1753` `1754` `1755` `1756` `1757` `1758` `1759` `1760`
 ##   <chr>     <dbl>  <dbl>  <dbl>  <dbl>  <dbl>  <dbl>  <dbl>  <dbl>  <dbl>  <dbl>
-## 1 Djibouti     NA     NA     NA     NA     NA     NA     NA     NA     NA     NA
-## 2 Qatar        NA     NA     NA     NA     NA     NA     NA     NA     NA     NA
-## 3 Peru         NA     NA     NA     NA     NA     NA     NA     NA     NA     NA
+## 1 Palau        NA     NA     NA     NA     NA     NA     NA     NA     NA     NA
+## 2 Kiribati     NA     NA     NA     NA     NA     NA     NA     NA     NA     NA
+## 3 Cuba         NA     NA     NA     NA     NA     NA     NA     NA     NA     NA
 ## # ... with 254 more variables: 1761 <dbl>, 1762 <dbl>, 1763 <dbl>, 1764 <dbl>,
 ## #   1765 <dbl>, 1766 <dbl>, 1767 <dbl>, 1768 <dbl>, 1769 <dbl>, 1770 <dbl>,
 ## #   1771 <dbl>, 1772 <dbl>, 1773 <dbl>, 1774 <dbl>, 1775 <dbl>, 1776 <dbl>,
@@ -916,18 +914,18 @@ carbon_long %>%
 
 ```
 ## # A tibble: 10 x 3
-##    country             year  emissions
-##    <chr>               <chr>     <dbl>
-##  1 Belize              1928         NA
-##  2 Austria             1856       4240
-##  3 Liberia             1924         NA
-##  4 Chile               1970      24700
-##  5 Ecuador             1817         NA
-##  6 Belize              1759         NA
-##  7 Equatorial Guinea   1869         NA
-##  8 Antigua and Barbuda 1881         NA
-##  9 Palau               1805         NA
-## 10 Suriname            1992       2070
+##    country         year  emissions
+##    <chr>           <chr>     <dbl>
+##  1 Lebanon         2013      22600
+##  2 Cuba            1966      15200
+##  3 India           1782         NA
+##  4 Kyrgyz Republic 1943       1260
+##  5 Namibia         1792         NA
+##  6 Tajikistan      2001       2290
+##  7 Andorra         1906         NA
+##  8 Qatar           1778         NA
+##  9 Bolivia         1894         NA
+## 10 Tunisia         1994      15900
 ```
 
 ```r
@@ -956,20 +954,28 @@ gdp_long <- gdp %>%
   pivot_longer(cols = -country, 
                names_to = "year",
                values_to = "gdp") %>%
-  mutate(year = as.numeric(year))
+  mutate(year = as.numeric(year),
+         gdp = as.numeric(gdp))
+```
+
+```
+## Warning in mask$eval_all_mutate(quo): NAs introduced by coercion
+```
+
+```r
 head(gdp_long)
 ```
 
 ```
 ## # A tibble: 6 x 3
-##   country      year   gdp
-##   <chr>       <dbl> <dbl>
-## 1 Afghanistan  1801    NA
-## 2 Afghanistan  1802    NA
-## 3 Afghanistan  1803    NA
-## 4 Afghanistan  1804    NA
-## 5 Afghanistan  1805    NA
-## 6 Afghanistan  1806    NA
+##   country  year   gdp
+##   <chr>   <dbl> <dbl>
+## 1 Aruba    1959    NA
+## 2 Aruba    1960    NA
+## 3 Aruba    1961    NA
+## 4 Aruba    1962    NA
+## 5 Aruba    1963    NA
+## 6 Aruba    1964    NA
 ```
 
 
@@ -1021,33 +1027,35 @@ head(carbon)
 
 ## Joining our data together
 
-Now we will join the three dataframes together. Like before, we will use the `full_join` function. 
+Now we will join the three data frames together. I want to keep all observations in the `carbon` data, and only add in the `politics` and `gdp` data. So, this time, I will do a `left_join()`.
 
 
 ```r
-data <- politics %>%
-  full_join(carbon_long, by = c("country", "year")) %>%
-  full_join(gdp_long, by = c("country", "year"))
+data <- carbon_long %>%
+  left_join(gdp_long, by = c("country", "year")) %>%
+  left_join(politics, by = c("country", "year")) %>% 
+  filter(!is.na(emissions) & !is.na(region) & !is.na(gdp)) %>%
+  filter(year > 1991 & year < 2014)
 
 head(data)
 ```
 
 ```
-##       country year democracy              regime                region
-## 1 Afghanistan 2007     0.227 Electoral Autocracy Eastern Mediterranean
-## 2 Afghanistan 2014     0.224 Electoral Autocracy Eastern Mediterranean
-## 3 Afghanistan 2012     0.224 Electoral Autocracy Eastern Mediterranean
-## 4 Afghanistan 2003     0.096    Closed Autocracy Eastern Mediterranean
-## 5 Afghanistan 2015     0.227 Electoral Autocracy Eastern Mediterranean
-## 6 Afghanistan 2009     0.226 Electoral Autocracy Eastern Mediterranean
-##   emissions    gdp
-## 1      2270 10.800
-## 2      9810  0.837
-## 3     10800 11.200
-## 4      1200  8.040
-## 5        NA  2.110
-## 6      6770 17.300
+## # A tibble: 6 x 7
+##   country      year emissions   gdp democracy regime           region           
+##   <chr>       <dbl>     <dbl> <dbl>     <dbl> <fct>            <chr>            
+## 1 Afghanistan  2001       818   330     0.03  Closed Autocracy Eastern Mediterr~
+## 2 Afghanistan  2002      1070   343     0.095 Closed Autocracy Eastern Mediterr~
+## 3 Afghanistan  2003      1200   333     0.096 Closed Autocracy Eastern Mediterr~
+## 4 Afghanistan  2004       950   357     0.105 Electoral Autoc~ Eastern Mediterr~
+## 5 Afghanistan  2005      1330   365     0.13  Electoral Autoc~ Eastern Mediterr~
+## 6 Afghanistan  2006      1650   406     0.225 Electoral Autoc~ Eastern Mediterr~
 ```
+
+## Filling in missing values
+
+We note that the `democracy`, `regime`, and `region` variables are missing for some years. It is possible that the level of demo
+
 
 ## Creating new variables
 
@@ -1064,6 +1072,7 @@ The `{base}` function to create a new column would be to run the following comma
 # Summary Statistics
 
 To take a look at some summary statistics, we can use the built-in R functions.
+
   * `mean(joindata$emissions, na.rm = T)` - mean of `emissions`
   * `table(joindata$country)` to know the number of observations per country
   * `summary(joindata)` - summary statistics of the columns
@@ -1076,21 +1085,20 @@ We can also look at some summary statistics by region. We use the `group_by()` f
 data %>% group_by(region) %>%
   summarize(n = n(), 
             avg_emissions = mean(emissions, na.rm = T), 
-            median_gdp = median(gdp, na.rm = T))
+            median_gdp = median(gdp, na.rm = T)) %>%
+  arrange(desc(median_gdp), desc(avg_emissions)) # arrange to order, desc() for descending
 ```
 
 ```
-## # A tibble: 8 x 4
-##   region                      n avg_emissions median_gdp
-##   <chr>                   <int>         <dbl>      <dbl>
-## 1 ""                        413        75649.      3.99 
-## 2 "Africa"                 1228        17118.      2.37 
-## 3 "Americas"                754        75294.      2.17 
-## 4 "Eastern Mediterranean"   609        80377.      1.94 
-## 5 "Europe"                 1414       145051.      2.55 
-## 6 "South-East Asia"         261       217400.      4.2  
-## 7 "Western Pacific"         464       538052.      2.98 
-## 8  <NA>                   47603        70314.      0.582
+## # A tibble: 6 x 4
+##   region                    n avg_emissions median_gdp
+##   <chr>                 <int>         <dbl>      <dbl>
+## 1 Europe                 1017       146336.     14400 
+## 2 Americas                594       272359.      5520 
+## 3 Eastern Mediterranean   373        92714.      4490 
+## 4 Western Pacific         330       522811.      3050 
+## 5 South-East Asia         208       194746.      1280 
+## 6 Africa                  928        16454.       886.
 ```
 
 We use the `summarize_all()` to apply a particular function to all variables. For example, if we put `mean, na.rm = T` inside the parentheses, we will get the mean of all variables, and it will return `NA` for categorical variables. 
@@ -1103,17 +1111,15 @@ data %>%
 ```
 
 ```
-## # A tibble: 8 x 8
-##   region                  country  year democracy regime emissions   gdp gdp_sq
-##   <chr>                     <dbl> <dbl>     <dbl>  <dbl>     <dbl> <dbl>  <dbl>
-## 1 ""                           NA 2006.     0.325     NA    75649.  3.04   56.5
-## 2 "Africa"                     NA 2006.     0.305     NA    17118.  2.33   72.7
-## 3 "Americas"                   NA 2006      0.500     NA    75294.  2.05   16.6
-## 4 "Eastern Mediterranean"      NA 2006      0.141     NA    80377.  2.29   71.0
-## 5 "Europe"                     NA 2006.     0.573     NA   145051.  2.12   41.8
-## 6 "South-East Asia"            NA 2006      0.286     NA   217400.  3.76   28.3
-## 7 "Western Pacific"            NA 2006      0.409     NA   538052.  3.02   24.7
-## 8  <NA>                        NA 1874.   NaN         NA    70314.  1.17   21.4
+## # A tibble: 6 x 8
+##   region              country  year emissions    gdp democracy regime     gdp_sq
+##   <chr>                 <dbl> <dbl>     <dbl>  <dbl>     <dbl>  <dbl>      <dbl>
+## 1 Africa                   NA 2003.    16454.  2141.     0.296     NA     1.37e7
+## 2 Americas                 NA 2002.   272359.  8972.     0.513     NA     1.96e8
+## 3 Eastern Mediterran~      NA 2003.    92714. 13530.     0.144     NA     5.09e8
+## 4 Europe                   NA 2003.   146336. 23271.     0.592     NA     1.05e9
+## 5 South-East Asia          NA 2003.   194746.  2056.     0.293     NA     7.70e6
+## 6 Western Pacific          NA 2002.   522811. 13545.     0.429     NA     4.70e8
 ```
 
 If we only want to summarize certain variables only, we can use the `summarize_at()` function. 
@@ -1126,17 +1132,15 @@ data %>%
 ```
 
 ```
-## # A tibble: 8 x 3
-##   region                  democracy emissions
-##   <chr>                       <dbl>     <dbl>
-## 1 ""                          0.325    75649.
-## 2 "Africa"                    0.305    17118.
-## 3 "Americas"                  0.500    75294.
-## 4 "Eastern Mediterranean"     0.141    80377.
-## 5 "Europe"                    0.573   145051.
-## 6 "South-East Asia"           0.286   217400.
-## 7 "Western Pacific"           0.409   538052.
-## 8  <NA>                     NaN        70314.
+## # A tibble: 6 x 3
+##   region                democracy emissions
+##   <chr>                     <dbl>     <dbl>
+## 1 Africa                    0.296    16454.
+## 2 Americas                  0.513   272359.
+## 3 Eastern Mediterranean     0.144    92714.
+## 4 Europe                    0.592   146336.
+## 5 South-East Asia           0.293   194746.
+## 6 Western Pacific           0.429   522811.
 ```
 
 If we only want to summarize numeric variables only, we can use the `summarize_if()` function.
@@ -1149,17 +1153,15 @@ data %>%
 ```
 
 ```
-## # A tibble: 8 x 6
-##   region                   year democracy emissions   gdp gdp_sq
-##   <chr>                   <dbl>     <dbl>     <dbl> <dbl>  <dbl>
-## 1 ""                      2006.     0.325    75649.  3.04   56.5
-## 2 "Africa"                2006.     0.305    17118.  2.33   72.7
-## 3 "Americas"              2006      0.500    75294.  2.05   16.6
-## 4 "Eastern Mediterranean" 2006      0.141    80377.  2.29   71.0
-## 5 "Europe"                2006.     0.573   145051.  2.12   41.8
-## 6 "South-East Asia"       2006      0.286   217400.  3.76   28.3
-## 7 "Western Pacific"       2006      0.409   538052.  3.02   24.7
-## 8  <NA>                   1874.   NaN        70314.  1.17   21.4
+## # A tibble: 6 x 6
+##   region                 year emissions    gdp democracy      gdp_sq
+##   <chr>                 <dbl>     <dbl>  <dbl>     <dbl>       <dbl>
+## 1 Africa                2003.    16454.  2141.     0.296   13716843.
+## 2 Americas              2002.   272359.  8972.     0.513  195516561.
+## 3 Eastern Mediterranean 2003.    92714. 13530.     0.144  509018698.
+## 4 Europe                2003.   146336. 23271.     0.592 1052742339.
+## 5 South-East Asia       2003.   194746.  2056.     0.293    7703759.
+## 6 Western Pacific       2002.   522811. 13545.     0.429  470312091.
 ```
 
 The `modelsummary` package allows you to produce very nice summary statistic plots for tidy data. You can read more [here](https://vincentarelbundock.github.io/modelsummary/articles/datasummary.html). 
@@ -1188,7 +1190,7 @@ datasummary_skim(politics)
    <td style="text-align:left;"> year </td>
    <td style="text-align:right;"> 29 </td>
    <td style="text-align:right;"> 0 </td>
-   <td style="text-align:right;"> 2006.1 </td>
+   <td style="text-align:right;"> 2006.0 </td>
    <td style="text-align:right;"> 8.4 </td>
    <td style="text-align:right;"> 1992.0 </td>
    <td style="text-align:right;"> 2006.0 </td>
@@ -1202,7 +1204,7 @@ datasummary_skim(politics)
       stroke-miterlimit: 10.00;
     }
   </style></defs><rect width="100%" height="100%" style="stroke: none; fill: none;"></rect><defs><clipPath id="cpMC4wMHw0OC4wMHwwLjAwfDEyLjAw"><rect x="0.00" y="0.00" width="48.00" height="12.00"></rect></clipPath></defs><g clip-path="url(#cpMC4wMHw0OC4wMHwwLjAwfDEyLjAw)">
-</g><defs><clipPath id="cpMC4wMHw0OC4wMHwyLjg4fDEyLjAw"><rect x="0.00" y="2.88" width="48.00" height="9.12"></rect></clipPath></defs><g clip-path="url(#cpMC4wMHw0OC4wMHwyLjg4fDEyLjAw)"><rect x="1.78" y="3.22" width="3.17" height="8.44" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="4.95" y="6.02" width="3.17" height="5.64" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="8.13" y="6.01" width="3.17" height="5.66" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="11.30" y="5.96" width="3.17" height="5.70" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="14.48" y="5.96" width="3.17" height="5.70" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="17.65" y="5.96" width="3.17" height="5.70" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="20.83" y="5.96" width="3.17" height="5.70" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="24.00" y="5.93" width="3.17" height="5.74" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="27.17" y="5.93" width="3.17" height="5.74" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="30.35" y="5.89" width="3.17" height="5.77" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="33.52" y="5.89" width="3.17" height="5.77" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="36.70" y="5.89" width="3.17" height="5.77" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="39.87" y="5.89" width="3.17" height="5.77" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="43.05" y="5.89" width="3.17" height="5.77" style="stroke-width: 0.38; fill: #000000;"></rect></g></svg>
+</g><defs><clipPath id="cpMC4wMHw0OC4wMHwyLjg4fDEyLjAw"><rect x="0.00" y="2.88" width="48.00" height="9.12"></rect></clipPath></defs><g clip-path="url(#cpMC4wMHw0OC4wMHwyLjg4fDEyLjAw)"><rect x="1.78" y="3.22" width="3.17" height="8.44" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="4.95" y="6.02" width="3.17" height="5.64" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="8.13" y="6.01" width="3.17" height="5.66" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="11.30" y="5.96" width="3.17" height="5.71" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="14.48" y="5.96" width="3.17" height="5.71" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="17.65" y="5.96" width="3.17" height="5.71" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="20.83" y="5.96" width="3.17" height="5.71" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="24.00" y="5.96" width="3.17" height="5.71" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="27.17" y="5.96" width="3.17" height="5.71" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="30.35" y="5.92" width="3.17" height="5.74" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="33.52" y="5.92" width="3.17" height="5.74" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="36.70" y="5.92" width="3.17" height="5.74" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="39.87" y="5.92" width="3.17" height="5.74" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="43.05" y="5.92" width="3.17" height="5.74" style="stroke-width: 0.38; fill: #000000;"></rect></g></svg>
 </td>
   </tr>
   <tr>
@@ -1212,7 +1214,7 @@ datasummary_skim(politics)
    <td style="text-align:right;"> 0.4 </td>
    <td style="text-align:right;"> 0.3 </td>
    <td style="text-align:right;"> 0.0 </td>
-   <td style="text-align:right;"> 0.3 </td>
+   <td style="text-align:right;"> 0.4 </td>
    <td style="text-align:right;"> 0.9 </td>
    <td style="text-align:right;">  <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" class="svglite" width="48.00pt" height="12.00pt" viewBox="0 0 48.00 12.00"><defs><style type="text/css">
     .svglite line, .svglite polyline, .svglite polygon, .svglite path, .svglite rect, .svglite circle {
@@ -1223,7 +1225,7 @@ datasummary_skim(politics)
       stroke-miterlimit: 10.00;
     }
   </style></defs><rect width="100%" height="100%" style="stroke: none; fill: none;"></rect><defs><clipPath id="cpMC4wMHw0OC4wMHwwLjAwfDEyLjAw"><rect x="0.00" y="0.00" width="48.00" height="12.00"></rect></clipPath></defs><g clip-path="url(#cpMC4wMHw0OC4wMHwwLjAwfDEyLjAw)">
-</g><defs><clipPath id="cpMC4wMHw0OC4wMHwyLjg4fDEyLjAw"><rect x="0.00" y="2.88" width="48.00" height="9.12"></rect></clipPath></defs><g clip-path="url(#cpMC4wMHw0OC4wMHwyLjg4fDEyLjAw)"><rect x="1.53" y="7.19" width="2.51" height="4.47" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="4.03" y="3.86" width="2.51" height="7.80" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="6.54" y="3.22" width="2.51" height="8.44" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="9.04" y="5.79" width="2.51" height="5.87" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="11.55" y="6.25" width="2.51" height="5.41" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="14.05" y="6.47" width="2.51" height="5.20" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="16.56" y="6.58" width="2.51" height="5.08" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="19.06" y="7.26" width="2.51" height="4.40" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="21.57" y="6.48" width="2.51" height="5.18" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="24.08" y="8.83" width="2.51" height="2.84" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="26.58" y="8.30" width="2.51" height="3.36" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="29.09" y="9.20" width="2.51" height="2.46" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="31.59" y="8.07" width="2.51" height="3.60" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="34.10" y="8.41" width="2.51" height="3.25" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="36.60" y="9.73" width="2.51" height="1.93" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="39.11" y="6.37" width="2.51" height="5.29" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="41.61" y="4.16" width="2.51" height="7.50" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="44.12" y="9.25" width="2.51" height="2.41" style="stroke-width: 0.38; fill: #000000;"></rect></g></svg>
+</g><defs><clipPath id="cpMC4wMHw0OC4wMHwyLjg4fDEyLjAw"><rect x="0.00" y="2.88" width="48.00" height="9.12"></rect></clipPath></defs><g clip-path="url(#cpMC4wMHw0OC4wMHwyLjg4fDEyLjAw)"><rect x="1.53" y="7.14" width="2.51" height="4.52" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="4.03" y="3.92" width="2.51" height="7.74" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="6.54" y="3.22" width="2.51" height="8.44" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="9.04" y="5.88" width="2.51" height="5.78" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="11.55" y="6.18" width="2.51" height="5.48" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="14.05" y="6.43" width="2.51" height="5.23" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="16.56" y="6.62" width="2.51" height="5.04" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="19.06" y="7.21" width="2.51" height="4.46" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="21.57" y="6.40" width="2.51" height="5.26" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="24.08" y="8.78" width="2.51" height="2.88" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="26.58" y="8.24" width="2.51" height="3.42" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="29.09" y="9.17" width="2.51" height="2.50" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="31.59" y="8.01" width="2.51" height="3.65" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="34.10" y="8.36" width="2.51" height="3.30" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="36.60" y="9.70" width="2.51" height="1.96" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="39.11" y="6.28" width="2.51" height="5.38" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="41.61" y="4.04" width="2.51" height="7.62" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="44.12" y="9.22" width="2.51" height="2.45" style="stroke-width: 0.38; fill: #000000;"></rect></g></svg>
 </td>
   </tr>
 </tbody>
@@ -1249,83 +1251,217 @@ datasummary_skim(data, type = "categorical")
   <tr>
    <td style="text-align:left;"> regime </td>
    <td style="text-align:left;"> Closed Autocracy </td>
-   <td style="text-align:right;"> 857 </td>
-   <td style="text-align:right;"> 1.6 </td>
+   <td style="text-align:right;"> 490 </td>
+   <td style="text-align:right;"> 14.2 </td>
   </tr>
   <tr>
    <td style="text-align:left;">  </td>
    <td style="text-align:left;"> Electoral Autocracy </td>
-   <td style="text-align:right;"> 1693 </td>
-   <td style="text-align:right;"> 3.2 </td>
+   <td style="text-align:right;"> 1097 </td>
+   <td style="text-align:right;"> 31.8 </td>
   </tr>
   <tr>
    <td style="text-align:left;">  </td>
    <td style="text-align:left;"> Electoral Democracy </td>
-   <td style="text-align:right;"> 1505 </td>
-   <td style="text-align:right;"> 2.9 </td>
+   <td style="text-align:right;"> 1056 </td>
+   <td style="text-align:right;"> 30.6 </td>
   </tr>
   <tr>
    <td style="text-align:left;">  </td>
    <td style="text-align:left;"> Liberal Democracy </td>
-   <td style="text-align:right;"> 1086 </td>
-   <td style="text-align:right;"> 2.1 </td>
+   <td style="text-align:right;"> 805 </td>
+   <td style="text-align:right;"> 23.3 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> region </td>
-   <td style="text-align:left;">  </td>
-   <td style="text-align:right;"> 413 </td>
-   <td style="text-align:right;"> 0.8 </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;">  </td>
    <td style="text-align:left;"> Africa </td>
-   <td style="text-align:right;"> 1228 </td>
-   <td style="text-align:right;"> 2.3 </td>
+   <td style="text-align:right;"> 928 </td>
+   <td style="text-align:right;"> 26.9 </td>
   </tr>
   <tr>
    <td style="text-align:left;">  </td>
    <td style="text-align:left;"> Americas </td>
-   <td style="text-align:right;"> 754 </td>
-   <td style="text-align:right;"> 1.4 </td>
+   <td style="text-align:right;"> 594 </td>
+   <td style="text-align:right;"> 17.2 </td>
   </tr>
   <tr>
    <td style="text-align:left;">  </td>
    <td style="text-align:left;"> Eastern Mediterranean </td>
-   <td style="text-align:right;"> 609 </td>
-   <td style="text-align:right;"> 1.2 </td>
+   <td style="text-align:right;"> 373 </td>
+   <td style="text-align:right;"> 10.8 </td>
   </tr>
   <tr>
    <td style="text-align:left;">  </td>
    <td style="text-align:left;"> Europe </td>
-   <td style="text-align:right;"> 1414 </td>
-   <td style="text-align:right;"> 2.7 </td>
+   <td style="text-align:right;"> 1017 </td>
+   <td style="text-align:right;"> 29.5 </td>
   </tr>
   <tr>
    <td style="text-align:left;">  </td>
    <td style="text-align:left;"> South-East Asia </td>
-   <td style="text-align:right;"> 261 </td>
-   <td style="text-align:right;"> 0.5 </td>
+   <td style="text-align:right;"> 208 </td>
+   <td style="text-align:right;"> 6.0 </td>
   </tr>
   <tr>
    <td style="text-align:left;">  </td>
    <td style="text-align:left;"> Western Pacific </td>
-   <td style="text-align:right;"> 464 </td>
-   <td style="text-align:right;"> 0.9 </td>
+   <td style="text-align:right;"> 330 </td>
+   <td style="text-align:right;"> 9.6 </td>
   </tr>
 </tbody>
 </table>
 
 # Data Visualization
 
-## Basic R
+There are functions in `{base}` R that will allows you to plot data. But we will look at the `ggplot2` package. Read this [tutorial/book](https://ggplot2-book.org/introduction.html) for an in-depth walk through. 
+
+## ggpplot2
+
+According to Hadley Wickham, "`ggplot2` is based on the Grammar of Graphics that allows you to compose graphs by combining independent components...The grammar tells us that a graphic maps the data to the aesthetic attributes (color, shape, size) of geometric objects (points, lines, bars)."
+
+In Wickham's tutorial, he indicated that there are 3 main components for every ggplot2 plot.
+
+  1. *data*
+  2. A set of *aesthetic* mappings
+  3. At least one layer which describes how to render each observations. Layers are usually created with a *geom* function. Common layers we will use are the following:
+    a. `geom_line()` for trend lines, time series, etc. 
+    b. `geom_point()` for scatter plots 
+    c. `geom_boxplot()` for boxplots 
+    d. `geom_bar()` and `geom_col()` for bar charts 
+    e. `geom_histogram()` for histograms 
+  
+## Scatterplots   
+
+Here is a simple example. The code below produces a scatterplot defined by:
+  1. Data: `data` (I should have named the object differently!)
+  2. Aesthetic mapping: gdp mapped to the x position, emissions to the y position
+  3. Layer: points 
+
 
 ```r
-plot(data$year, data$emissions)
+options(scipen=99999)  # turn off scientific notation like 1e+06
+
+ggplot(data, aes(x = gdp, y = emissions)) + 
+  geom_point()
 ```
 
-![](intro-to-r_files/figure-html/unnamed-chunk-3-1.png)<!-- -->
+![](intro-to-r_files/figure-html/first_plot-1.png)<!-- -->
 
-## ggpplot
+If we want to do a log transformation, we can just add `log()` before the variable name. 
+
+
+```r
+ggplot(data, aes(x = log(gdp), y = log(emissions))) + 
+  geom_point()
+```
+
+![](intro-to-r_files/figure-html/first_plot_log-1.png)<!-- -->
+  
+Note the syntax. The data and aesthetic mapping are inside the `ggplot()` function, and the layer is adding with a `+`.  Since most maps plots a variable to x and y, the developers have indicated that the the first two arguments of `aes()` will be mapped to x and y. The code below will generate the same plot as above. 
+
+
+```r
+ggplot(data, aes(log(gdp), log(emissions))) + 
+  geom_point()
+```
+
+![](intro-to-r_files/figure-html/firstplot_noxy-1.png)<!-- -->
+
+We can add plot another variable to the plot by using other aesthetics such as color, shape, and size. The code below changes the color of the points based on country's region. 
+
+
+```r
+ggplot(data, aes(log(gdp), log(emissions), color = region)) + 
+  geom_point()
+```
+
+![](intro-to-r_files/figure-html/firstplot_region-1.png)<!-- -->
+
+We can also use the pipe operator. This method can be useful if you want to make changes to the data (i.e. filter or mutate) before plotting. For example, let's calculate the average emissions and average GDP per country, and plot its relationship. This will be our *base* graph, so I am assigning it to the object `p`. We will call it again later and add more layers to it. Now, whenever you type `p` in your console, you will see the plot in the plots tab on the lower left panel of RStudio.  
+
+
+```r
+p <- data %>% 
+  group_by(country) %>%
+  mutate(avg_emissions = mean(emissions, na.rm = T),
+         avg_gdp = mean(gdp, na.rm = T)) %>%
+  ggplot(aes(log(avg_gdp), log(avg_emissions))) +
+  geom_point()
+
+p
+```
+
+![](intro-to-r_files/figure-html/avgplot-1.png)<!-- -->
+
+We build our plots iteratively. Now, let's add a title and label the axes of `p`. Since we always want to label our graph well, let's add these layers to `p`. 
+
+
+```r
+p <- p + labs(title = "Relationship between Emissions and GDP",
+              y = "Log GDP per capita", x = "Log CO2 per capita")
+p
+```
+
+![](intro-to-r_files/figure-html/firstplot_labels-1.png)<!-- -->
+
+We can add a fitted line using `geom_smooth()` function. 
+
+
+```r
+p + geom_smooth()
+```
+
+```
+## `geom_smooth()` using method = 'gam' and formula 'y ~ s(x, bs = "cs")'
+```
+
+![](intro-to-r_files/figure-html/firstplot_fittedline-1.png)<!-- -->
+
+If we want to add a fitted line based on a linear model, we have to specify `geom_smooth(method = "lm")`. 
+
+
+```r
+p + geom_smooth(method = "lm")
+```
+
+```
+## `geom_smooth()` using formula 'y ~ x'
+```
+
+![](intro-to-r_files/figure-html/firstplot_fittedline_lm-1.png)<!-- -->
+
+If we want to change the background, there are multiple themes available in the [package](https://ggplot2-book.org/polishing.html), and of course you can customize your own too. 
+
+
+```r
+p + theme_classic()
+```
+
+![](intro-to-r_files/figure-html/firstplot_theme-1.png)<!-- -->
+
+## Boxplot 
+
+
+```r
+ggplot()
+```
+
+![](intro-to-r_files/figure-html/boxplot-1.png)<!-- -->
+
+We can also use the pipe operator. This method can be useful if you want to make changes to the data (i.e. filter) and then plot. For example, we can filter and plot Canada's GDP over time. 
+
+
+```r
+data %>% 
+  filter(country == "Canada") %>%
+  ggplot(aes(year, gdp)) + 
+  geom_line()
+```
+
+![](intro-to-r_files/figure-html/canadaonly-1.png)<!-- -->
+
+
+
 
 How has carbon emissions changed over time? 
 
@@ -1336,11 +1472,7 @@ data %>% group_by(year) %>%
   geom_line(size = 1.5)
 ```
 
-```
-## Warning: Removed 270 row(s) containing missing values (geom_path).
-```
-
-![](intro-to-r_files/figure-html/unnamed-chunk-4-1.png)<!-- -->
+![](intro-to-r_files/figure-html/unnamed-chunk-3-1.png)<!-- -->
 
 
 ```r
@@ -1354,11 +1486,9 @@ data %>% group_by(year) %>%
   theme_classic()
 ```
 
-```
-## Warning: Removed 270 row(s) containing missing values (geom_path).
-```
+![](intro-to-r_files/figure-html/unnamed-chunk-4-1.png)<!-- -->
 
-![](intro-to-r_files/figure-html/unnamed-chunk-5-1.png)<!-- -->
+
 
 Are certain countries contribute more emissions than others? 
 
@@ -1369,11 +1499,7 @@ data %>%
   theme_classic()
 ```
 
-```
-## Warning: Removed 35157 row(s) containing missing values (geom_path).
-```
-
-![](intro-to-r_files/figure-html/unnamed-chunk-6-1.png)<!-- -->
+![](intro-to-r_files/figure-html/unnamed-chunk-5-1.png)<!-- -->
 
 Change the transparency of the lines due to overlapping lines
 
@@ -1385,11 +1511,7 @@ data %>%
   theme_classic()
 ```
 
-```
-## Warning: Removed 35157 row(s) containing missing values (geom_path).
-```
-
-![](intro-to-r_files/figure-html/unnamed-chunk-7-1.png)<!-- -->
+![](intro-to-r_files/figure-html/unnamed-chunk-6-1.png)<!-- -->
 
 Compare USA to the rest of the world
 

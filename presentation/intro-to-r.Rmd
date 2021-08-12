@@ -750,7 +750,7 @@ ggplot(data, aes(x = gdp, y = emissions)) +
 
 If we want to do a log transformation, we can just add `log()` before the variable name. 
 
-```{r first_plot, warning = FALSE}
+```{r first_plot_log, warning = FALSE}
 ggplot(data, aes(x = log(gdp), y = log(emissions))) + 
   geom_point()
 ```
@@ -798,7 +798,7 @@ p + geom_smooth()
 
 If we want to add a fitted line based on a linear model, we have to specify `geom_smooth(method = "lm")`. 
 
-```{r firstplot_fittedline}
+```{r firstplot_fittedline_lm}
 p + geom_smooth(method = "lm")
 ```
 
@@ -816,7 +816,7 @@ ggplot()
 
 We can also use the pipe operator. This method can be useful if you want to make changes to the data (i.e. filter) and then plot. For example, we can filter and plot Canada's GDP over time. 
 
-```{r first_plot, warning = FALSE}
+```{r canadaonly, warning = FALSE}
 data %>% 
   filter(country == "Canada") %>%
   ggplot(aes(year, gdp)) + 
