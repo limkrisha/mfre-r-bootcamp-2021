@@ -370,7 +370,7 @@ carbon <- read_csv(here("data", "yearly_co2_emissions.csv"))
 Another way that spreadsheets are stored is in the Excel xlsx format. Sometimes, there are multiple sheets in one Excel file. The `read_xlsx()` function of the `{readxl}` package allows us to read files in xlsx format. 
 
 ```{r loaddata3_nosheet, message = FALSE, warning = FALSE}
-gdp <- read_xlsx(here("data", "gdp_per_capita_yearly_growth.xlsx"))
+gdp <- read_xlsx(here("data", "gdp_pc.xlsx"))
 ```
 
 Sometimes there are multiple sheets in one spreadsheet. We use the argument `sheet = insert_sheet_number` to indicate the sheet we are importing. 
@@ -498,7 +498,7 @@ politics %>% select(country_name, year, v2x_libdem, v2x_regime, region)
 Alternatively, we can also drop the columns we do not want by adding a `-` symbol before the column name/s. 
 
 ```{r select_drop, eval = FALSE}
-politics %>% select(-country_text_id, -v2psnatpar_ord)
+politics %>% select(-v2psnatpar_ord)
 ```
 
 The output from the two codes above is a dataframe of all the rows of the columns we selected But the original data `politics` remains unchanged. To "save" this new dataframe, we have to use the assignment operator `<-`. In the code below, we will just overwrite the original `politics` data.
@@ -608,7 +608,8 @@ gdp_long <- gdp %>%
   pivot_longer(cols = -country, 
                names_to = "year",
                values_to = "gdp") %>%
-  mutate(year = as.numeric(year))
+  mutate(year = as.numeric(year),
+         gdp = as.numeric(gdp))
 head(gdp_long)
 ```
 
@@ -637,7 +638,7 @@ Now we will join the three data frames together. I want to keep all observations
 data <- carbon_long %>%
   left_join(gdp_long, by = c("country", "year")) %>%
   left_join(politics, by = c("country", "year")) %>% 
-  filter(!is.na(emissions) & !is.na(region)) %>%
+  filter(!is.na(emissions) & !is.na(region) & !is.na(gdp)) %>%
   filter(year > 1991 & year < 2014)
 
 head(data)
@@ -674,7 +675,8 @@ We can also look at some summary statistics by region. We use the `group_by()` f
 data %>% group_by(region) %>%
   summarize(n = n(), 
             avg_emissions = mean(emissions, na.rm = T), 
-            median_gdp = median(gdp, na.rm = T))
+            median_gdp = median(gdp, na.rm = T)) %>%
+  arrange(desc(median_gdp), desc(avg_emissions)) # arrange to order, desc() for descending
 ```
 
 We use the `summarize_all()` to apply a particular function to all variables. For example, if we put `mean, na.rm = T` inside the parentheses, we will get the mean of all variables, and it will return `NA` for categorical variables. 
@@ -725,24 +727,103 @@ In Wickham's tutorial, he indicated that there are 3 main components for every g
 
   1. *data*
   2. A set of *aesthetic* mappings
-  3. At least one layer which describes how to render each observations. Layers are usually created with a *geom* function
+  3. At least one layer which describes how to render each observations. Layers are usually created with a *geom* function. Common layers we will use are the following:
+    a. `geom_line()` for trend lines, time series, etc. 
+    b. `geom_point()` for scatter plots 
+    c. `geom_boxplot()` for boxplots 
+    d. `geom_bar()` and `geom_col()` for bar charts 
+    e. `geom_histogram()` for histograms 
   
+## Scatterplots   
+
 Here is a simple example. The code below produces a scatterplot defined by:
   1. Data: `data` (I should have named the object differently!)
   2. Aesthetic mapping: gdp mapped to the x position, emissions to the y position
   3. Layer: points 
 
 ```{r first_plot}
+options(scipen=99999)  # turn off scientific notation like 1e+06
+
 ggplot(data, aes(x = gdp, y = emissions)) + 
   geom_point()
 ```
 
-Note the syntax. The data and aesthetic mapping are inside the `ggplot()` function, and the layer is adding with a `+`.  Since most maps plots a variable to x and y, the developers have indicated that the the first two arguments of `aes()` will be mapped to x and y. The code below will generate the same plot as above. 
+If we want to do a log transformation, we can just add `log()` before the variable name. 
 
-```{r first_plot}
-ggplot(data, aes(gdp, emissions)) + 
+```{r first_plot, warning = FALSE}
+ggplot(data, aes(x = log(gdp), y = log(emissions))) + 
   geom_point()
 ```
+  
+Note the syntax. The data and aesthetic mapping are inside the `ggplot()` function, and the layer is adding with a `+`.  Since most maps plots a variable to x and y, the developers have indicated that the the first two arguments of `aes()` will be mapped to x and y. The code below will generate the same plot as above. 
+
+```{r firstplot_noxy, warning = FALSE}
+ggplot(data, aes(log(gdp), log(emissions))) + 
+  geom_point()
+```
+
+We can add plot another variable to the plot by using other aesthetics such as color, shape, and size. The code below changes the color of the points based on country's region. 
+
+```{r firstplot_region, warning = FALSE}
+ggplot(data, aes(log(gdp), log(emissions), color = region)) + 
+  geom_point()
+```
+
+We can also use the pipe operator. This method can be useful if you want to make changes to the data (i.e. filter or mutate) before plotting. For example, let's calculate the average emissions and average GDP per country, and plot its relationship. This will be our *base* graph, so I am assigning it to the object `p`. We will call it again later and add more layers to it. Now, whenever you type `p` in your console, you will see the plot in the plots tab on the lower left panel of RStudio.  
+
+```{r avgplot}
+p <- data %>% 
+  group_by(country) %>%
+  mutate(avg_emissions = mean(emissions, na.rm = T),
+         avg_gdp = mean(gdp, na.rm = T)) %>%
+  ggplot(aes(log(avg_gdp), log(avg_emissions))) +
+  geom_point()
+
+p
+```
+
+We build our plots iteratively. Now, let's add a title and label the axes of `p`. Since we always want to label our graph well, let's add these layers to `p`. 
+
+```{r firstplot_labels}
+p <- p + labs(title = "Relationship between Emissions and GDP",
+              y = "Log GDP per capita", x = "Log CO2 per capita")
+p
+```
+
+We can add a fitted line using `geom_smooth()` function. 
+
+```{r firstplot_fittedline}
+p + geom_smooth()
+```
+
+If we want to add a fitted line based on a linear model, we have to specify `geom_smooth(method = "lm")`. 
+
+```{r firstplot_fittedline}
+p + geom_smooth(method = "lm")
+```
+
+If we want to change the background, there are multiple themes available in the [package](https://ggplot2-book.org/polishing.html), and of course you can customize your own too. 
+
+```{r firstplot_theme}
+p + theme_classic()
+```
+
+## Boxplot 
+
+```{r boxplot}
+ggplot()
+```
+
+We can also use the pipe operator. This method can be useful if you want to make changes to the data (i.e. filter) and then plot. For example, we can filter and plot Canada's GDP over time. 
+
+```{r first_plot, warning = FALSE}
+data %>% 
+  filter(country == "Canada") %>%
+  ggplot(aes(year, gdp)) + 
+  geom_line()
+```
+
+
 
 
 How has carbon emissions changed over time? 
@@ -763,6 +844,8 @@ data %>% group_by(year) %>%
        y = "Emissions (metric tonnes)") +
   theme_classic()
 ```
+
+
 
 Are certain countries contribute more emissions than others? 
 ```{r}
