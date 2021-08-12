@@ -487,7 +487,7 @@ There are many packages you can use to wrangle data. In this case study, I will 
 
 You will see that I will use the pipe operator `%>%` frequently. The operator allows us to chain functions together. It takes the function specified to the left of the operator and allows you to pass the intermediate output to the function specified to the right of the operator. You can read more about it [here](https://www.datacamp.com/community/tutorials/pipe-r-tutorial).
 
-## Selecting columns/variables and filtering rows 
+## Selecting and Filtering
 
 In the `politics` data frame, let's say I only want to keep the `country_name`, `year`, `v2x_libdem`, `v2x_regime`, and `region` variables. We will use the `select(col1, col2, ...)` function. 
 
@@ -530,7 +530,7 @@ politics <- politics %>%
 
 Let's say we want to rename the `country_name` column to `country`, `v2x_libdem` to `democracy`, and `v2x_regime` to regime. The function is `rename(new_name = old_name)`.
 
-```{r rename, eval = FALSE}
+```{r rename}
 politics <- politics %>% 
   rename(country = country_name,
          democracy = v2x_libdem,
@@ -540,8 +540,6 @@ politics <- politics %>%
   * In Dr. Vercammen's code, you will see that he renames variables using the `names()` and `which()` functions -- `names(politics)[which(names(politics) == "country")] = "country_name"`. 
   
 ## Reshaping Data
-
-### Pivoting wider
 
 In the `politics` data, each row contains the values of variables associated with each country and year. This dataframe is said to be in the "long" data format. 
 
@@ -633,41 +631,74 @@ head(carbon)
 
 ## Joining our data together
 
-Now we will join the three dataframes together. Like before, we will use the `full_join` function. 
+Now we will join the three data frames together. I want to keep all observations in the `carbon` data, and only add in the `politics` and `gdp` data. So, this time, I will do a `left_join()`.
 
 ```{r join_all}
-
-politics$country <- politics$country_name
-
-data <- politics %>%
-  full_join(carbon_long, by = c("country", "year")) %>%
-  full_join(gdp_long, by = c("country", "year"))
+data <- carbon_long %>%
+  left_join(gdp_long, by = c("country", "year")) %>%
+  left_join(politics, by = c("country", "year")) %>% 
+  filter(!is.na(emissions) & !is.na(region)) %>%
+  filter(year > 1991 & year < 2014)
 
 head(data)
 ```
 
-## Summary Statistics
+## Filling in missing values
+
+We note that the `democracy`, `regime`, and `region` variables are missing for some years. It is possible that the level of demo
+
+
+## Creating new variables
+
+We can create a new variable from existing variables using the `mutate()` function. For example, we want to create a new column that is the squared of GDP called `gdp_sq`.
+
+```{r gdp_sq}
+data <- data %>% 
+  mutate(gdp_sq = gdp * gdp)
+```
+
+The `{base}` function to create a new column would be to run the following command: `data$gdp_sq <- data$gdp * data$gdp`
+
+# Summary Statistics
 
 To take a look at some summary statistics, we can use the built-in R functions.
+
   * `mean(joindata$emissions, na.rm = T)` - mean of `emissions`
   * `table(joindata$country)` to know the number of observations per country
   * `summary(joindata)` - summary statistics of the columns
   * `summary(joindata$emissions)` - summary statistics of the `emissions` variable
   
-We can also look at some summary statistics by region. We use the `group_by()` function to group the observations. We use the `summarize()` function to calculate summary statistics. In the code below, `avg_emissions` is the column name I will assign to the mean emissions. 
+We can also look at some summary statistics by region. We use the `group_by()` function to group the observations. To calculate multiple summary statistics, we can use the `summarize()` function.
 
-```{r group_by}
+```{r summarize_new_col}
 data %>% group_by(region) %>%
-  summarize(avg_emissions = mean(emissions, na.rm = T))
+  summarize(n = n(), 
+            avg_emissions = mean(emissions, na.rm = T), 
+            median_gdp = median(gdp, na.rm = T))
 ```
 
-I can request for multiple summary statistics in one command too.
+We use the `summarize_all()` to apply a particular function to all variables. For example, if we put `mean, na.rm = T` inside the parentheses, we will get the mean of all variables, and it will return `NA` for categorical variables. 
 
-```{r group_bymore}
-data %>% group_by(region) %>%
-  summarize(n = n(),
-            avg_emissions = mean(emissions, na.rm = T),
-            median_emissions = median(emissions, na.rm = T))
+```{r summarize_all, warning = FALSE, message = FALSE}
+data %>% 
+  group_by(region) %>%
+  summarize_all(mean, na.rm = T)
+```
+
+If we only want to summarize certain variables only, we can use the `summarize_at()` function. 
+
+```{r summarize_at}
+data %>%
+  group_by(region) %>%
+  summarize_at(vars(democracy, emissions), mean, na.rm = T)
+```
+
+If we only want to summarize numeric variables only, we can use the `summarize_if()` function.
+
+```{r summarize_if}
+data %>% 
+  group_by(region) %>%
+  summarize_if(is.numeric, mean, na.rm = T)
 ```
 
 The `modelsummary` package allows you to produce very nice summary statistic plots for tidy data. You can read more [here](https://vincentarelbundock.github.io/modelsummary/articles/datasummary.html). 
@@ -684,12 +715,35 @@ datasummary_skim(data, type = "categorical")
 
 # Data Visualization
 
-## Basic R
-```{r}
-plot(data$year, data$emissions)
+There are functions in `{base}` R that will allows you to plot data. But we will look at the `ggplot2` package. Read this [tutorial/book](https://ggplot2-book.org/introduction.html) for an in-depth walk through. 
+
+## ggpplot2
+
+According to Hadley Wickham, "`ggplot2` is based on the Grammar of Graphics that allows you to compose graphs by combining independent components...The grammar tells us that a graphic maps the data to the aesthetic attributes (color, shape, size) of geometric objects (points, lines, bars)."
+
+In Wickham's tutorial, he indicated that there are 3 main components for every ggplot2 plot.
+
+  1. *data*
+  2. A set of *aesthetic* mappings
+  3. At least one layer which describes how to render each observations. Layers are usually created with a *geom* function
+  
+Here is a simple example. The code below produces a scatterplot defined by:
+  1. Data: `data` (I should have named the object differently!)
+  2. Aesthetic mapping: gdp mapped to the x position, emissions to the y position
+  3. Layer: points 
+
+```{r first_plot}
+ggplot(data, aes(x = gdp, y = emissions)) + 
+  geom_point()
 ```
 
-## ggpplot
+Note the syntax. The data and aesthetic mapping are inside the `ggplot()` function, and the layer is adding with a `+`.  Since most maps plots a variable to x and y, the developers have indicated that the the first two arguments of `aes()` will be mapped to x and y. The code below will generate the same plot as above. 
+
+```{r first_plot}
+ggplot(data, aes(gdp, emissions)) + 
+  geom_point()
+```
+
 
 How has carbon emissions changed over time? 
 ```{r}

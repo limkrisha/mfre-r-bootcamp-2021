@@ -752,7 +752,7 @@ There are many packages you can use to wrangle data. In this case study, I will 
 
 You will see that I will use the pipe operator `%>%` frequently. The operator allows us to chain functions together. It takes the function specified to the left of the operator and allows you to pass the intermediate output to the function specified to the right of the operator. You can read more about it [here](https://www.datacamp.com/community/tutorials/pipe-r-tutorial).
 
-## Selecting columns/variables and filtering rows 
+## Selecting and Filtering
 
 In the `politics` data frame, let's say I only want to keep the `country_name`, `year`, `v2x_libdem`, `v2x_regime`, and `region` variables. We will use the `select(col1, col2, ...)` function. 
 
@@ -830,9 +830,9 @@ carbon %>%
 ## # A tibble: 3 x 265
 ##   country  `1751` `1752` `1753` `1754` `1755` `1756` `1757` `1758` `1759` `1760`
 ##   <chr>     <dbl>  <dbl>  <dbl>  <dbl>  <dbl>  <dbl>  <dbl>  <dbl>  <dbl>  <dbl>
-## 1 Maurita~     NA     NA     NA     NA     NA     NA     NA     NA     NA     NA
-## 2 Cambodia     NA     NA     NA     NA     NA     NA     NA     NA     NA     NA
-## 3 Singapo~     NA     NA     NA     NA     NA     NA     NA     NA     NA     NA
+## 1 Djibouti     NA     NA     NA     NA     NA     NA     NA     NA     NA     NA
+## 2 Qatar        NA     NA     NA     NA     NA     NA     NA     NA     NA     NA
+## 3 Peru         NA     NA     NA     NA     NA     NA     NA     NA     NA     NA
 ## # ... with 254 more variables: 1761 <dbl>, 1762 <dbl>, 1763 <dbl>, 1764 <dbl>,
 ## #   1765 <dbl>, 1766 <dbl>, 1767 <dbl>, 1768 <dbl>, 1769 <dbl>, 1770 <dbl>,
 ## #   1771 <dbl>, 1772 <dbl>, 1773 <dbl>, 1774 <dbl>, 1775 <dbl>, 1776 <dbl>,
@@ -918,16 +918,16 @@ carbon_long %>%
 ## # A tibble: 10 x 3
 ##    country             year  emissions
 ##    <chr>               <chr>     <dbl>
-##  1 Denmark             1760      NA   
-##  2 Iceland             1972    1490   
-##  3 Sweden              1779      NA   
-##  4 Belgium             2004  111000   
-##  5 South Korea         1959   11200   
-##  6 Romania             1861       7.33
-##  7 Germany             1805    1040   
-##  8 St. Kitts and Nevis 1836      NA   
-##  9 North Korea         2002   69200   
-## 10 Argentina           1866      NA
+##  1 Belize              1928         NA
+##  2 Austria             1856       4240
+##  3 Liberia             1924         NA
+##  4 Chile               1970      24700
+##  5 Ecuador             1817         NA
+##  6 Belize              1759         NA
+##  7 Equatorial Guinea   1869         NA
+##  8 Antigua and Barbuda 1881         NA
+##  9 Palau               1805         NA
+## 10 Suriname            1992       2070
 ```
 
 ```r
@@ -1025,8 +1025,6 @@ Now we will join the three dataframes together. Like before, we will use the `fu
 
 
 ```r
-politics$country <- politics$country_name
-
 data <- politics %>%
   full_join(carbon_long, by = c("country", "year")) %>%
   full_join(gdp_long, by = c("country", "year"))
@@ -1035,23 +1033,35 @@ head(data)
 ```
 
 ```
-##   country_name year v2x_libdem          v2x_regime                region
-## 1  Afghanistan 2007      0.227 Electoral Autocracy Eastern Mediterranean
-## 2  Afghanistan 2014      0.224 Electoral Autocracy Eastern Mediterranean
-## 3  Afghanistan 2012      0.224 Electoral Autocracy Eastern Mediterranean
-## 4  Afghanistan 2003      0.096    Closed Autocracy Eastern Mediterranean
-## 5  Afghanistan 2015      0.227 Electoral Autocracy Eastern Mediterranean
-## 6  Afghanistan 2009      0.226 Electoral Autocracy Eastern Mediterranean
-##       country emissions    gdp
-## 1 Afghanistan      2270 10.800
-## 2 Afghanistan      9810  0.837
-## 3 Afghanistan     10800 11.200
-## 4 Afghanistan      1200  8.040
-## 5 Afghanistan        NA  2.110
-## 6 Afghanistan      6770 17.300
+##       country year democracy              regime                region
+## 1 Afghanistan 2007     0.227 Electoral Autocracy Eastern Mediterranean
+## 2 Afghanistan 2014     0.224 Electoral Autocracy Eastern Mediterranean
+## 3 Afghanistan 2012     0.224 Electoral Autocracy Eastern Mediterranean
+## 4 Afghanistan 2003     0.096    Closed Autocracy Eastern Mediterranean
+## 5 Afghanistan 2015     0.227 Electoral Autocracy Eastern Mediterranean
+## 6 Afghanistan 2009     0.226 Electoral Autocracy Eastern Mediterranean
+##   emissions    gdp
+## 1      2270 10.800
+## 2      9810  0.837
+## 3     10800 11.200
+## 4      1200  8.040
+## 5        NA  2.110
+## 6      6770 17.300
 ```
 
-## Summary Statistics
+## Creating new variables
+
+We can create a new variable from existing variables using the `mutate()` function. For example, we want to create a new column that is the squared of GDP called `gdp_sq`.
+
+
+```r
+data <- data %>% 
+  mutate(gdp_sq = gdp * gdp)
+```
+
+The `{base}` function to create a new column would be to run the following command: `data$gdp_sq <- data$gdp * data$gdp`
+
+# Summary Statistics
 
 To take a look at some summary statistics, we can use the built-in R functions.
   * `mean(joindata$emissions, na.rm = T)` - mean of `emissions`
@@ -1059,50 +1069,97 @@ To take a look at some summary statistics, we can use the built-in R functions.
   * `summary(joindata)` - summary statistics of the columns
   * `summary(joindata$emissions)` - summary statistics of the `emissions` variable
   
-We can also look at some summary statistics by region. We use the `group_by()` function to group the observations. We use the `summarize()` function to calculate summary statistics. In the code below, `avg_emissions` is the column name I will assign to the mean emissions. 
+We can also look at some summary statistics by region. We use the `group_by()` function to group the observations. To calculate multiple summary statistics, we can use the `summarize()` function.
 
 
 ```r
 data %>% group_by(region) %>%
-  summarize(avg_emissions = mean(emissions, na.rm = T))
-```
-
-```
-## # A tibble: 8 x 2
-##   region                  avg_emissions
-##   <chr>                           <dbl>
-## 1 ""                             75649.
-## 2 "Africa"                       17118.
-## 3 "Americas"                     75294.
-## 4 "Eastern Mediterranean"        80377.
-## 5 "Europe"                      145051.
-## 6 "South-East Asia"             217400.
-## 7 "Western Pacific"             538052.
-## 8  <NA>                          70314.
-```
-
-I can request for multiple summary statistics in one command too.
-
-
-```r
-data %>% group_by(region) %>%
-  summarize(n = n(),
-            avg_emissions = mean(emissions, na.rm = T),
-            median_emissions = median(emissions, na.rm = T))
+  summarize(n = n(), 
+            avg_emissions = mean(emissions, na.rm = T), 
+            median_gdp = median(gdp, na.rm = T))
 ```
 
 ```
 ## # A tibble: 8 x 4
-##   region                      n avg_emissions median_emissions
-##   <chr>                   <int>         <dbl>            <dbl>
-## 1 ""                        413        75649.           110000
-## 2 "Africa"                 1228        17118.             1770
-## 3 "Americas"                754        75294.            11100
-## 4 "Eastern Mediterranean"   609        80377.            36400
-## 5 "Europe"                 1414       145051.            49150
-## 6 "South-East Asia"         261       217400.            35700
-## 7 "Western Pacific"         464       538052.            38800
-## 8  <NA>                   47603        70314.             3140
+##   region                      n avg_emissions median_gdp
+##   <chr>                   <int>         <dbl>      <dbl>
+## 1 ""                        413        75649.      3.99 
+## 2 "Africa"                 1228        17118.      2.37 
+## 3 "Americas"                754        75294.      2.17 
+## 4 "Eastern Mediterranean"   609        80377.      1.94 
+## 5 "Europe"                 1414       145051.      2.55 
+## 6 "South-East Asia"         261       217400.      4.2  
+## 7 "Western Pacific"         464       538052.      2.98 
+## 8  <NA>                   47603        70314.      0.582
+```
+
+We use the `summarize_all()` to apply a particular function to all variables. For example, if we put `mean, na.rm = T` inside the parentheses, we will get the mean of all variables, and it will return `NA` for categorical variables. 
+
+
+```r
+data %>% 
+  group_by(region) %>%
+  summarize_all(mean, na.rm = T)
+```
+
+```
+## # A tibble: 8 x 8
+##   region                  country  year democracy regime emissions   gdp gdp_sq
+##   <chr>                     <dbl> <dbl>     <dbl>  <dbl>     <dbl> <dbl>  <dbl>
+## 1 ""                           NA 2006.     0.325     NA    75649.  3.04   56.5
+## 2 "Africa"                     NA 2006.     0.305     NA    17118.  2.33   72.7
+## 3 "Americas"                   NA 2006      0.500     NA    75294.  2.05   16.6
+## 4 "Eastern Mediterranean"      NA 2006      0.141     NA    80377.  2.29   71.0
+## 5 "Europe"                     NA 2006.     0.573     NA   145051.  2.12   41.8
+## 6 "South-East Asia"            NA 2006      0.286     NA   217400.  3.76   28.3
+## 7 "Western Pacific"            NA 2006      0.409     NA   538052.  3.02   24.7
+## 8  <NA>                        NA 1874.   NaN         NA    70314.  1.17   21.4
+```
+
+If we only want to summarize certain variables only, we can use the `summarize_at()` function. 
+
+
+```r
+data %>%
+  group_by(region) %>%
+  summarize_at(vars(democracy, emissions), mean, na.rm = T)
+```
+
+```
+## # A tibble: 8 x 3
+##   region                  democracy emissions
+##   <chr>                       <dbl>     <dbl>
+## 1 ""                          0.325    75649.
+## 2 "Africa"                    0.305    17118.
+## 3 "Americas"                  0.500    75294.
+## 4 "Eastern Mediterranean"     0.141    80377.
+## 5 "Europe"                    0.573   145051.
+## 6 "South-East Asia"           0.286   217400.
+## 7 "Western Pacific"           0.409   538052.
+## 8  <NA>                     NaN        70314.
+```
+
+If we only want to summarize numeric variables only, we can use the `summarize_if()` function.
+
+
+```r
+data %>% 
+  group_by(region) %>%
+  summarize_if(is.numeric, mean, na.rm = T)
+```
+
+```
+## # A tibble: 8 x 6
+##   region                   year democracy emissions   gdp gdp_sq
+##   <chr>                   <dbl>     <dbl>     <dbl> <dbl>  <dbl>
+## 1 ""                      2006.     0.325    75649.  3.04   56.5
+## 2 "Africa"                2006.     0.305    17118.  2.33   72.7
+## 3 "Americas"              2006      0.500    75294.  2.05   16.6
+## 4 "Eastern Mediterranean" 2006      0.141    80377.  2.29   71.0
+## 5 "Europe"                2006.     0.573   145051.  2.12   41.8
+## 6 "South-East Asia"       2006      0.286   217400.  3.76   28.3
+## 7 "Western Pacific"       2006      0.409   538052.  3.02   24.7
+## 8  <NA>                   1874.   NaN        70314.  1.17   21.4
 ```
 
 The `modelsummary` package allows you to produce very nice summary statistic plots for tidy data. You can read more [here](https://vincentarelbundock.github.io/modelsummary/articles/datasummary.html). 
@@ -1149,7 +1206,7 @@ datasummary_skim(politics)
 </td>
   </tr>
   <tr>
-   <td style="text-align:left;"> v2x_libdem </td>
+   <td style="text-align:left;"> democracy </td>
    <td style="text-align:right;"> 858 </td>
    <td style="text-align:right;"> 0 </td>
    <td style="text-align:right;"> 0.4 </td>
@@ -1190,7 +1247,7 @@ datasummary_skim(data, type = "categorical")
  </thead>
 <tbody>
   <tr>
-   <td style="text-align:left;"> v2x_regime </td>
+   <td style="text-align:left;"> regime </td>
    <td style="text-align:left;"> Closed Autocracy </td>
    <td style="text-align:right;"> 857 </td>
    <td style="text-align:right;"> 1.6 </td>
