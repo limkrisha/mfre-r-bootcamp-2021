@@ -697,11 +697,13 @@ You can view your data with the command `View(dataframe_name)` or click the data
 Here are a few functions to inspect your data. We will use the  `politics` data as an example. 
 
 Size: 
+
   * `dim(politics)` returns a vector with the number of rows in the first element, and the number of columns in the second element
   * `nrow(politics)` returns the number of rows
   * `ncol(politics)` returns the number of columns 
   
 Content:
+
   * `head(politics)` returns the first 5 observations 
   * `tail(politics)` returns the last 5 observations
   * `politics %>% slice_head(n = 6)` returns the first 6 observations 
@@ -712,6 +714,7 @@ Column Names:
   * `names(politics)` returns the column names 
   
 Summary:
+
   * `str(politics)` shows the structure of the object and information about the class, length, and content of each column
   * `summary(politics)` returns the summary statistics of each column
   * `glimpse(politics)` returns the dimension of the data, the names and class of each column, and previous as many values per column. 
@@ -732,7 +735,9 @@ To extract certain columns and rows from our data, we use `[]` or `[[]]` or `$` 
 
 As you can see, there are so many different ways to extract values. The most common way we extract values in MFRE classes would be last point, `politics$country_name`.   
 
-## Shoud I add something about factors?
+## Factors
+
+To be added 
 
 # Data Wrangling
 
@@ -826,11 +831,11 @@ carbon %>%
 
 ```
 ## # A tibble: 3 x 265
-##   country  `1751` `1752` `1753` `1754` `1755` `1756` `1757` `1758` `1759` `1760`
-##   <chr>     <dbl>  <dbl>  <dbl>  <dbl>  <dbl>  <dbl>  <dbl>  <dbl>  <dbl>  <dbl>
-## 1 Palau        NA     NA     NA     NA     NA     NA     NA     NA     NA     NA
-## 2 Kiribati     NA     NA     NA     NA     NA     NA     NA     NA     NA     NA
-## 3 Cuba         NA     NA     NA     NA     NA     NA     NA     NA     NA     NA
+##   country `1751` `1752` `1753` `1754` `1755` `1756` `1757` `1758` `1759` `1760`
+##   <chr>    <dbl>  <dbl>  <dbl>  <dbl>  <dbl>  <dbl>  <dbl>  <dbl>  <dbl>  <dbl>
+## 1 Tuvalu      NA     NA     NA     NA     NA     NA     NA     NA     NA     NA
+## 2 Yemen       NA     NA     NA     NA     NA     NA     NA     NA     NA     NA
+## 3 Vietnam     NA     NA     NA     NA     NA     NA     NA     NA     NA     NA
 ## # ... with 254 more variables: 1761 <dbl>, 1762 <dbl>, 1763 <dbl>, 1764 <dbl>,
 ## #   1765 <dbl>, 1766 <dbl>, 1767 <dbl>, 1768 <dbl>, 1769 <dbl>, 1770 <dbl>,
 ## #   1771 <dbl>, 1772 <dbl>, 1773 <dbl>, 1774 <dbl>, 1775 <dbl>, 1776 <dbl>,
@@ -914,18 +919,18 @@ carbon_long %>%
 
 ```
 ## # A tibble: 10 x 3
-##    country         year  emissions
-##    <chr>           <chr>     <dbl>
-##  1 Lebanon         2013      22600
-##  2 Cuba            1966      15200
-##  3 India           1782         NA
-##  4 Kyrgyz Republic 1943       1260
-##  5 Namibia         1792         NA
-##  6 Tajikistan      2001       2290
-##  7 Andorra         1906         NA
-##  8 Qatar           1778         NA
-##  9 Bolivia         1894         NA
-## 10 Tunisia         1994      15900
+##    country            year  emissions
+##    <chr>              <chr>     <dbl>
+##  1 Luxembourg         1837         NA
+##  2 Lesotho            2009       2220
+##  3 Germany            1995     864000
+##  4 Belize             1883         NA
+##  5 Saudi Arabia       1968      29100
+##  6 Iraq               1840         NA
+##  7 Samoa              1949         NA
+##  8 Guatemala          1763         NA
+##  9 Dominican Republic 1819         NA
+## 10 Turkmenistan       1794         NA
 ```
 
 ```r
@@ -1035,7 +1040,7 @@ data <- carbon_long %>%
   left_join(gdp_long, by = c("country", "year")) %>%
   left_join(politics, by = c("country", "year")) %>% 
   filter(!is.na(emissions) & !is.na(region) & !is.na(gdp)) %>%
-  filter(year > 1991 & year < 2014)
+  filter(year > 1990 & year <= 2014)
 
 head(data)
 ```
@@ -1093,12 +1098,12 @@ data %>% group_by(region) %>%
 ## # A tibble: 6 x 4
 ##   region                    n avg_emissions median_gdp
 ##   <chr>                 <int>         <dbl>      <dbl>
-## 1 Europe                 1017       146336.     14400 
-## 2 Americas                594       272359.      5520 
-## 3 Eastern Mediterranean   373        92714.      4490 
-## 4 Western Pacific         330       522811.      3050 
-## 5 South-East Asia         208       194746.      1280 
-## 6 Africa                  928        16454.       886.
+## 1 Europe                 1064       145754.      14750
+## 2 Americas                620       273001.       5545
+## 3 Eastern Mediterranean   391        94934.       4540
+## 4 Western Pacific         345       538052.       3090
+## 5 South-East Asia         218       200235.       1340
+## 6 Africa                  971        16681.        891
 ```
 
 We use the `summarize_all()` to apply a particular function to all variables. For example, if we put `mean, na.rm = T` inside the parentheses, we will get the mean of all variables, and it will return `NA` for categorical variables. 
@@ -1114,12 +1119,12 @@ data %>%
 ## # A tibble: 6 x 8
 ##   region              country  year emissions    gdp democracy regime     gdp_sq
 ##   <chr>                 <dbl> <dbl>     <dbl>  <dbl>     <dbl>  <dbl>      <dbl>
-## 1 Africa                   NA 2003.    16454.  2141.     0.296     NA     1.37e7
-## 2 Americas                 NA 2002.   272359.  8972.     0.513     NA     1.96e8
-## 3 Eastern Mediterran~      NA 2003.    92714. 13530.     0.144     NA     5.09e8
-## 4 Europe                   NA 2003.   146336. 23271.     0.592     NA     1.05e9
-## 5 South-East Asia          NA 2003.   194746.  2056.     0.293     NA     7.70e6
-## 6 Western Pacific          NA 2002.   522811. 13545.     0.429     NA     4.70e8
+## 1 Africa                   NA 2003.    16681.  2162.     0.298     NA     1.39e7
+## 2 Americas                 NA 2003.   273001.  9052.     0.514     NA     1.99e8
+## 3 Eastern Mediterran~      NA 2004.    94934. 13529.     0.146     NA     5.07e8
+## 4 Europe                   NA 2003.   145754. 23436.     0.592     NA     1.07e9
+## 5 South-East Asia          NA 2003.   200235.  2096.     0.295     NA     7.96e6
+## 6 Western Pacific          NA 2003    538052. 13701.     0.428     NA     4.80e8
 ```
 
 If we only want to summarize certain variables only, we can use the `summarize_at()` function. 
@@ -1135,12 +1140,12 @@ data %>%
 ## # A tibble: 6 x 3
 ##   region                democracy emissions
 ##   <chr>                     <dbl>     <dbl>
-## 1 Africa                    0.296    16454.
-## 2 Americas                  0.513   272359.
-## 3 Eastern Mediterranean     0.144    92714.
-## 4 Europe                    0.592   146336.
-## 5 South-East Asia           0.293   194746.
-## 6 Western Pacific           0.429   522811.
+## 1 Africa                    0.298    16681.
+## 2 Americas                  0.514   273001.
+## 3 Eastern Mediterranean     0.146    94934.
+## 4 Europe                    0.592   145754.
+## 5 South-East Asia           0.295   200235.
+## 6 Western Pacific           0.428   538052.
 ```
 
 If we only want to summarize numeric variables only, we can use the `summarize_if()` function.
@@ -1156,12 +1161,12 @@ data %>%
 ## # A tibble: 6 x 6
 ##   region                 year emissions    gdp democracy      gdp_sq
 ##   <chr>                 <dbl>     <dbl>  <dbl>     <dbl>       <dbl>
-## 1 Africa                2003.    16454.  2141.     0.296   13716843.
-## 2 Americas              2002.   272359.  8972.     0.513  195516561.
-## 3 Eastern Mediterranean 2003.    92714. 13530.     0.144  509018698.
-## 4 Europe                2003.   146336. 23271.     0.592 1052742339.
-## 5 South-East Asia       2003.   194746.  2056.     0.293    7703759.
-## 6 Western Pacific       2002.   522811. 13545.     0.429  470312091.
+## 1 Africa                2003.    16681.  2162.     0.298   13935487.
+## 2 Americas              2003.   273001.  9052.     0.514  198779759.
+## 3 Eastern Mediterranean 2004.    94934. 13529.     0.146  507495399.
+## 4 Europe                2003.   145754. 23436.     0.592 1065083408.
+## 5 South-East Asia       2003.   200235.  2096.     0.295    7956161.
+## 6 Western Pacific       2003    538052. 13701.     0.428  480089967.
 ```
 
 The `modelsummary` package allows you to produce very nice summary statistic plots for tidy data. You can read more [here](https://vincentarelbundock.github.io/modelsummary/articles/datasummary.html). 
@@ -1251,71 +1256,69 @@ datasummary_skim(data, type = "categorical")
   <tr>
    <td style="text-align:left;"> regime </td>
    <td style="text-align:left;"> Closed Autocracy </td>
-   <td style="text-align:right;"> 490 </td>
-   <td style="text-align:right;"> 14.2 </td>
+   <td style="text-align:right;"> 504 </td>
+   <td style="text-align:right;"> 14.0 </td>
   </tr>
   <tr>
    <td style="text-align:left;">  </td>
    <td style="text-align:left;"> Electoral Autocracy </td>
-   <td style="text-align:right;"> 1097 </td>
-   <td style="text-align:right;"> 31.8 </td>
+   <td style="text-align:right;"> 1150 </td>
+   <td style="text-align:right;"> 31.9 </td>
   </tr>
   <tr>
    <td style="text-align:left;">  </td>
    <td style="text-align:left;"> Electoral Democracy </td>
-   <td style="text-align:right;"> 1056 </td>
-   <td style="text-align:right;"> 30.6 </td>
+   <td style="text-align:right;"> 1109 </td>
+   <td style="text-align:right;"> 30.7 </td>
   </tr>
   <tr>
    <td style="text-align:left;">  </td>
    <td style="text-align:left;"> Liberal Democracy </td>
-   <td style="text-align:right;"> 805 </td>
-   <td style="text-align:right;"> 23.3 </td>
+   <td style="text-align:right;"> 844 </td>
+   <td style="text-align:right;"> 23.4 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> region </td>
    <td style="text-align:left;"> Africa </td>
-   <td style="text-align:right;"> 928 </td>
+   <td style="text-align:right;"> 971 </td>
    <td style="text-align:right;"> 26.9 </td>
   </tr>
   <tr>
    <td style="text-align:left;">  </td>
    <td style="text-align:left;"> Americas </td>
-   <td style="text-align:right;"> 594 </td>
+   <td style="text-align:right;"> 620 </td>
    <td style="text-align:right;"> 17.2 </td>
   </tr>
   <tr>
    <td style="text-align:left;">  </td>
    <td style="text-align:left;"> Eastern Mediterranean </td>
-   <td style="text-align:right;"> 373 </td>
+   <td style="text-align:right;"> 391 </td>
    <td style="text-align:right;"> 10.8 </td>
   </tr>
   <tr>
    <td style="text-align:left;">  </td>
    <td style="text-align:left;"> Europe </td>
-   <td style="text-align:right;"> 1017 </td>
+   <td style="text-align:right;"> 1064 </td>
    <td style="text-align:right;"> 29.5 </td>
   </tr>
   <tr>
    <td style="text-align:left;">  </td>
    <td style="text-align:left;"> South-East Asia </td>
-   <td style="text-align:right;"> 208 </td>
+   <td style="text-align:right;"> 218 </td>
    <td style="text-align:right;"> 6.0 </td>
   </tr>
   <tr>
    <td style="text-align:left;">  </td>
    <td style="text-align:left;"> Western Pacific </td>
-   <td style="text-align:right;"> 330 </td>
+   <td style="text-align:right;"> 345 </td>
    <td style="text-align:right;"> 9.6 </td>
   </tr>
 </tbody>
 </table>
 
-# Data Visualization
+# Data Visualization (ggplot2)
 
 There are functions in `{base}` R that will allows you to plot data. But we will look at the `ggplot2` package. Read this [tutorial/book](https://ggplot2-book.org/introduction.html) for an in-depth walk through. 
-
-## ggpplot2
 
 According to Hadley Wickham, "`ggplot2` is based on the Grammar of Graphics that allows you to compose graphs by combining independent components...The grammar tells us that a graphic maps the data to the aesthetic attributes (color, shape, size) of geometric objects (points, lines, bars)."
 
@@ -1324,6 +1327,7 @@ In Wickham's tutorial, he indicated that there are 3 main components for every g
   1. *data*
   2. A set of *aesthetic* mappings
   3. At least one layer which describes how to render each observations. Layers are usually created with a *geom* function. Common layers we will use are the following:
+  
     a. `geom_line()` for trend lines, time series, etc. 
     b. `geom_point()` for scatter plots 
     c. `geom_boxplot()` for boxplots 
@@ -1333,6 +1337,7 @@ In Wickham's tutorial, he indicated that there are 3 main components for every g
 ## Scatterplots   
 
 Here is a simple example. The code below produces a scatterplot defined by:
+
   1. Data: `data` (I should have named the object differently!)
   2. Aesthetic mapping: gdp mapped to the x position, emissions to the y position
   3. Layer: points 
@@ -1430,118 +1435,93 @@ p + geom_smooth(method = "lm")
 
 ![](intro-to-r_files/figure-html/firstplot_fittedline_lm-1.png)<!-- -->
 
-If we want to change the background, there are multiple themes available in the [package](https://ggplot2-book.org/polishing.html), and of course you can customize your own too. 
+If we want to change the background, there are multiple themes available in the [package](https://ggplot2-book.org/polishing.html), and of course you can customize your own too. Let's say we are hapyp with this layout, we shall overwrite our `p` object again. 
 
 
 ```r
-p + theme_classic()
+p <- p + theme_classic()
+
+p
 ```
 
 ![](intro-to-r_files/figure-html/firstplot_theme-1.png)<!-- -->
 
+To save the plot, we can use the `ggsave()` function. I am saving this file in another folder called output. You can save the plots to different formats too. 
+
+
+```r
+ggsave(p, filename = here("output","emissions_gdp.png"))
+
+ggsave(p, filename = here("output","emissions_gdp.jpg"))
+
+ggsave(p, filename = here("output","emissions_gdp.pdf"))
+```
+
 ## Boxplot 
 
+We can also visualize the distribution of GDP within each region in 2010. We follow the structure, but now use `geom_boxplot()`. 
+
 
 ```r
-ggplot()
+bp <- data %>% 
+  filter(year == 2010) %>%
+  ggplot(aes(region, gdp)) + 
+  geom_boxplot() + 
+  labs(title = "Distribution of GDP by Region, 2010",
+              y = "GDP per capita", x = "Region") +
+  theme_classic()
+
+bp
 ```
 
-![](intro-to-r_files/figure-html/boxplot-1.png)<!-- -->
+![](intro-to-r_files/figure-html/boxplot_2010-1.png)<!-- -->
 
-We can also use the pipe operator. This method can be useful if you want to make changes to the data (i.e. filter) and then plot. For example, we can filter and plot Canada's GDP over time. 
+We may want to edit the tick marks.
 
 
 ```r
-data %>% 
-  filter(country == "Canada") %>%
-  ggplot(aes(year, gdp)) + 
-  geom_line()
+bp + scale_x_discrete(labels = c("Africa", "Americas", "Mediterranean", "Europe", "SE Asia", "W Pacific"))
 ```
 
-![](intro-to-r_files/figure-html/canadaonly-1.png)<!-- -->
+![](intro-to-r_files/figure-html/boxplot_2010ticks-1.png)<!-- -->
 
+We can also flip the coordinates of the boxplot. Note that because we did not assign the tick mark labels to `bp`, as in did not use `bp + scale_x_discrete(labels = c("Africa", "Americas", "Mediterranean", "Europe", "SE Asia", "W Pacific"))`),`bp` remains unchanged. Hence the plot below shows the original labels. 
 
-
-
-How has carbon emissions changed over time? 
 
 ```r
-data %>% group_by(year) %>%
-  summarize(total_emissions = sum(emissions)) %>%
-  ggplot(aes(x = year, y = total_emissions)) +
-  geom_line(size = 1.5)
+bp + coord_flip()
+```
+
+![](intro-to-r_files/figure-html/boxplot_2010flipped-1.png)<!-- -->
+
+### Line plots
+
+We may be interested in Canada's carbon emissions over time. To draw a line graph, we now use the `ggplot_line()` function. 
+
+
+```r
+lp <- data %>% 
+  filter(country == "Canada") %>% 
+  ggplot(aes(x = year, y = emissions)) +
+  geom_line(linetype = "dashed", color = "red") +
+  theme_classic() +
+  labs(title = "Canada's CO2 emissions, 1991-2014",
+       y = "Total Emissions", 
+       x = "Year")
+
+lp
+```
+
+![](intro-to-r_files/figure-html/geomline-1.png)<!-- -->
+
+We can also add comma to the y-axis labels for easier reading. 
+
+
+```r
+lp + scale_y_continuous(labels = scales::comma) 
 ```
 
 ![](intro-to-r_files/figure-html/unnamed-chunk-3-1.png)<!-- -->
-
-
-```r
-data %>% group_by(year) %>%
-  summarize(total_emissions = sum(emissions)) %>%
-  ggplot(aes(x = year, y = total_emissions)) +
-  geom_line(size = 1.5) + 
-  labs(title = "World" ~CO[2]~ "Emissions",
-       caption = "Limited to reporting countries only",
-       y = "Emissions (metric tonnes)") +
-  theme_classic()
-```
-
-![](intro-to-r_files/figure-html/unnamed-chunk-4-1.png)<!-- -->
-
-
-
-Are certain countries contribute more emissions than others? 
-
-```r
-data %>% 
-  ggplot(aes(x = year, y = emissions, group = country)) +
-  geom_line(size = 1) +
-  theme_classic()
-```
-
-![](intro-to-r_files/figure-html/unnamed-chunk-5-1.png)<!-- -->
-
-Change the transparency of the lines due to overlapping lines
-
-```r
-data %>% 
-  ggplot(aes(x = year, y = emissions, group = country)) +
-  geom_line(size = 1, 
-            alpha = 0.4) +
-  theme_classic()
-```
-
-![](intro-to-r_files/figure-html/unnamed-chunk-6-1.png)<!-- -->
-
-Compare USA to the rest of the world
-
-```r
-# data %>% 
-#   ggplot(aes(x = year, y = emissions, group = country, color = region)) +
-#   geom_line(size = 1) +
-#   scale_colour_manual(values = c("grey", "black")) +
-#   theme_classic()
-```
-
-## Visualize carbon emissions over the years for the top 10 countries with the highest emissions in 2014
-
-
-```r
-# Create a new object to identify the 10 countries with highest emissions in 2014
-# top10countries <- data %>%
-#   filter(year == 2014) %>%
-#   mutate(rank = dense_rank(desc(emissions))) %>%
-#   filter(rank <= 10) %>%
-#   arrange(rank)
-# 
-# # filter original data for countries in top10
-# top10data <- data %>%
-#   filter(country %in% pull(top10countries, country)) 
-# 
-# ggplot(top10data, aes(x = year, y = emissions, color = country)) + 
-#   geom_line() + 
-#   theme_classic()
-```
 
 # Data Analysis
 

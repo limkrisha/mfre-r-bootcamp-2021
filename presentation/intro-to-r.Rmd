@@ -432,11 +432,13 @@ You can view your data with the command `View(dataframe_name)` or click the data
 Here are a few functions to inspect your data. We will use the  `politics` data as an example. 
 
 Size: 
+
   * `dim(politics)` returns a vector with the number of rows in the first element, and the number of columns in the second element
   * `nrow(politics)` returns the number of rows
   * `ncol(politics)` returns the number of columns 
   
 Content:
+
   * `head(politics)` returns the first 5 observations 
   * `tail(politics)` returns the last 5 observations
   * `politics %>% slice_head(n = 6)` returns the first 6 observations 
@@ -447,6 +449,7 @@ Column Names:
   * `names(politics)` returns the column names 
   
 Summary:
+
   * `str(politics)` shows the structure of the object and information about the class, length, and content of each column
   * `summary(politics)` returns the summary statistics of each column
   * `glimpse(politics)` returns the dimension of the data, the names and class of each column, and previous as many values per column. 
@@ -467,7 +470,9 @@ To extract certain columns and rows from our data, we use `[]` or `[[]]` or `$` 
 
 As you can see, there are so many different ways to extract values. The most common way we extract values in MFRE classes would be last point, `politics$country_name`.   
 
-## Shoud I add something about factors?
+## Factors
+
+To be added 
 
 # Data Wrangling
 
@@ -639,7 +644,7 @@ data <- carbon_long %>%
   left_join(gdp_long, by = c("country", "year")) %>%
   left_join(politics, by = c("country", "year")) %>% 
   filter(!is.na(emissions) & !is.na(region) & !is.na(gdp)) %>%
-  filter(year > 1991 & year < 2014)
+  filter(year > 1990 & year <= 2014)
 
 head(data)
 ```
@@ -715,11 +720,9 @@ We need to add an argument `type = categorical` to see summary statistics for no
 datasummary_skim(data, type = "categorical")
 ```
 
-# Data Visualization
+# Data Visualization (ggplot2)
 
 There are functions in `{base}` R that will allows you to plot data. But we will look at the `ggplot2` package. Read this [tutorial/book](https://ggplot2-book.org/introduction.html) for an in-depth walk through. 
-
-## ggpplot2
 
 According to Hadley Wickham, "`ggplot2` is based on the Grammar of Graphics that allows you to compose graphs by combining independent components...The grammar tells us that a graphic maps the data to the aesthetic attributes (color, shape, size) of geometric objects (points, lines, bars)."
 
@@ -728,6 +731,7 @@ In Wickham's tutorial, he indicated that there are 3 main components for every g
   1. *data*
   2. A set of *aesthetic* mappings
   3. At least one layer which describes how to render each observations. Layers are usually created with a *geom* function. Common layers we will use are the following:
+  
     a. `geom_line()` for trend lines, time series, etc. 
     b. `geom_point()` for scatter plots 
     c. `geom_boxplot()` for boxplots 
@@ -737,6 +741,7 @@ In Wickham's tutorial, he indicated that there are 3 main components for every g
 ## Scatterplots   
 
 Here is a simple example. The code below produces a scatterplot defined by:
+
   1. Data: `data` (I should have named the object differently!)
   2. Aesthetic mapping: gdp mapped to the x position, emissions to the y position
   3. Layer: points 
@@ -802,94 +807,73 @@ If we want to add a fitted line based on a linear model, we have to specify `geo
 p + geom_smooth(method = "lm")
 ```
 
-If we want to change the background, there are multiple themes available in the [package](https://ggplot2-book.org/polishing.html), and of course you can customize your own too. 
+If we want to change the background, there are multiple themes available in the [package](https://ggplot2-book.org/polishing.html), and of course you can customize your own too. Let's say we are hapyp with this layout, we shall overwrite our `p` object again. 
 
 ```{r firstplot_theme}
-p + theme_classic()
+p <- p + theme_classic()
+
+p
+```
+
+To save the plot, we can use the `ggsave()` function. I am saving this file in another folder called output. You can save the plots to different formats too. 
+
+```{r firstplot_ggsave, message = FALSE}
+ggsave(p, filename = here("output","emissions_gdp.png"))
+
+ggsave(p, filename = here("output","emissions_gdp.jpg"))
+
+ggsave(p, filename = here("output","emissions_gdp.pdf"))
 ```
 
 ## Boxplot 
 
-```{r boxplot}
-ggplot()
-```
+We can also visualize the distribution of GDP within each region in 2010. We follow the structure, but now use `geom_boxplot()`. 
 
-We can also use the pipe operator. This method can be useful if you want to make changes to the data (i.e. filter) and then plot. For example, we can filter and plot Canada's GDP over time. 
-
-```{r canadaonly, warning = FALSE}
-data %>% 
-  filter(country == "Canada") %>%
-  ggplot(aes(year, gdp)) + 
-  geom_line()
-```
-
-
-
-
-How has carbon emissions changed over time? 
-```{r}
-data %>% group_by(year) %>%
-  summarize(total_emissions = sum(emissions)) %>%
-  ggplot(aes(x = year, y = total_emissions)) +
-  geom_line(size = 1.5)
-```
-
-```{r}
-data %>% group_by(year) %>%
-  summarize(total_emissions = sum(emissions)) %>%
-  ggplot(aes(x = year, y = total_emissions)) +
-  geom_line(size = 1.5) + 
-  labs(title = "World" ~CO[2]~ "Emissions",
-       caption = "Limited to reporting countries only",
-       y = "Emissions (metric tonnes)") +
+```{r boxplot_2010}
+bp <- data %>% 
+  filter(year == 2010) %>%
+  ggplot(aes(region, gdp)) + 
+  geom_boxplot() + 
+  labs(title = "Distribution of GDP by Region, 2010",
+              y = "GDP per capita", x = "Region") +
   theme_classic()
+
+bp
 ```
 
+We may want to edit the tick marks.
 
-
-Are certain countries contribute more emissions than others? 
-```{r}
-data %>% 
-  ggplot(aes(x = year, y = emissions, group = country)) +
-  geom_line(size = 1) +
-  theme_classic()
+```{r boxplot_2010ticks}
+bp + scale_x_discrete(labels = c("Africa", "Americas", "Mediterranean", "Europe", "SE Asia", "W Pacific"))
 ```
 
-Change the transparency of the lines due to overlapping lines
-```{r}
-data %>% 
-  ggplot(aes(x = year, y = emissions, group = country)) +
-  geom_line(size = 1, 
-            alpha = 0.4) +
-  theme_classic()
+We can also flip the coordinates of the boxplot. Note that because we did not assign the tick mark labels to `bp`, as in did not use `bp + scale_x_discrete(labels = c("Africa", "Americas", "Mediterranean", "Europe", "SE Asia", "W Pacific"))`),`bp` remains unchanged. Hence the plot below shows the original labels. 
+
+```{r boxplot_2010flipped}
+bp + coord_flip()
 ```
 
-Compare USA to the rest of the world
-```{r}
-# data %>% 
-#   ggplot(aes(x = year, y = emissions, group = country, color = region)) +
-#   geom_line(size = 1) +
-#   scale_colour_manual(values = c("grey", "black")) +
-#   theme_classic()
+### Line plots
+
+We may be interested in Canada's carbon emissions over time. To draw a line graph, we now use the `ggplot_line()` function. 
+
+```{r geomline}
+lp <- data %>% 
+  filter(country == "Canada") %>% 
+  ggplot(aes(x = year, y = emissions)) +
+  geom_line(linetype = "dashed", color = "red") +
+  theme_classic() +
+  labs(title = "Canada's CO2 emissions, 1991-2014",
+       y = "Total Emissions", 
+       x = "Year")
+
+lp
 ```
 
-## Visualize carbon emissions over the years for the top 10 countries with the highest emissions in 2014
+We can also add comma to the y-axis labels for easier reading. 
 
 ```{r}
-# Create a new object to identify the 10 countries with highest emissions in 2014
-# top10countries <- data %>%
-#   filter(year == 2014) %>%
-#   mutate(rank = dense_rank(desc(emissions))) %>%
-#   filter(rank <= 10) %>%
-#   arrange(rank)
-# 
-# # filter original data for countries in top10
-# top10data <- data %>%
-#   filter(country %in% pull(top10countries, country)) 
-# 
-# ggplot(top10data, aes(x = year, y = emissions, color = country)) + 
-#   geom_line() + 
-#   theme_classic()
+lp + scale_y_continuous(labels = scales::comma) 
 ```
 
 # Data Analysis
@@ -938,6 +922,8 @@ By the end of this section, the students will be able to:
 ```
 
 ## Regressions
+
+
 ```{r}
 # run the regression
 
