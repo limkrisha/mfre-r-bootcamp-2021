@@ -14,8 +14,8 @@ The main objective of this R bootcamp is to introduce R programming to incoming 
 
 # Before we get started
 
-  * Familiarize yourself with the RStudio IDE
-  * Understand the benefits of a project-oriented workflow. Read Jenny Bryan's post on why you should not start your scripts with `setwd()` and `rm(list = ls())` [here](https://www.tidyverse.org/blog/2017/12/workflow-vs-script/). 
+  * Familiarize yourself with the RStudio IDE, which we will go through in class
+  * Understand the benefits of a project-oriented workflow. Read Jenny Bryan's post on why you should not start your scripts with `setwd()` and `rm(list = ls())` [here](https://www.tidyverse.org/blog/2017/12/workflow-vs-script/). We will talk about using R Projects instead.  
 
 #  Packages
 
@@ -36,14 +36,6 @@ pacman::p_load(tidyverse, readxl, googlesheets4, readstata13, magrittr, cansim, 
 
 
 # R Basics 
-
-By the end of this section, students will be able to
-
-* create, name, and assign values to objects
-* use comments to inform script
-* inspect, manipulate, and subset vectors, lists, and dataframes/tibbles
-* call functions and use arguments to change default options
-* deal with missing values in objects
 
 ## Interacting with R 
 
@@ -711,6 +703,7 @@ Content:
   * `politics %>% slice_sample(n = 10)` returns 10 observations selected at random 
   
 Column Names:
+
   * `names(politics)` returns the column names 
   
 Summary:
@@ -733,7 +726,7 @@ To extract certain columns and rows from our data, we use `[]` or `[[]]` or `$` 
   * `politics["country_name"]` To extract the `country_name` column as a data frame 
     * `politics$country_name` To extract the `country_name` column as a vector
 
-As you can see, there are so many different ways to extract values. The most common way we extract values in MFRE classes would be last point, `politics$country_name`.   
+As you can see, there are so many different ways to extract values. The most common way we extract values in MFRE classes would be last point, `politics$country`. Most of the time, however, we'll just want to see the results from `table(politics$country_name)`
 
 ## Factors
 
@@ -741,17 +734,7 @@ To be added
 
 # Data Wrangling
 
-  * Selecting columns/variables and filtering rows
-  * Reshaping Data
-  * Renaming columns
-  * Changing data types
-  * Creating new variables
-  * Filtering observations
-  * Selecting columns/variables
-  * String manipulation
-  * Joining/Merging datasets (need to modify to just use merge())
-
-We will only work with 3 data frames: `carbon`, `politics`, and `gdp`. 
+From this point on, we will only work with 3 data frames: `carbon`, `politics`, and `gdp`. 
 
 There are many packages you can use to wrangle data. In this case study, I will mostly use packages in the `{tidyverse}` library, but I will also show you alternatives that you might encounter in some MFRE courses. 
 
@@ -759,7 +742,7 @@ You will see that I will use the pipe operator `%>%` frequently. The operator al
 
 ## Selecting and Filtering
 
-In the `politics` data frame, let's say I only want to keep the `country_name`, `year`, `v2x_libdem`, `v2x_regime`, and `region` variables. We will use the `select(col1, col2, ...)` function. 
+In the `politics` data frame, let's say I only want to keep the `country`, `year`, `v2x_libdem`, `v2x_regime`, and `region` variables. We will use the `select(col1, col2, ...)` function. 
 
 
 ```r
@@ -803,7 +786,7 @@ politics <- politics %>%
 
 ## Renaming columns
 
-Let's say we want to rename the `country_name` column to `country`, `v2x_libdem` to `democracy`, and `v2x_regime` to regime. The function is `rename(new_name = old_name)`.
+Let's say we want to rename the `country` column to `country`, `v2x_libdem` to `democracy`, and `v2x_regime` to regime. The function is `rename(new_name = old_name)`.
 
 
 ```r
@@ -813,7 +796,7 @@ politics <- politics %>%
          regime = v2x_regime)
 ```
 
-  * In Dr. Vercammen's code, you will see that he renames variables using the `names()` and `which()` functions -- `names(politics)[which(names(politics) == "country")] = "country_name"`. 
+  * In Dr. Vercammen's code, you will see that he renames variables using the `names()` and `which()` functions -- `names(politics)[which(names(politics) == "country")] = "country"`. 
   
 ## Reshaping Data
 
@@ -831,11 +814,11 @@ carbon %>%
 
 ```
 ## # A tibble: 3 x 265
-##   country `1751` `1752` `1753` `1754` `1755` `1756` `1757` `1758` `1759` `1760`
-##   <chr>    <dbl>  <dbl>  <dbl>  <dbl>  <dbl>  <dbl>  <dbl>  <dbl>  <dbl>  <dbl>
-## 1 Tuvalu      NA     NA     NA     NA     NA     NA     NA     NA     NA     NA
-## 2 Yemen       NA     NA     NA     NA     NA     NA     NA     NA     NA     NA
-## 3 Vietnam     NA     NA     NA     NA     NA     NA     NA     NA     NA     NA
+##   country  `1751` `1752` `1753` `1754` `1755` `1756` `1757` `1758` `1759` `1760`
+##   <chr>     <dbl>  <dbl>  <dbl>  <dbl>  <dbl>  <dbl>  <dbl>  <dbl>  <dbl>  <dbl>
+## 1 Andorra      NA     NA     NA     NA     NA     NA     NA     NA     NA     NA
+## 2 Suriname     NA     NA     NA     NA     NA     NA     NA     NA     NA     NA
+## 3 Trinida~     NA     NA     NA     NA     NA     NA     NA     NA     NA     NA
 ## # ... with 254 more variables: 1761 <dbl>, 1762 <dbl>, 1763 <dbl>, 1764 <dbl>,
 ## #   1765 <dbl>, 1766 <dbl>, 1767 <dbl>, 1768 <dbl>, 1769 <dbl>, 1770 <dbl>,
 ## #   1771 <dbl>, 1772 <dbl>, 1773 <dbl>, 1774 <dbl>, 1775 <dbl>, 1776 <dbl>,
@@ -919,18 +902,18 @@ carbon_long %>%
 
 ```
 ## # A tibble: 10 x 3
-##    country            year  emissions
-##    <chr>              <chr>     <dbl>
-##  1 Luxembourg         1837         NA
-##  2 Lesotho            2009       2220
-##  3 Germany            1995     864000
-##  4 Belize             1883         NA
-##  5 Saudi Arabia       1968      29100
-##  6 Iraq               1840         NA
-##  7 Samoa              1949         NA
-##  8 Guatemala          1763         NA
-##  9 Dominican Republic 1819         NA
-## 10 Turkmenistan       1794         NA
+##    country               year  emissions
+##    <chr>                 <chr>     <dbl>
+##  1 Armenia               1995       3410
+##  2 Chile                 2008      71900
+##  3 South Africa          2002     357000
+##  4 Maldives              1846         NA
+##  5 Italy                 1853         NA
+##  6 South Korea           1776         NA
+##  7 Sao Tome and Principe 1934         NA
+##  8 St. Kitts and Nevis   1972         NA
+##  9 Chad                  1802         NA
+## 10 Sierra Leone          2008        664
 ```
 
 ```r
@@ -1056,11 +1039,6 @@ head(data)
 ## 5 Afghanistan  2005      1330   365     0.13  Electoral Autoc~ Eastern Mediterr~
 ## 6 Afghanistan  2006      1650   406     0.225 Electoral Autoc~ Eastern Mediterr~
 ```
-
-## Filling in missing values
-
-We note that the `democracy`, `regime`, and `region` variables are missing for some years. It is possible that the level of demo
-
 
 ## Creating new variables
 
@@ -1523,68 +1501,162 @@ lp + scale_y_continuous(labels = scales::comma)
 
 ![](intro-to-r_files/figure-html/unnamed-chunk-3-1.png)<!-- -->
 
-# Data Analysis
+### Histograms
 
-By the end of this section, the students will be able to:
-
-* Calculate basic summary statistics
-* Run hypothesis tests
-* Run regressions
-* Format regression results
-
-## Summary Statistics
 
 ```r
-# usa %>% summarise(mean_emissions = mean(emissions, na.rm = T), 
-#                   mean_temp = mean(temp, na.rm = T),
-#                   sd_emissions = sd(emissions, na.rm = T),
-#                   sd_temp = sd(temp, na.rm = T))
+ggplot(data, aes(x = gdp)) + 
+  geom_histogram() + 
+  theme_classic() + 
+  labs(title = "Income Distribution, 1991-2014",
+       y = "Count",
+       x = "GDP per capita") 
 ```
 
-## Correlation
+```
+## `stat_bin()` using `bins = 30`. Pick better value with `binwidth`.
+```
+
+![](intro-to-r_files/figure-html/hist-1.png)<!-- -->
+
+# Analysis
+
+Our graph earlier suggests that there may be a relationship between emissions and GDP per capita. We can take a look at the correlation between these two variables. 
+
+We will use the country's average emissions and average GDP from 1992-2014. 
+
 
 ```r
-# usa <- usa %>% drop_na()
-# 
-# usa %>%
-#   summarize(r = cor(x = emissions,
-#                     y = temp,
-#                     method = "pearson")) %>%
-#   pull(r)
-# 
-# cortest <- cor.test(pull(usa, emissions), 
-#                     pull(usa, temp))
-# 
-# # see the structure of the data
-# # str(cortest)
-# cortest$statistic
-# cortest$p.value
-# # tidy the results
-# tidy(cortest)
+data <- data %>% 
+  group_by(country) %>%
+  mutate(avg_emissions = mean(emissions, na.rm = T),
+         avg_gdp = mean(gdp, na.rm = T))
+```
+
+Then let us calculate the correlation coefficient using the Pearson method.
+
+
+```r
+cor <- cor.test(data$avg_emissions, data$avg_gdp, method = "pearson")
+cor
+```
+
+```
+## 
+## 	Pearson's product-moment correlation
+## 
+## data:  data$avg_emissions and data$avg_gdp
+## t = 8.4759, df = 3607, p-value < 0.00000000000000022
+## alternative hypothesis: true correlation is not equal to 0
+## 95 percent confidence interval:
+##  0.1076060 0.1715877
+## sample estimates:
+##       cor 
+## 0.1397427
+```
+
+Let's say we want to estimate the following equation: 
+
+$$ 
+emissions_i = b_0 + b_1 GDP_i + \varepsilon_i 
+$$
+
+To run an OLS regression, we use the `lm()` function of the `stats` package. The syntax is `lm(y ~ x1 + x2 + x3 + ...)` Printing the object will only give you the coefficients. 
+
+
+```r
+reg1 <- lm(emissions ~ gdp, data = data)
+reg1
+```
+
+```
+## 
+## Call:
+## lm(formula = emissions ~ gdp, data = data)
+## 
+## Coefficients:
+## (Intercept)          gdp  
+##  105757.604        5.224
+```
+
+To get all the details of the regression, we use the `summary()` function. The output is similar to Stata's regression output. 
+
+
+```r
+options(scipen = 0) # to allow for scientific notation again
+summary(reg1)
+```
+
+```
+## 
+## Call:
+## lm(formula = emissions ~ gdp, data = data)
+## 
+## Residuals:
+##      Min       1Q   Median       3Q      Max 
+##  -679538  -127215  -107452   -74489 10162376 
+## 
+## Coefficients:
+##              Estimate Std. Error t value Pr(>|t|)    
+## (Intercept) 1.058e+05  1.366e+04   7.739 1.29e-14 ***
+## gdp         5.224e+00  6.418e-01   8.139 5.43e-16 ***
+## ---
+## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+## 
+## Residual standard error: 679400 on 3607 degrees of freedom
+## Multiple R-squared:  0.01803,	Adjusted R-squared:  0.01776 
+## F-statistic: 66.24 on 1 and 3607 DF,  p-value: 5.431e-16
+```
+
+As mentioned earlier, regressions results is a list object. We can use the `$` and `[[]]` to extract information. To know the location or the element name, you can check in `str(summary(reg1))`. For example, we can just extract the coefficients of the regression. 
+
+
+```r
+summary(reg1)$coefficients
+```
+
+```
+##                 Estimate   Std. Error  t value     Pr(>|t|)
+## (Intercept) 1.057576e+05 1.366473e+04 7.739456 1.287314e-14
+## gdp         5.223937e+00 6.418401e-01 8.139000 5.431350e-16
+```
+
+Let's say we want to compare the GDP between USA and Canada. We can first visualize our data using box plots.
+
+
+```r
+can_usa <- data %>%
+  filter(country == "Canada" | country == "United States")
 ```
 
 
 ```r
-# politics %<>% rename(country = country_name)
-# data2 <- data %>% full_join(politics, by =c("country", "year"))
-# data2$gdp2 <- data2$gdp * data2$gdp
+can_usa %>%
+  group_by(country) %>%
+  ggplot(aes(x = country, y = gdp)) +
+  geom_boxplot()
 ```
 
-## Regressions
+![](intro-to-r_files/figure-html/can_usa_bp-1.png)<!-- -->
 
-```r
-# run the regression
-
-# reg1 <- lm(emissions ~ gdp, data = usa)
-# # stargazer(reg1, type = 'html')
-# summary(reg1)
-# 
-# reg2 <- lm(emissions ~ log(energy) + gdp + gdp2 +v2x_libdem, data = data2)
-# summary(reg2)
-```
+Now, we can conduct a simple t-test. 
 
 
 ```r
-# sum(residuals(reg2)^2)
-# anova(reg2)
+can_usa_ttest <- t.test(gdp ~ country, data = can_usa)
+can_usa_ttest
+```
+
+```
+## 
+## 	Welch Two Sample t-test
+## 
+## data:  gdp by country
+## t = -1.9956, df = 41.391, p-value = 0.05259
+## alternative hypothesis: true difference in means between group Canada and group United States is not equal to 0
+## 95 percent confidence interval:
+##  -6280.02564    36.54738
+## sample estimates:
+##        mean in group Canada mean in group United States 
+##                    42578.26                    45700.00
 ```
