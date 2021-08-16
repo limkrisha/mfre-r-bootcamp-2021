@@ -10,20 +10,34 @@ output:
 
 
 
-The main objective of this R bootcamp is to introduce R programming to incoming MFRE students. The content of this bootcamp was adapted from [Software Carpentry](https://datacarpentry.org/r-socialsci/), Dr. Nick Huntington-Klein's Teaching Econometrics with R [slides](https://rpubs.com/NickCHK/RTeach2020), and the [Open Case Studies](https://www.opencasestudies.org/ocs-bp-co2-emissions/#Data_Analysis). If you spot any errors or issues, please email krisha.lim[at]ubc.ca. 
+The main objective of this R bootcamp is to introduce R programming to incoming MFRE students. The content of this bootcamp was adapted from [Software Carpentry](https://datacarpentry.org/r-socialsci/), Dr. Nick Huntington-Klein's Teaching Econometrics with R [slides](https://rpubs.com/NickCHK/RTeach2020), and the [Open Case Studies](https://www.opencasestudies.org/ocs-bp-co2-emissions/#Data_Analysis). If you spot any errors or issues, please send me a message on Canvas or at krisha.lim[at]ubc.ca. 
 
 # Before we get started
 
-  * Familiarize yourself with the RStudio IDE, which we will go through in class
-  * Understand the benefits of a project-oriented workflow. Read Jenny Bryan's post on why you should not start your scripts with `setwd()` and `rm(list = ls())` [here](https://www.tidyverse.org/blog/2017/12/workflow-vs-script/). We will talk about using R Projects instead.  
+* R is the language. RStudio is the IDE. If I say let's use R, I mean let's run R using RStudio. 
+* There are 4 main panes in RStudio 
+  * Source - This pane is where you type your script. If it's your first time to run RStudio, you might not see this pane. Just go to `File -> New File -> R Script`. It's best to type your code here because you can save it and run it again in the future. You will likely want to type most if not all of your code here for reproducibility. You can think of it as the equivalent of the Stata do file.
+  * Console - The console is the brain of R. It is where the code is evaluated. If you want to run some quick calculations, you can type your code here too. 
+  * Environment/History tab in the upper right - This pane will show all the data objects that you have loaded in your R session.
+  * File/Plots/Packages/Help 
+    * File - You can see all the other files in your working directory. 
+    * Plots - You can see the graph/plot you just designed
+    * Packages - You can see all the packages installed in your device. If a package is checked, then it is loaded in the current session. If a package is unchecked, the package is installed but not loaded. More on packages in the next section. 
+    * Help - You can see the documentation of the different packages, functions, etc.
+    
+* Stay organized. It is good to have one working directory per project. You can check for the working directory using the `getwd()` command. You can set the working directory using the `setwd("insert_file_path_here")`. BUT this approach is not the best way. Why? The file path will only work on your computer. If you share your code with your teammates, the script will not run seamlessly, and they have to manually change the file path too. Read more about this issue [here](https://www.tidyverse.org/blog/2017/12/workflow-vs-script/). 
+  * The better approach is to use R Projects and the `{here}` package. 
+  
 
-#  Packages
+# Packages
 
 There are thousands of packages (bundles of codes) available on [CRAN](https://cran.r-project.org/). If you are struggling to accomplish a certain task, it is very likely that someone has already created a function or a package to do it for you. 
 
 To install a package, use the command `install.package("package_name")` - do not forget the quotation marks! To install multiple packages at once, you can use the code `install.packages(c("package_1", "package_2", ...))`. 
 
 A big difference between R and Stata is that you have to load the package you will (or plan to use) use every time you start a new R session. To load a package, use the command `library(package_name)` - the quotation marks are now optional. You can write a function to load multiple libraries at once.
+
+Sometimes, you may encounter the code `require(package_name)`. Like `library(package_name)`, it will load the already installed package. The main difference between `require()` and `library()` is that `library()` returns an error if the package you are calling is not yet installed, whereas `require()` will return only a warning. More info on the difference [here](https://www.r-bloggers.com/2016/12/difference-between-library-and-require-in-r/#:~:text=The%20require()%20is%20designed,if%20the%20package%20is%20loaded.&text=It%20is%20better%20to%20use,during%20the%20package%20loading%20time). 
 
 The `pacman` package allows you to install and load packages in R more efficiently. The function `p_load()` checks whether a package is already installed, and if not, installs the package and loads it. The function can also be applied to several package at once, so you save a few (or many) lines of codes. 
 
@@ -260,6 +274,165 @@ emissions %in% c(14300, 50000)
 
 ```
 ## [1] FALSE  TRUE FALSE
+```
+
+## Matrices
+
+So far we have looked at one-dimensional objects. Matrices are two-dimensional objects in R and another common R object you will work with.  Elements must be of the same data type and are arranged in rows and columns. You can construct a matrix using the `matrix()` function, or also with a `cbind()` function. 
+
+The `matrix()` way
+
+
+```r
+# Let's first create another vector 
+year <- c(2014, 2015, 2016)
+
+m <- matrix(c(emissions, year), nrow = 3)
+m
+```
+
+```
+##         [,1] [,2]
+## [1,]   53700 2014
+## [2,]   14300 2015
+## [3,] 5250000 2016
+```
+
+```r
+class(m)
+```
+
+```
+## [1] "matrix" "array"
+```
+
+```r
+# To add column names to your matrix
+colnames(m) <- c("emissions", "year")
+m
+```
+
+```
+##      emissions year
+## [1,]     53700 2014
+## [2,]     14300 2015
+## [3,]   5250000 2016
+```
+
+The `cbind()` way 
+  
+
+```r
+matrix <- cbind(emissions, year)
+matrix
+```
+
+```
+##      emissions year
+## [1,]     53700 2014
+## [2,]     14300 2015
+## [3,]   5250000 2016
+```
+
+```r
+class(matrix)
+```
+
+```
+## [1] "matrix" "array"
+```
+
+  * In this option, the column takes the names of the R objects. You can also change the column names using the `colnames()` function.You can specify the column number of the column you wish to rename in brackets. 
+  
+
+```r
+# change name of the first column 
+colnames(matrix)[1] <- "emissions_new"
+
+# print column names
+colnames(matrix)
+```
+
+```
+## [1] "emissions_new" "year"
+```
+
+```r
+# dimension of the matrix
+dim(matrix) # 3 rows and 2 columns
+```
+
+```
+## [1] 3 2
+```
+
+Indexing a matrix is similar to a vector.
+
+
+```r
+# extract first row
+matrix[1,]
+```
+
+```
+## emissions_new          year 
+##         53700          2014
+```
+
+```r
+# extract first column 
+matrix[,1]
+```
+
+```
+## [1]   53700   14300 5250000
+```
+
+```r
+# extract first cell
+matrix[1,1]
+```
+
+```
+## emissions_new 
+##         53700
+```
+
+```r
+# extract by column name - don't forget the comma in front!
+matrix[, c("year")]
+```
+
+```
+## [1] 2014 2015 2016
+```
+
+You will get an error if you combine two vectors of different size.
+
+
+```r
+year <- c(year, 2017)
+
+will_not_work <- cbind(emissions, year)
+```
+
+```
+## Warning in cbind(emissions, year): number of rows of result is not a multiple of
+## vector length (arg 1)
+```
+
+You will also get an error if you attempt to create a matrix using 2 vectors of different types (i.e. one is numeric and another is character) 
+
+
+```r
+emission_type <- c("carbon dioxide", "carbon dioxide")
+
+will_not_work_too <- cbind(emissions, emission_type)
+```
+
+```
+## Warning in cbind(emissions, emission_type): number of rows of result is not a
+## multiple of vector length (arg 2)
 ```
 
 ## Lists
@@ -816,9 +989,9 @@ carbon %>%
 ## # A tibble: 3 x 265
 ##   country  `1751` `1752` `1753` `1754` `1755` `1756` `1757` `1758` `1759` `1760`
 ##   <chr>     <dbl>  <dbl>  <dbl>  <dbl>  <dbl>  <dbl>  <dbl>  <dbl>  <dbl>  <dbl>
-## 1 Andorra      NA     NA     NA     NA     NA     NA     NA     NA     NA     NA
-## 2 Suriname     NA     NA     NA     NA     NA     NA     NA     NA     NA     NA
-## 3 Trinida~     NA     NA     NA     NA     NA     NA     NA     NA     NA     NA
+## 1 Portugal     NA     NA     NA     NA     NA     NA     NA     NA     NA     NA
+## 2 Uganda       NA     NA     NA     NA     NA     NA     NA     NA     NA     NA
+## 3 Rwanda       NA     NA     NA     NA     NA     NA     NA     NA     NA     NA
 ## # ... with 254 more variables: 1761 <dbl>, 1762 <dbl>, 1763 <dbl>, 1764 <dbl>,
 ## #   1765 <dbl>, 1766 <dbl>, 1767 <dbl>, 1768 <dbl>, 1769 <dbl>, 1770 <dbl>,
 ## #   1771 <dbl>, 1772 <dbl>, 1773 <dbl>, 1774 <dbl>, 1775 <dbl>, 1776 <dbl>,
@@ -902,18 +1075,18 @@ carbon_long %>%
 
 ```
 ## # A tibble: 10 x 3
-##    country               year  emissions
-##    <chr>                 <chr>     <dbl>
-##  1 Armenia               1995       3410
-##  2 Chile                 2008      71900
-##  3 South Africa          2002     357000
-##  4 Maldives              1846         NA
-##  5 Italy                 1853         NA
-##  6 South Korea           1776         NA
-##  7 Sao Tome and Principe 1934         NA
-##  8 St. Kitts and Nevis   1972         NA
-##  9 Chad                  1802         NA
-## 10 Sierra Leone          2008        664
+##    country         year  emissions
+##    <chr>           <chr>     <dbl>
+##  1 Belize          1981      183  
+##  2 Samoa           1887       NA  
+##  3 Zambia          1974     4200  
+##  4 Libya           1880       NA  
+##  5 Slovak Republic 1956    26000  
+##  6 Italy           1797       NA  
+##  7 Mauritania      1888       NA  
+##  8 Tonga           1992       69.7
+##  9 Switzerland     1890     2880  
+## 10 South Africa    1994   339000
 ```
 
 ```r
