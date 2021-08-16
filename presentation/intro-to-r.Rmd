@@ -21,15 +21,34 @@ library(broom)
 library(readstata13)
 ```
 
-The main objective of this R bootcamp is to introduce R programming to incoming MFRE students. The content of this bootcamp was adapted from [Software Carpentry](https://datacarpentry.org/r-socialsci/), Dr. Nick Huntington-Klein's Teaching Econometrics with R [slides](https://rpubs.com/NickCHK/RTeach2020), and the [Open Case Studies](https://www.opencasestudies.org/ocs-bp-co2-emissions/#Data_Analysis). If you spot any errors or issues, please email krisha.lim[at]ubc.ca. 
+The main objective of this R bootcamp is to introduce R programming to incoming MFRE students. The content of this bootcamp was adapted from [Software Carpentry](https://datacarpentry.org/r-socialsci/), Dr. Nick Huntington-Klein's Teaching Econometrics with R [slides](https://rpubs.com/NickCHK/RTeach2020), and the [Open Case Studies](https://www.opencasestudies.org/ocs-bp-co2-emissions/#Data_Analysis). If you spot any errors or issues, please send me a message on Canvas or at krisha.lim[at]ubc.ca. 
 
-#  Packages
+# Before we get started
+
+* R is the language. RStudio is the IDE. If I say let's use R, I mean let's run R using RStudio. 
+* There are 4 main panes in RStudio 
+  * Source - This pane is where you type your script. If it's your first time to run RStudio, you might not see this pane. Just go to `File -> New File -> R Script`. It's best to type your code here because you can save it and run it again in the future. You will likely want to type most if not all of your code here for reproducibility. You can think of it as the equivalent of the Stata do file.
+  * Console - The console is the brain of R. It is where the code is evaluated. If you want to run some quick calculations, you can type your code here too. 
+  * Environment/History tab in the upper right - This pane will show all the data objects that you have loaded in your R session.
+  * File/Plots/Packages/Help 
+    * File - You can see all the other files in your working directory. 
+    * Plots - You can see the graph/plot you just designed
+    * Packages - You can see all the packages installed in your device. If a package is checked, then it is loaded in the current session. If a package is unchecked, the package is installed but not loaded. More on packages in the next section. 
+    * Help - You can see the documentation of the different packages, functions, etc.
+    
+* Stay organized. It is good to have one working directory per project. You can check for the working directory using the `getwd()` command. You can set the working directory using the `setwd("insert_file_path_here")`. BUT this approach is not the best way. Why? The file path will only work on your computer. If you share your code with your teammates, the script will not run seamlessly, and they have to manually change the file path too. Read more about this issue [here](https://www.tidyverse.org/blog/2017/12/workflow-vs-script/). 
+  * The better approach is to use R Projects and the `{here}` package. 
+  
+
+# Packages
 
 There are thousands of packages (bundles of codes) available on [CRAN](https://cran.r-project.org/). If you are struggling to accomplish a certain task, it is very likely that someone has already created a function or a package to do it for you. 
 
 To install a package, use the command `install.package("package_name")` - do not forget the quotation marks! To install multiple packages at once, you can use the code `install.packages(c("package_1", "package_2", ...))`. 
 
 A big difference between R and Stata is that you have to load the package you will (or plan to use) use every time you start a new R session. To load a package, use the command `library(package_name)` - the quotation marks are now optional. You can write a function to load multiple libraries at once.
+
+Sometimes, you may encounter the code `require(package_name)`. Like `library(package_name)`, it will load the already installed package. The main difference between `require()` and `library()` is that `library()` returns an error if the package you are calling is not yet installed, whereas `require()` will return only a warning. More info on the difference [here](https://www.r-bloggers.com/2016/12/difference-between-library-and-require-in-r/#:~:text=The%20require()%20is%20designed,if%20the%20package%20is%20loaded.&text=It%20is%20better%20to%20use,during%20the%20package%20loading%20time). 
 
 The `pacman` package allows you to install and load packages in R more efficiently. The function `p_load()` checks whether a package is already installed, and if not, installs the package and loads it. The function can also be applied to several package at once, so you save a few (or many) lines of codes. 
 
@@ -162,6 +181,78 @@ emissions %in% c("Canada")
 countries %in% c("Canada", "United States")
 
 emissions %in% c(14300, 50000)
+```
+
+## Matrices
+
+So far we have looked at one-dimensional objects. Matrices are two-dimensional objects in R and another common R object you will work with.  Elements must be of the same data type and are arranged in rows and columns. You can construct a matrix using the `matrix()` function, or also with a `cbind()` function. 
+
+The `matrix()` way
+
+```{r matrix}
+# Let's first create another vector 
+year <- c(2014, 2015, 2016)
+
+m <- matrix(c(emissions, year), nrow = 3)
+m
+class(m)
+
+# To add column names to your matrix
+colnames(m) <- c("emissions", "year")
+m
+```
+
+The `cbind()` way 
+  
+```{r matrix_cbind}
+matrix <- cbind(emissions, year)
+matrix
+class(matrix)
+```
+
+  * In this option, the column takes the names of the R objects. You can also change the column names using the `colnames()` function.You can specify the column number of the column you wish to rename in brackets. 
+  
+```{r matrix_changecol}
+# change name of the first column 
+colnames(matrix)[1] <- "emissions_new"
+
+# print column names
+colnames(matrix)
+
+# dimension of the matrix
+dim(matrix) # 3 rows and 2 columns
+```
+
+Indexing a matrix is similar to a vector.
+
+```{r matrix_indexing}
+# extract first row
+matrix[1,]
+
+# extract first column 
+matrix[,1]
+
+# extract first cell
+matrix[1,1]
+
+# extract by column name - don't forget the comma in front!
+matrix[, c("year")]
+```
+
+You will get an error if you combine two vectors of different size.
+
+```{r matrix_diffsize}
+year <- c(year, 2017)
+
+will_not_work <- cbind(emissions, year)
+```
+
+You will also get an error if you attempt to create a matrix using 2 vectors of different types (i.e. one is numeric and another is character) 
+
+```{r matrix_error}
+emission_type <- c("carbon dioxide", "carbon dioxide")
+
+will_not_work_too <- cbind(emissions, emission_type)
 ```
 
 ## Lists
