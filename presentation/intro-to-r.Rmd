@@ -190,22 +190,30 @@ So far we have looked at one-dimensional objects. Matrices are two-dimensional o
 The `matrix()` way
 
 ```{r matrix}
-# Let's first create another vector 
-year <- c(2014, 2015, 2016)
+# the 2 vectors must be of the same size length
+countries <- c("Canada", "Kenya", "United States")
 
-m <- matrix(c(emissions, year), nrow = 3)
+m <- matrix(c(emissions, countries), nrow = 3)
 m
 class(m)
+```
 
+  * If you don't specify `nrow = 3`, then it will just create 1 column. 
+  
+```{r matrix_colnames}
 # To add column names to your matrix
 colnames(m) <- c("emissions", "year")
+m
+
+# To add row names to your matrix
+rownames(m) <- c("c1", "c2", "c3")
 m
 ```
 
 The `cbind()` way 
   
 ```{r matrix_cbind}
-matrix <- cbind(emissions, year)
+matrix <- cbind(emissions, countries)
 matrix
 class(matrix)
 ```
@@ -219,6 +227,9 @@ colnames(matrix)[1] <- "emissions_new"
 # print column names
 colnames(matrix)
 
+# add row names
+rownames(matrix) <- c("c1", "c2", "c3")
+
 # dimension of the matrix
 dim(matrix) # 3 rows and 2 columns
 ```
@@ -229,25 +240,28 @@ Indexing a matrix is similar to a vector.
 # extract first row
 matrix[1,]
 
+# extract first row by row name
+matrix["c2",]
+
 # extract first column 
 matrix[,1]
 
+# extract by column name - don't forget the comma in front!
+matrix[, c("emissions_new")]
+
 # extract first cell
 matrix[1,1]
-
-# extract by column name - don't forget the comma in front!
-matrix[, c("year")]
 ```
 
 You will get an error if you combine two vectors of different size.
 
 ```{r matrix_diffsize}
-year <- c(year, 2017)
+countries <- c(countries, "China")
 
-will_not_work <- cbind(emissions, year)
+will_not_work <- cbind(emissions, countries)
 ```
 
-You will also get an error if you attempt to create a matrix using 2 vectors of different types (i.e. one is numeric and another is character) 
+You will also get an error if you attempt to create a matrix using 2 vectors of different types (i.e. one is numeric and another is character).
 
 ```{r matrix_error}
 emission_type <- c("carbon dioxide", "carbon dioxide")
@@ -282,6 +296,15 @@ first_df
 
 # class(first_df)
 # extract values in country column: first_df[["countries]] or first_df$countries
+```
+
+We can also convert the matrix we created earlier into a data frame using the `as.data.frame()` function.
+
+```{r matrix_df}
+matrix_df <- as.data.frame(matrix)
+str(matrix_df)
+
+# to call the first column: matrix_df$emissions_new
 ```
 
 A special type of data frame we will work with in this bootcamp is called tibbles; you can read more about it [here](https://r4ds.had.co.nz/tibbles.html). 
@@ -386,10 +409,11 @@ function_name <- function(arg1, arg2, ...){
 
   * The `object` is the value to be returned by the function. Some people may write `return(object)` or `object` or do not specify. 
 
-Let's take a look at an example. R does not have a built in function to calculate standard error. Recall that the formula of the standard error is $ SE_\tilde{x} =  \sqrt{var/ n} $
+Let's take a look at an example. R does not have a built in function to calculate standard error. Recall that the formula of the standard error is $SE_\tilde{x} =  \sqrt{var/ n}$
 
 ```{r data_addgdp}
-first_tibble %<>% add_column(gdp = c(50300, 1090, 52100, 6110))
+first_tibble <- first_tibble %>%
+  add_column(gdp = c(50300, 1090, 52100, 6110))
 ```
 
 Let's say we want to calculate the standard error for emissions.
@@ -415,6 +439,33 @@ Now we can call use this function similar to the built-in functions of R introdu
 std_error(first_tibble$emissions)
 
 std_error(first_tibble$gdp)
+```
+
+### Importing a function
+
+In some cases, you may write a function and save it in a different script. You can then import that script into your current script using the `source()` function.
+
+In this example below, we first specify the model parameters (a, b, m0, etc.). Then we call the function get_delta saved in the `price_function.R` script saved in the `code` folder in my working directory using the `source()` and `here()` commands. You will notice a `get_delta()` function appear in your `Environment` tab. Then you can run the function as if you wrote it in this script. 
+
+Other times `source()` may be helpful is when you have a "main" or "master" script that will run all the scripts in your project. For example, you might have a cleaning script, analysis script, figures script, and then a "main" script that runs all of these individual scripts. 
+
+```{r price_function}
+# assign values to model parameters 
+a <- 16.21
+b <- 3.50
+m0 <- -0.22
+m1 <- 0.03
+S0 <- 2.015
+H1 <- 14.38
+S_bar <- 2.015
+v <- c(a, b, m0, m1, S0, H1, S_bar)
+
+# call the script that contains the `get_delta()` function. 
+source(here("code", "price_function.R"))
+
+# run the function
+del <- get_delta(v)
+del
 ```
 
 # Data Import

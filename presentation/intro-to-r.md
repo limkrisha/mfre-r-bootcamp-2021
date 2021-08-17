@@ -284,18 +284,18 @@ The `matrix()` way
 
 
 ```r
-# Let's first create another vector 
-year <- c(2014, 2015, 2016)
+# the 2 vectors must be of the same size length
+countries <- c("Canada", "Kenya", "United States")
 
-m <- matrix(c(emissions, year), nrow = 3)
+m <- matrix(c(emissions, countries), nrow = 3)
 m
 ```
 
 ```
-##         [,1] [,2]
-## [1,]   53700 2014
-## [2,]   14300 2015
-## [3,] 5250000 2016
+##      [,1]      [,2]           
+## [1,] "53700"   "Canada"       
+## [2,] "14300"   "Kenya"        
+## [3,] "5250000" "United States"
 ```
 
 ```r
@@ -306,6 +306,9 @@ class(m)
 ## [1] "matrix" "array"
 ```
 
+  * If you don't specify `nrow = 3`, then it will just create 1 column. 
+  
+
 ```r
 # To add column names to your matrix
 colnames(m) <- c("emissions", "year")
@@ -313,25 +316,38 @@ m
 ```
 
 ```
-##      emissions year
-## [1,]     53700 2014
-## [2,]     14300 2015
-## [3,]   5250000 2016
+##      emissions year           
+## [1,] "53700"   "Canada"       
+## [2,] "14300"   "Kenya"        
+## [3,] "5250000" "United States"
+```
+
+```r
+# To add row names to your matrix
+rownames(m) <- c("c1", "c2", "c3")
+m
+```
+
+```
+##    emissions year           
+## c1 "53700"   "Canada"       
+## c2 "14300"   "Kenya"        
+## c3 "5250000" "United States"
 ```
 
 The `cbind()` way 
   
 
 ```r
-matrix <- cbind(emissions, year)
+matrix <- cbind(emissions, countries)
 matrix
 ```
 
 ```
-##      emissions year
-## [1,]     53700 2014
-## [2,]     14300 2015
-## [3,]   5250000 2016
+##      emissions countries      
+## [1,] "53700"   "Canada"       
+## [2,] "14300"   "Kenya"        
+## [3,] "5250000" "United States"
 ```
 
 ```r
@@ -354,10 +370,13 @@ colnames(matrix)
 ```
 
 ```
-## [1] "emissions_new" "year"
+## [1] "emissions_new" "countries"
 ```
 
 ```r
+# add row names
+rownames(matrix) <- c("c1", "c2", "c3")
+
 # dimension of the matrix
 dim(matrix) # 3 rows and 2 columns
 ```
@@ -375,8 +394,18 @@ matrix[1,]
 ```
 
 ```
-## emissions_new          year 
-##         53700          2014
+## emissions_new     countries 
+##       "53700"      "Canada"
+```
+
+```r
+# extract first row by row name
+matrix["c2",]
+```
+
+```
+## emissions_new     countries 
+##       "14300"       "Kenya"
 ```
 
 ```r
@@ -385,7 +414,18 @@ matrix[,1]
 ```
 
 ```
-## [1]   53700   14300 5250000
+##        c1        c2        c3 
+##   "53700"   "14300" "5250000"
+```
+
+```r
+# extract by column name - don't forget the comma in front!
+matrix[, c("emissions_new")]
+```
+
+```
+##        c1        c2        c3 
+##   "53700"   "14300" "5250000"
 ```
 
 ```r
@@ -394,34 +434,24 @@ matrix[1,1]
 ```
 
 ```
-## emissions_new 
-##         53700
-```
-
-```r
-# extract by column name - don't forget the comma in front!
-matrix[, c("year")]
-```
-
-```
-## [1] 2014 2015 2016
+## [1] "53700"
 ```
 
 You will get an error if you combine two vectors of different size.
 
 
 ```r
-year <- c(year, 2017)
+countries <- c(countries, "China")
 
-will_not_work <- cbind(emissions, year)
+will_not_work <- cbind(emissions, countries)
 ```
 
 ```
-## Warning in cbind(emissions, year): number of rows of result is not a multiple of
-## vector length (arg 1)
+## Warning in cbind(emissions, countries): number of rows of result is not a
+## multiple of vector length (arg 1)
 ```
 
-You will also get an error if you attempt to create a matrix using 2 vectors of different types (i.e. one is numeric and another is character) 
+You will also get an error if you attempt to create a matrix using 2 vectors of different types (i.e. one is numeric and another is character).
 
 
 ```r
@@ -712,11 +742,12 @@ function_name <- function(arg1, arg2, ...){
 
   * The `object` is the value to be returned by the function. Some people may write `return(object)` or `object` or do not specify. 
 
-Let's take a look at an example. R does not have a built in function to calculate standard error. Recall that the formula of the standard error is $ SE_\tilde{x} =  \sqrt{var/ n} $
+Let's take a look at an example. R does not have a built in function to calculate standard error. Recall that the formula of the standard error is $SE_\tilde{x} =  \sqrt{var/ n}$
 
 
 ```r
-first_tibble %<>% add_column(gdp = c(50300, 1090, 52100, 6110))
+first_tibble <- first_tibble %>%
+  add_column(gdp = c(50300, 1090, 52100, 6110))
 ```
 
 Let's say we want to calculate the standard error for emissions.
@@ -989,9 +1020,9 @@ carbon %>%
 ## # A tibble: 3 x 265
 ##   country  `1751` `1752` `1753` `1754` `1755` `1756` `1757` `1758` `1759` `1760`
 ##   <chr>     <dbl>  <dbl>  <dbl>  <dbl>  <dbl>  <dbl>  <dbl>  <dbl>  <dbl>  <dbl>
-## 1 Portugal     NA     NA     NA     NA     NA     NA     NA     NA     NA     NA
-## 2 Uganda       NA     NA     NA     NA     NA     NA     NA     NA     NA     NA
-## 3 Rwanda       NA     NA     NA     NA     NA     NA     NA     NA     NA     NA
+## 1 South K~     NA     NA     NA     NA     NA     NA     NA     NA     NA     NA
+## 2 Slovenia     NA     NA     NA     NA     NA     NA     NA     NA     NA     NA
+## 3 Kiribati     NA     NA     NA     NA     NA     NA     NA     NA     NA     NA
 ## # ... with 254 more variables: 1761 <dbl>, 1762 <dbl>, 1763 <dbl>, 1764 <dbl>,
 ## #   1765 <dbl>, 1766 <dbl>, 1767 <dbl>, 1768 <dbl>, 1769 <dbl>, 1770 <dbl>,
 ## #   1771 <dbl>, 1772 <dbl>, 1773 <dbl>, 1774 <dbl>, 1775 <dbl>, 1776 <dbl>,
@@ -1075,18 +1106,18 @@ carbon_long %>%
 
 ```
 ## # A tibble: 10 x 3
-##    country         year  emissions
-##    <chr>           <chr>     <dbl>
-##  1 Belize          1981      183  
-##  2 Samoa           1887       NA  
-##  3 Zambia          1974     4200  
-##  4 Libya           1880       NA  
-##  5 Slovak Republic 1956    26000  
-##  6 Italy           1797       NA  
-##  7 Mauritania      1888       NA  
-##  8 Tonga           1992       69.7
-##  9 Switzerland     1890     2880  
-## 10 South Africa    1994   339000
+##    country      year  emissions
+##    <chr>        <chr>     <dbl>
+##  1 Malta        1964        499
+##  2 Nauru        1888         NA
+##  3 Timor-Leste  1862         NA
+##  4 Paraguay     1855         NA
+##  5 Maldives     1841         NA
+##  6 Venezuela    1758         NA
+##  7 Brazil       1841         NA
+##  8 Tunisia      1985      11900
+##  9 South Africa 1867         NA
+## 10 Luxembourg   1889         NA
 ```
 
 ```r
