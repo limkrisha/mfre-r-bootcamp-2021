@@ -21,57 +21,51 @@ library(broom)
 library(readstata13)
 ```
 
-The main objective of this R bootcamp is to introduce R programming to incoming MFRE students. The content of this bootcamp was adapted from [Software Carpentry](https://datacarpentry.org/r-socialsci/), Dr. Nick Huntington-Klein's Teaching Econometrics with R [slides](https://rpubs.com/NickCHK/RTeach2020), and the [Open Case Studies](https://www.opencasestudies.org/ocs-bp-co2-emissions/#Data_Analysis). If you spot any errors or issues, please send me a message on Canvas or at krisha.lim[at]ubc.ca. 
+The main objective of this R bootcamp is to introduce R programming to incoming MFRE students. The content of this session is adapted from [Software Carpentry](https://datacarpentry.org/r-socialsci/) and Dr. Nick Huntington-Klein's Teaching Econometrics with R [slides](https://rpubs.com/NickCHK/RTeach2020). If you spot any errors or issues, please send me a message on Canvas or at krisha.lim[at]ubc.ca. 
 
 # Before we get started
 
+* Programming in R is one of the tools taught in the MFRE program to support econometrics, economics, and business analysis applications. 
 * R is the language. RStudio is the IDE. If I say let's use R, I mean let's run R using RStudio. 
-* There are 4 main panes in RStudio 
-  * Source - This pane is where you type your script. If it's your first time to run RStudio, you might not see this pane. Just go to `File -> New File -> R Script`. It's best to type your code here because you can save it and run it again in the future. You will likely want to type most if not all of your code here for reproducibility. You can think of it as the equivalent of the Stata do file.
-  * Console - The console is the brain of R. It is where the code is evaluated. If you want to run some quick calculations, you can type your code here too. 
-  * Environment/History tab in the upper right - This pane will show all the data objects that you have loaded in your R session.
-  * File/Plots/Packages/Help 
-    * File - You can see all the other files in your working directory. 
-    * Plots - You can see the graph/plot you just designed
-    * Packages - You can see all the packages installed in your device. If a package is checked, then it is loaded in the current session. If a package is unchecked, the package is installed but not loaded. More on packages in the next section. 
-    * Help - You can see the documentation of the different packages, functions, etc.
-    
-* Stay organized. It is good to have one working directory per project. You can check for the working directory using the `getwd()` command. You can set the working directory using the `setwd("insert_file_path_here")`. BUT this approach is not the best way. Why? The file path will only work on your computer. If you share your code with your teammates, the script will not run seamlessly, and they have to manually change the file path too. Read more about this issue [here](https://www.tidyverse.org/blog/2017/12/workflow-vs-script/). 
-  * The better approach is to use R Projects and the `{here}` package. 
-  
+* Stay organized. It is good to have one working directory per project. You can check for the working directory using the `getwd()` command. The best practice is to use R projects and the `{here}` package. 
+  * The `{here}` package will determine the top-level of your current project, which is your working directory. In my case it is "H:/Workshops/2021-r-bootcamp". The `here()` function allows me to build the path relative to this directory. So instead of typing "H:/Workshops/2021-r-bootcamp/data/emissions.csv" to refer to the emissions.csv file saved in the data folder (or "data/emission.csv" if I set the working directory), I can use `here("data", "emissions.csv")`.  
+  * I discourage you from using`setwd("insert_file_path_here")` because this file path will only work on your computer. Read more about this issue [here](https://www.tidyverse.org/blog/2017/12/workflow-vs-script/). 
+
 
 # Packages
 
 There are thousands of packages (bundles of codes) available on [CRAN](https://cran.r-project.org/). If you are struggling to accomplish a certain task, it is very likely that someone has already created a function or a package to do it for you. 
 
-To install a package, use the command `install.package("package_name")` - do not forget the quotation marks! To install multiple packages at once, you can use the code `install.packages(c("package_1", "package_2", ...))`. 
+To install a package, use the command `install.package("package_name")`. Do not forget the quotation marks! To install multiple packages at once, you can use the code `install.packages(c("package_1", "package_2", ...))`. 
 
-A big difference between R and Stata is that you have to load the package you will (or plan to use) use every time you start a new R session. To load a package, use the command `library(package_name)` - the quotation marks are now optional. You can write a function to load multiple libraries at once.
+A big difference between R and Stata is that you have to load the package you will (or plan to use) use every time you start a new R session. To load a package, use the command `library(package_name)`. The quotation marks are now optional. You can also write a function to load multiple libraries at once.
 
 Sometimes, you may encounter the code `require(package_name)`. Like `library(package_name)`, it will load the already installed package. The main difference between `require()` and `library()` is that `library()` returns an error if the package you are calling is not yet installed, whereas `require()` will return only a warning. More info on the difference [here](https://www.r-bloggers.com/2016/12/difference-between-library-and-require-in-r/#:~:text=The%20require()%20is%20designed,if%20the%20package%20is%20loaded.&text=It%20is%20better%20to%20use,during%20the%20package%20loading%20time). 
 
 The `pacman` package allows you to install and load packages in R more efficiently. The function `p_load()` checks whether a package is already installed, and if not, installs the package and loads it. The function can also be applied to several package at once, so you save a few (or many) lines of codes. 
 
+Let's now load the packages we will use for the rest of the bootcamp! 
+
 ```{r pacman_norun, eval = FALSE}
-# install.packages("pacman")
-pacman::p_load(tidyverse, readxl, googlesheets4, readstata13, magrittr, cansim, stats, broom, modelsummary)
+install.packages("pacman")
+library(pacman)
+# require(pacman)
+p_load(tidyverse, readxl, googlesheets4, readstata13, magrittr, cansim, stats, broom, modelsummary, flextable, here)
 ```
  
 ```{r pacman_run, echo = FALSE}
-pacman::p_load(tidyverse, readxl, googlesheets4, readstata13, magrittr, cansim, stats, broom, modelsummary)
+pacman::p_load(tidyverse, readxl, googlesheets4, readstata13, magrittr, cansim, stats, broom, modelsummary, flextable, here)
 ```
 
-# R Basics 
-
-## Interacting with R 
+# Interacting with R 
 
 We can get output from R console by typing math expressions. 
 
 ```{r, eval = FALSE}
-1+1 
-2+4*1^3
-100 %/% 60 
-100 %% 60
+1 + 1 
+2 + 4 * 1^3
+100 %/% 60 # How many whole hours in 100 minutes?
+100 %% 60 # How many minutes are left over?
 ```
 
 We can also get output from R by typing logic statements in the console.
@@ -96,7 +90,7 @@ x <- 10
 x # we can also overwrite the value of an existing object
 ```
 
-## Data object types
+# Data object types
 
 There are different types of objects in R. The common ones we will use are: numeric, character, factor, and logical. There are different functions (or commands) in R to examine objects. Common examples are `class()`, `typeof()`, `str()`, `length()`. 
 
@@ -107,7 +101,7 @@ factor_var <- factor(1, labels = "one")
 logical_var <- TRUE
 ```
 
-## Vectors
+# Vectors
 
 Multiple observations of the same type are called vectors. You use the `c()` function to concatenate values.  
 
@@ -130,17 +124,18 @@ You can also add values to existing vectors.
 countries <- c(countries, "China")
 countries
 ```
-
 Here are some functions to inspect the content of a vector. 
-```{r inspectvec}
-length(countries) # inspect the number of elements in a vector
-class(countries) # type/class of an object
-class(emissions)
 
-# The str() function provides the structure of an object and a preview of its elements. This function is useful when inspecting large and complex objects. 
+  * `length()` to inspect the number of elements in a vector
+  * `class()` to inspect the type or class of an object
+  * `str()` to inspect the structure of an object and see a preview of its elements, which is useful when working with large and complex objects
+  
+```{r inspectvec_length}
+length(countries)
+class(countries) 
 str(emissions) 
 ```
-
+  
 Vectors must always be of the same type. If we try to mix different types (character, numeric, logical, etc.) in a vector, R will force the content to be the same. 
 
 ```{r difftypesvector}
@@ -148,7 +143,17 @@ trythis <- c(1, 2, 3, "a")
 class(trythis)
 ```
 
-### Subsetting Vectors
+You can also convert one data type to another. You may find these functions useful when you load numeric data but R reads it as character. 
+
+```{r convervectortype}
+emissions <- as.character(emissions) 
+class(emissions)
+
+emissions <- as.numeric(emissions) 
+class(emissions)
+```
+
+## Subsetting Vectors
 
 We use the index position of an element in square brackets to extract one or more elements from a vector. Note that the index starts at 1. 
 
@@ -173,7 +178,7 @@ emissions[emissions > 100000]
 emissions[emissions > 0 & emissions < 55000]
 ```
 
-We can also use `%in` to check whether an object is contained within or matches with a list of items. 
+We can also use `%in%` to check whether an object is contained within or matches with a list of items. 
 
 ```{r extract_in}
 emissions %in% c("Canada")
@@ -183,34 +188,44 @@ countries %in% c("Canada", "United States")
 emissions %in% c(14300, 50000)
 ```
 
-## Matrices
+# Matrices
 
-So far we have looked at one-dimensional objects. Matrices are two-dimensional objects in R and another common R object you will work with.  Elements must be of the same data type and are arranged in rows and columns. You can construct a matrix using the `matrix()` function, or also with a `cbind()` function. 
+So far we have looked at one-dimensional objects. Matrices are two-dimensional objects in R and another common R object you will work with. Elements must be of the same data type and are arranged in rows and columns.
 
-The `matrix()` way
+You can construct a matrix using the `matrix()` function.
 
 ```{r matrix}
 # the 2 vectors must be of the same size length
 countries <- c("Canada", "Kenya", "United States")
 
+# Creates a matrix and assigns it to object m
 m <- matrix(c(emissions, countries), nrow = 3)
 m
 class(m)
 ```
 
-  * If you don't specify `nrow = 3`, then it will just create 1 column. 
-  
-```{r matrix_colnames}
-# To add column names to your matrix
-colnames(m) <- c("emissions", "year")
-m
+The `nrow = 3` argument tells R that your matrix has 3 rows. If you don't specify `nrow = 3`, then it will just create 1 column with the number of rows equal to the number of elements of your vectors. 
 
-# To add row names to your matrix
+```{r matrix_nrow}
+m_1 <- matrix(c(emissions, countries))
+m_1
+```
+
+If you specify `nrow = 5` for example, your object will have 5 rows, and the values of some elements will repeat. 
+```{r matrix_nrow5}
+m_5 <- matrix(c(emissions, countries), nrow = 5)
+m_5
+```
+
+You can also add column and rownames to your matrix using the `colnames()` and `rownames()` functions, respectively
+
+```{r matrix_colnames}
+colnames(m) <- c("emissions", "year")
 rownames(m) <- c("c1", "c2", "c3")
 m
 ```
 
-The `cbind()` way 
+You can also construct a matrix using the `cbind()` function. In FRE501, Dr. Vercammen uses this function to construct a matrix.
   
 ```{r matrix_cbind}
 matrix <- cbind(emissions, countries)
@@ -218,29 +233,33 @@ matrix
 class(matrix)
 ```
 
-  * In this option, the column takes the names of the R objects. You can also change the column names using the `colnames()` function.You can specify the column number of the column you wish to rename in brackets. 
-  
+If you use the `cbind()` function to create a matrix, the columns in the matrix takes the names of the R objects. You can also change the column and row names using the `colnames()` and `rownames()` functions. If you want to change a specific column (or row) number, you can specify the index number in brackets. 
+
 ```{r matrix_changecol}
 # change name of the first column 
 colnames(matrix)[1] <- "emissions_new"
 
-# print column names
-colnames(matrix)
-
 # add row names
 rownames(matrix) <- c("c1", "c2", "c3")
+
+# print column and names only
+colnames(matrix)
+rownames(matrix)
 
 # dimension of the matrix
 dim(matrix) # 3 rows and 2 columns
 ```
 
-Indexing a matrix is similar to a vector.
+Just like vectors, we use brackets to subset matrices. Because matrices are two dimensional objects (rows and columns) while vectors are only one dimensional, we now need to indicate the row and column positions of the values we want to extract. The sytax would be `matrix[row_position, column_position]`. If you leave row position blank, R assumes that you are asking for the whole row. 
 
 ```{r matrix_indexing}
+# extract first element of the second column
+matrix[1,2]
+
 # extract first row
 matrix[1,]
 
-# extract first row by row name
+# extract first row by row name - don't forget the comma after
 matrix["c2",]
 
 # extract first column 
@@ -249,8 +268,8 @@ matrix[,1]
 # extract by column name - don't forget the comma in front!
 matrix[, c("emissions_new")]
 
-# extract first cell
-matrix[1,1]
+# extract first two rows of the first column
+matrix[1:2, 1]
 ```
 
 You will get an error if you combine two vectors of different size.
@@ -271,43 +290,65 @@ will_not_work_too <- cbind(emissions, emission_type)
 
 ## Lists
 
-A list is a flexible R object that is a collection of different objects. You can extract sub-objects using `[[]]` or `$`. A common example of a list object you will interact with often is regression objects (more on this later!). 
+A list is a flexible R object that is a collection of different objects.
 
 ```{r list}
 first_list <- list(a = 1:5, b = 6:10, c = c("food", "resource", "economics"))
-first_list #print the output
-class(first_list)
-class(first_list$a)
-class(first_list[["c"]])
-
-first_list[["a"]] # extract elements in a using [[]]
-first_list$c #extract elements in c using $ 
+first_list 
+str(first_list)
 ```
 
-## Data Frames
+You can extract sub-objects using `[]` or `[[]]` or `$`. A common example of a list object you will interact with often is regression objects (more on this later!). 
 
-In MFRE, we will work a lot with data frames. A data frame is a list composed of vectors of equal length. Data frames can story different data types in each column. For example, the first column can be a character vector, and the second column is a numeric vector. You can createa data frame object using the function `data.frame()`.
+```{r list_extract}
+first_list["a"] # output is a list
+first_list[["a"]] # output is character vector
+first_list$c #output is character vector
+```
+
+# Data Frames
+
+In MFRE, we will work a lot with data frames. A data frame is a list composed of vectors of equal length. You can think of a data frame as an Excel spreadsheet that contains columns of different data types, and all columns have the same number of rows. Data frames can store different data types in each column. For example, the first column can be a character vector, and the second column is a numeric vector. 
+
+You can create a data frame object using the function `data.frame()`.
 
 ```{r df}
 first_df <- data.frame(countries = c("Canada", "Kenya", "United States"),
                        emissions = c(53700, 14300, 5250000))
 
 first_df
-
-# class(first_df)
-# extract values in country column: first_df[["countries]] or first_df$countries
 ```
 
 We can also convert the matrix we created earlier into a data frame using the `as.data.frame()` function.
 
 ```{r matrix_df}
 matrix_df <- as.data.frame(matrix)
-str(matrix_df)
-
-# to call the first column: matrix_df$emissions_new
 ```
 
-A special type of data frame we will work with in this bootcamp is called tibbles; you can read more about it [here](https://r4ds.had.co.nz/tibbles.html). 
+Here are some functions to inspect the elements of a data frame. 
+  * `dim()` to know the dimension of a data frame (can also be used in a matrix)
+  * `str()` to know the structure of a data frame
+  * `head()` and `tail()` to view the first or last 5 rows of the data frame 
+  * `names()` to know the column names of a data frame
+  
+```{r df_inspect}
+dim(first_df)
+str(first_df)
+head(first_df) 
+names(first_df)
+```
+
+We can extract elements inside the data frame using `[]`, `[[]]`, and `$`. 
+
+```{r df_extract}
+first_df["countries"] #output is a data frame
+first_df[["countries"]] #output is a character vector
+first_df$countries #output is a character vector 
+```
+
+## Tibbles
+
+A special type of data frame you may encounter is tibbles. You can read more about it [here](https://r4ds.had.co.nz/tibbles.html). 
 
 We can convert the `first_df` into a tibble using the `as_tibble()` function and call it `first_tibble`. We can also create a new tibble, which we will call `second_tibble` 
 
@@ -315,13 +356,12 @@ We can convert the `first_df` into a tibble using the `as_tibble()` function and
 first_tibble <- as_tibble(first_df)
 first_tibble 
 class(first_tibble)
-# first_tibble[["countries"]] or first_tibble$countries to extract the data in the countries column
 
 second_tibble <- tibble(countries = c("Peru", "Mexico", "China"),
                         emissions = c(61700, 480000, 10300000))
 ```
 
-## Functions
+# Functions
 
 Functions are scripts that automate complicated commands. You can write your own function, or you can also use functions that are available in R packages. A function gets one or more inputs called *arguments*. Functions often, but not always, return a value. One example of a function is the `sqrt()`. If you type in `?sqrt()` in the console, you will the documentation on the lower right panel under the 'Help` tab. You learn that the input (argument) must be numeric, and running the function will return the square root of the number. 
 
@@ -352,45 +392,44 @@ If you provide the arguments in the same order as they are defined, i.e. `round(
 round(3.14159, 2)
 ``` 
 
-You can find some built in R functions [here](https://www.statmethods.net/management/functions.html). Common ones we will use are `mean()`, `median()`, `min()`, `max()`. The code below shows you can take the mean of the emissions variable in the `first_tibble` tibble. 
+You can find some built in R functions [here](https://www.statmethods.net/management/functions.html). Common ones we will use are `summary()`, `mean()`, `median()`, `min()`, `max()`. The code below shows you can take the mean of the emissions variable in the `first_df` data frame.  
 
 ```{r mean_emissions}
-mean(first_tibble$emissions)
+mean(first_df$emissions)
 ```
 
 For these statistical functions, you will have to indicate how the function will treat missing values. In R, missing data are represented in vectors as `NA`. If you don't specify how the function will treat missing values, the function will return NA. 
 
-Let's return to our `first_tibble` object. Let's say we want to add Peru's emissions, but we don't have the data yet. We can use the `add_row()` function to do this step. Notice that I also have a `%>%` operator there. It is called the pipe. The pipe operator allows you to express a series of operators clearly (more info [here](https://r4ds.had.co.nz/pipes.html)). It takes the output on the left of the `%>%` and pass it to the function on the right. In the code below, `first_tibble` (left of the `%>%`) is passed on to another function, which is the `add_row` function. Then we are assigning it back to `first_tibble`, overwriting our initial data. If we don't use the assignment operator `<-`, then we have not overwritten `first_tibble`
+Let's return to our `first_df` object. Let's say we want to add Peru's emissions, but we don't have the data yet. We can use the `add_row()` function to do this step. Notice that I also have a `%>%` operator there. It is called the pipe operator. The pipe operator allows you to express a series of operators clearly (more info [here](https://r4ds.had.co.nz/pipes.html)). It takes the output on the left of the `%>%` and pass it to the function on the right. In the code below, `first_df` (left of the `%>%`) is passed on to another function, which is the `add_row` function. Then we are assigning it back to `first_df`, overwriting our initial data. If we don't use the assignment operator `<-`, then we have not overwritten `first_df` and Peru will not appear when we print `first_df`. 
 
-```{r tibble_addrow}
-# let's first add a row with missing data in first_tibble
-# no assignment operator
-first_tibble %>% 
+```{r df_addrow}
+first_df %>% 
   add_row(countries = "Peru", emissions = NA)
 
-first_tibble # Peru is not saved in first_tibble
+# Since we did not use an assignment operator, Peru is not saved in first_df
+first_df
 
-first_tibble <- first_tibble %>% 
+first_df <- first_df %>% 
   add_row(countries = "Peru", emissions = NA)
 
-first_tibble 
+first_df 
 ```
 
 Now, let's try to take the mean of emissions. 
 
 ```{r mean_na}
-mean(first_tibble$emissions)
+mean(first_df$emissions)
 ```
 
-Notice that you `NA` as the output. This feature makes it harder to overlook cases where you are dealing with missing data. If you take a look at the documentation (`?mean`), you can see that the default is `na.rm = FALSE`. By adding in `na.rm = TRUE`, then you are asking R to calculate the mean and that NA values should be ignored. Now the output will show `r mean(first_tibble$emissions, na.rm = T)`
+Notice that you `NA` as the output. This feature makes it harder to overlook cases where you are dealing with missing data. If you take a look at the documentation (`?mean`), you can see that the default is `na.rm = FALSE`. By adding in `na.rm = TRUE`, then you are asking R to calculate the mean and that NA values should be ignored. Now the output will show `r mean(first_df$emissions, na.rm = T)`
 
 ```{r mean_na2}
-mean(first_tibble$emissions, na.rm = T)
+mean(first_df$emissions, na.rm = T)
 ```
 
-### Writing your own functions
+## Writing your own functions
 
-You may consider writing your own functions to automate certain tasks and to reuse them later on. Read more about it [here](http://environmentalcomputing.net/writing-simple-functions/). If you find yourself repeating the same steps (in your current or across multiple scripts), writing a function may help you save time and also avoid mistakes. 
+Sometimes, you will find it useful to write your own functions to automate certain tasks and to reuse them later on. Read more about how to write your own functions [here](http://environmentalcomputing.net/writing-simple-functions/). If you find yourself repeating the same steps (in your current or across multiple scripts), writing a function may help you save time and also avoid mistakes. 
 
 The syntax of a function is 
 
@@ -409,17 +448,12 @@ function_name <- function(arg1, arg2, ...){
 
   * The `object` is the value to be returned by the function. Some people may write `return(object)` or `object` or do not specify. 
 
-Let's take a look at an example. R does not have a built in function to calculate standard error. Recall that the formula of the standard error is $SE_\tilde{x} =  \sqrt{var/ n}$
-
-```{r data_addgdp}
-first_tibble <- first_tibble %>%
-  add_column(gdp = c(50300, 1090, 52100, 6110))
-```
+Let's take a look at an example. R does not have a built in function to calculate standard error. Recall that the formula of the standard error is $SE =  \sqrt{var/ n}$
 
 Let's say we want to calculate the standard error for emissions.
 
 ```{r se_emissions}
-sqrt(var(first_tibble$emissions, na.rm = T) / length(first_tibble$emissions))
+sqrt(var(first_df$emissions, na.rm = T) / length(first_df$emissions))
 ```
 
 Not too bad! But what if you want to calculate the standard error for multiple variables, then you'd have to write the code above multiple times. Even if you copy paste the code and change the variable names, this process may be prone to errors. A better approach would be to make it a function. Following the syntax, we can write the standard error function as follows. 
@@ -427,21 +461,24 @@ Not too bad! But what if you want to calculate the standard error for multiple v
 ```{r own_function}
 std_error <- function(x){
   sqrt(var(x, na.rm = T) / length(x))
-  # because the calculation will return an output, we no longer have to indicate the return value 
 }
 ```
 
-Here, `std_error` is the function name. It takes `x` as the argument, which in our case would be a vector. Then everytime we pass a vector to this function, it will calculate the formula provided in the body. 
+Here, `std_error` is the function name. It takes `x` as the argument, which in our case would be a vector. Then every time we pass a vector to this function, it will calculate the formula provided in the body. 
 
-Now we can call use this function similar to the built-in functions of R introduced earlier. 
+Now let's add the GDP of these countries, and use the `std_error()` function we just created to compute the standard deviation. 
 
 ```{r std_error}
-std_error(first_tibble$emissions)
+first_df <- first_df %>%
+  add_column(gdp = c(50300, 1090, 52100, 6110))
 
-std_error(first_tibble$gdp)
+#always good to check if you wrote the function correctly
+std_error(first_df$emissions) 
+
+std_error(first_df$gdp)
 ```
 
-### Importing a function
+## Importing a function
 
 In some cases, you may write a function and save it in a different script. You can then import that script into your current script using the `source()` function.
 
@@ -466,605 +503,4 @@ source(here("code", "price_function.R"))
 # run the function
 del <- get_delta(v)
 del
-```
-
-# Data Import
-
-You will likely have to import data into R for your MFRE courses, instead of typing the data by hand. In this section, you will learn how to load data from 5 different sources: 
-
- * csv
- * xlsx
- * Stata data format (dta)
- * Google Sheet
- * API (Statistics Canada)
-
-## csv
-
-It's common for people to save data in spreadsheets as comma-separated values (csv). To open a csv file in R, we use the `read_csv()` function of the `{tidyverse}` package, and the `here()` function of the `{here}` package. The `here()` function takes the folder and file names as inputs, which are enclosed by quotation marks and you wouldn't have to worry about to use back or forward slashes. 
-
-The code below shows that we are reading the file "yearly_co2_emissions.csv" saved in our data folder and assigning it to the data object called `carbon`. Assigning data to objects is one of the big difference between R and Stata, as R allows you to work with multiple data sets at once. 
-
-```{r loaddata1, message = FALSE, warning = FALSE}
-carbon <- read_csv(here("data", "yearly_co2_emissions.csv"))
-```
-
-  * If you don't use the `here()` function, you have to specify the full file path relative to the location of the R project (my working directory). For example, my R project folder is called 2021-r-bootcamp, and in it I have multiple folders including "code" (where my current script is saved) and "data" (where data files are saved). To import the carbon emissions file, I will have to type in `carbon <- read_csv("data/yearly_co2_emissions.csv")`
-  
-  * Note: The `read_csv` function assumes fields are delimited by comma. If you want a more flexible way of reading text files, look up the `{readr}` package for other [functions](https://readr.tidyverse.org/). 
-  
-  * In FRE 501, Dr. Vercammen uses the base R `read.csv` function. It is doing the same thing as the `read_csv` function. The additional arguments you will see are `header = TRUE` meaning that the first row will be treated as columns, and `sep = ","` meaning that the file is delimited by comma. 
-  
-## Excel xlsx format
-
-Another way that spreadsheets are stored is in the Excel xlsx format. Sometimes, there are multiple sheets in one Excel file. The `read_xlsx()` function of the `{readxl}` package allows us to read files in xlsx format. 
-
-```{r loaddata3_nosheet, message = FALSE, warning = FALSE}
-gdp <- read_xlsx(here("data", "gdp_pc.xlsx"))
-```
-
-Sometimes there are multiple sheets in one spreadsheet. We use the argument `sheet = insert_sheet_number` to indicate the sheet we are importing. 
-
-```{r loaddata3, message = FALSE, warning = FALSE}
-energy_hist <- read_xlsx(here("data", "energy_use_per_person.xlsx"), sheet = 1)
-energy_recent <- read_xlsx(here("data", "energy_use_per_person.xlsx"), sheet = 2)
-```
-
-If you look at the two imported sheets (either by typing `View(energy_hist)` or clicking the `energy_hist` object in the Environment tab in the upper right panel of RStudio), they contain data for the same countries. The only difference is that in the first sheet (`energy_hist`), the data is from 1960-1999, and the data in the second sheet (`energy_recent`) is from 2000-2015. We want to join `energy_hist` and `energy_recent`. There are many types of [joins](https://dplyr.tidyverse.org/reference/join.html), but for now we will do a full join, meaning the new data frame called `energy` will include all rows and columns in both `energy_hist` and `energy_recent`. The variable `country` is the common variable in both data frames that I used to link them together. 
-
-```{r loaddata3_join}
-energy <- full_join(energy_hist, energy_recent, by = c("country"))
-```
-
-There are many ways to do the same thing in R. In FRE 501, Dr. Vercammen's uses the base R `merge` function. You can look at the full documentation for more details (`?merge`). The syntax is `merge(x, y)` where `x` and `y` are both the names of your dataframes. If you want to keep all observations in `x` and only merge `y` based on a common variable (`country`), I will use the `all.x = TRUE` argument. Since we want to do a full join (although the output would be the same anyway), we will use the `all.x = TRUE, all.y = TRUE` arguments to indicate that we want all rows in `x` and all rows in `y` in the output. 
-  
-```{r loaddata3_merge}
-energy_basemerge <- merge(energy_hist, energy_recent, by = c("country"), all.x = TRUE, all.y = TRUE)
-```
-
-  * If you look at `energy` and `energy_basemerge` in your Environment tab, you will notice that both of them have the same dimensions. 
-  
-## Stata dta format
-
-Because you will use Stata in some of your classes, you may read in a Stata data format into R as well. We will use the `read.dta13` of the `{readstata13}` package. This function allows you to read Stata file formats from version 17 and older. 
-
-```{r loaddata4, message = FALSE, warning = FALSE}
-politics <- read.dta13(here("data", "politics.dta"), nonint.factors = TRUE)
-```
-
-  * The argument `nonint.factors = TRUE` is to keep factor labels instead of the value itself. You can try loading the data with and without that argument to see the difference. 
-  
-It is also common now to share data using Google Sheets. We will use the `read_sheet("insert_link_here")` function of the `{googlesheets4}` package. This function will prompt you to provide authorization to the tidyverse API and log in with your Gmail credentials. One way to get around this step would be to add in the function `gs4_deauth()` before you use the `read_sheet()` function. 
-
-## Google Sheets 
-
-```{r loaddata5, message = FALSE, warning = FALSE}
-gs4_deauth() # so no need to sign in
-disasters <- read_sheet("https://docs.google.com/spreadsheets/d/17s15o7jdDpGSKgsIboZdnYU2UxHtU9DHKNRmYVVgwJo/edit#gid=0", skip = 2) 
-```
-* When you open the Google sheet link in your browser, you will notice that the first two rows are the notes or the title of the table. The data actually starts in row 3. Because of this reason, we add the argument `skip = 2` to tell R to start reading the data from the third row.
-
-## API - Statistics Canada
-
-When you look for data online, you usually have the option to download the tables as a csv or xlsx file. You may also want to check online if someone has already written a package that connects to the data's server directly and load it into R. The advantage of doing this approach is that you can work with 'updated' data whenever you run the code, and you also save yourself time from having to save the table as a spreadsheet every time the table is updated. 
-
-For exapmle, you want to download the Estimated areas, yield, production, average farm price, and total farm value of principal field crops table from [Statistics Canada](https://www150.statcan.gc.ca/t1/tbl1/en/tv.action?pid=3210035901). A quick Google Search of "import stats can table in R" will reveal that someone already wrote the `{cansim}` package to do just that. The function we will use is called `get_cansim('insert_table_number_here'_)`. 
-```{r loaddata6_statscan, message = FALSE, warning = FALSE}
-ag <- get_cansim('32-10-0359-01')
-```
-
-There are other many other ways to import data into R, but these are the ones you will most likely need to know for your MFRE courses. 
-
-# Data Exploration
-
-You can view your data with the command `View(dataframe_name)` or click the data object in the Environment tab in the upper right panel of RStudio. These two actions will open a new tab in the upper left panel of RStudio. If you want to see your data in the console, simply type in the name of the data object into your console. 
-
-Here are a few functions to inspect your data. We will use the  `politics` data as an example. 
-
-Size: 
-
-  * `dim(politics)` returns a vector with the number of rows in the first element, and the number of columns in the second element
-  * `nrow(politics)` returns the number of rows
-  * `ncol(politics)` returns the number of columns 
-  
-Content:
-
-  * `head(politics)` returns the first 5 observations 
-  * `tail(politics)` returns the last 5 observations
-  * `politics %>% slice_head(n = 6)` returns the first 6 observations 
-  * `politics %>% slice_tail(n = 7)` returns the last 7 observations
-  * `politics %>% slice_sample(n = 10)` returns 10 observations selected at random 
-  
-Column Names:
-
-  * `names(politics)` returns the column names 
-  
-Summary:
-
-  * `str(politics)` shows the structure of the object and information about the class, length, and content of each column
-  * `summary(politics)` returns the summary statistics of each column
-  * `glimpse(politics)` returns the dimension of the data, the names and class of each column, and previous as many values per column. 
-
-## Indexing and Subsetting Data Frames
-
-To extract certain columns and rows from our data, we use `[]` or `[[]]` or `$` symbols. 
-  
-  * `politics[1, 2]` To extract the first element in the second column of the table as a vector
-  * `politics[[1]]` To extract the first column as a vector 
-  * `politics[3,]` To extract the third row of the table as a data frame
-  * `politics[,3]` To extract the third column of the table as a data frame
-  * `politics[, -1]` To extract all the columns except the first column as a data frame
-    * `politics[c(5:10), ]` To extract rows to 5 and all of the columns as a data frame. If you do not include a comma, you will get an error. By not specifying a value after the comma, you indicate that you want all the columns. 
-  * `politics[, c(3:4)]` To extract the third and fourth columns as a data frame. Notice that there is a comma in front to indicate that we want all the rows. 
-  * `politics["country_name"]` To extract the `country_name` column as a data frame 
-    * `politics$country_name` To extract the `country_name` column as a vector
-
-As you can see, there are so many different ways to extract values. The most common way we extract values in MFRE classes would be last point, `politics$country`. Most of the time, however, we'll just want to see the results from `table(politics$country_name)`
-
-## Factors
-
-To be added 
-
-# Data Wrangling
-
-From this point on, we will only work with 3 data frames: `carbon`, `politics`, and `gdp`. 
-
-There are many packages you can use to wrangle data. In this case study, I will mostly use packages in the `{tidyverse}` library, but I will also show you alternatives that you might encounter in some MFRE courses. 
-
-You will see that I will use the pipe operator `%>%` frequently. The operator allows us to chain functions together. It takes the function specified to the left of the operator and allows you to pass the intermediate output to the function specified to the right of the operator. You can read more about it [here](https://www.datacamp.com/community/tutorials/pipe-r-tutorial).
-
-## Selecting and Filtering
-
-In the `politics` data frame, let's say I only want to keep the `country`, `year`, `v2x_libdem`, `v2x_regime`, and `region` variables. We will use the `select(col1, col2, ...)` function. 
-
-```{r select, eval = FALSE}
-politics %>% select(country_name, year, v2x_libdem, v2x_regime, region)
-```
-
-Alternatively, we can also drop the columns we do not want by adding a `-` symbol before the column name/s. 
-
-```{r select_drop, eval = FALSE}
-politics %>% select(-v2psnatpar_ord)
-```
-
-The output from the two codes above is a dataframe of all the rows of the columns we selected But the original data `politics` remains unchanged. To "save" this new dataframe, we have to use the assignment operator `<-`. In the code below, we will just overwrite the original `politics` data.
-
-```{r select_overwrite}
-politics <- politics %>% select(country_name, year, v2x_libdem, v2x_regime, region)
-```
-
-Running the command `dim(politics)`, you will notice that we only have 5 columns left in our dataframe. 
-
-If we want to keep observations to those from years 1991 onwards, we use the `filter()` function. 
-
-```{r filter}
-politics <- politics %>% filter(year > 1991)
-
-# To filter observations where region = Africa
-# politics %>% filter(region == "Africa") 
-```
-
-We can use the pipe operator to chain the `select()` and `filter()` functions. Running this code will not change anything anymore because we already used the assignment operator. But it may be something you may want to do in the future and save yourself a few lines of code. 
-
-```{r pipe, eval = FALSE}
-politics <- politics %>% 
-  select(country_name, year, v2x_libdem, v2x_regime, region) %>%
-  filter(year > 1991)
-```
-
-## Renaming columns
-
-Let's say we want to rename the `country` column to `country`, `v2x_libdem` to `democracy`, and `v2x_regime` to regime. The function is `rename(new_name = old_name)`.
-
-```{r rename}
-politics <- politics %>% 
-  rename(country = country_name,
-         democracy = v2x_libdem,
-         regime = v2x_regime)
-```
-
-  * In Dr. Vercammen's code, you will see that he renames variables using the `names()` and `which()` functions -- `names(politics)[which(names(politics) == "country")] = "country"`. 
-  
-## Reshaping Data
-
-In the `politics` data, each row contains the values of variables associated with each country and year. This dataframe is said to be in the "long" data format. 
-
-If you look at the `carbon` and `gdp` dataframes, you will notice that they are in the wide format. Each row is a country, and the columns are the different years we have observations for. 
-
-Most R functions expect your data to be in the "long" data format because it is more machine readable and is closer to the formatting of databases. In the `tidyr` package, we can use the `pivot_longer()` and `pivot_wider` columns to reshape our data. 
-
-```{r carbon_sample}
-carbon %>% 
-  slice_sample(n = 3)
-```
-
-  * *Note*: Something else you might notice is that the column names start with a number. If you create your own dataframe in the future, I strongly recommend that you DO NOT use numbers as the first character of your variable name. To refer to the last column of the `carbon` data, for example, whose variable/column name is 2014, you will have to wrap the column name with a backtick. 
-
-
-```{r backticks}
-head(carbon$`2014`)
-```
-
-### Pivoting longer
-
-The `pivot_longer()` function takes four main arguments:
-  * the (wide) data
-  * *cols* are the names of the columns we use to fill the new values variable (or to drop)
-  * the *names_to* column variable we wish to create the *cols* provided
-  * the *values_to* column variable we wish to create and fill with values associated with the *cols* provided
-  
-Let's now reshape the `carbon` data longer to create new columns for `year` and `emissions`. 
-
-To create a long format of the `carbon` data, we use the following
-  * the (wide) data - `carbon` 
-  * *cols* include all columns except the country variable, so we can just put `-country`. Usually you can put the column names of interest as in `cols = col1:col5` or `cols = c(col1, col2, col5)`, but because our variable names start as numbers, it is not allowing us to use this format. 
-  * the *names_to* column variable will be a character string of the name the column names these columns (1762:2014) will collapse into - `"year"`
-  * the *values_to* column variable will be a character string of the name of the column the values of the collapsed columns will be inserted into - `"emissions"`
-  
-```{r pivot_long_carbon}
-carbon_long <- carbon %>%
-  pivot_longer(cols = -country,
-               names_to = "year",
-               values_to = "emissions")
-```
-
-Now we can take a look at the long data format. 
-
-```{r carbon_long_look}
-head(carbon_long)
-
-# To always get the same random sample, use set.seed(number)
-# set.seed(2021)
-carbon_long %>% 
-  slice_sample(n = 10)
-
-str(carbon_long)
-```
-Notice that the `year` variable is of the `character (chr)` type, so we want to recode that variable to numeric. To create or modify columns as a function of existing columns, we use the `mutate(new_var_name = function_of_existing_vars)` function. To change the data type to numeric, we use the `as.numeric()` function.  
-
-```{r to_numeric}
-carbon_long <- carbon_long %>%
-  mutate(year = as.numeric(year))
-```
-
-The `gdp` data is in the same format, so let's do reshape that one too.
-
-```{r pivot_long_gdp}
-gdp_long <- gdp %>%
-  pivot_longer(cols = -country, 
-               names_to = "year",
-               values_to = "gdp") %>%
-  mutate(year = as.numeric(year),
-         gdp = as.numeric(gdp))
-head(gdp_long)
-```
-
-
-### Pivoting wider
-
-In the case that we want to reshape the `carbon_long` back to its original "wide" data format, we can use the `pivot_wider()` function. This function takes three main arguments. 
-
-  1. the data
-  2. the *names_from* column whose values will become new column names
-  3. the *values_from* column whose values will fill the new column variables. 
-  
-```{r pivot_carbon_back}
-carbon_wide <- carbon_long %>%
-  pivot_wider(names_from = "year",
-              values_from = "emissions")
-
-head(carbon)
-```
-
-## Joining our data together
-
-Now we will join the three data frames together. I want to keep all observations in the `carbon` data, and only add in the `politics` and `gdp` data. So, this time, I will do a `left_join()`.
-
-```{r join_all}
-data <- carbon_long %>%
-  left_join(gdp_long, by = c("country", "year")) %>%
-  left_join(politics, by = c("country", "year")) %>% 
-  filter(!is.na(emissions) & !is.na(region) & !is.na(gdp)) %>%
-  filter(year > 1990 & year <= 2014)
-
-head(data)
-```
-
-## Creating new variables
-
-We can create a new variable from existing variables using the `mutate()` function. For example, we want to create a new column that is the squared of GDP called `gdp_sq`.
-
-```{r gdp_sq}
-data <- data %>% 
-  mutate(gdp_sq = gdp * gdp)
-```
-
-The `{base}` function to create a new column would be to run the following command: `data$gdp_sq <- data$gdp * data$gdp`
-
-# Summary Statistics
-
-To take a look at some summary statistics, we can use the built-in R functions.
-
-  * `mean(joindata$emissions, na.rm = T)` - mean of `emissions`
-  * `table(joindata$country)` to know the number of observations per country
-  * `summary(joindata)` - summary statistics of the columns
-  * `summary(joindata$emissions)` - summary statistics of the `emissions` variable
-  
-We can also look at some summary statistics by region. We use the `group_by()` function to group the observations. To calculate multiple summary statistics, we can use the `summarize()` function.
-
-```{r summarize_new_col}
-data %>% group_by(region) %>%
-  summarize(n = n(), 
-            avg_emissions = mean(emissions, na.rm = T), 
-            median_gdp = median(gdp, na.rm = T)) %>%
-  arrange(desc(median_gdp), desc(avg_emissions)) # arrange to order, desc() for descending
-```
-
-We use the `summarize_all()` to apply a particular function to all variables. For example, if we put `mean, na.rm = T` inside the parentheses, we will get the mean of all variables, and it will return `NA` for categorical variables. 
-
-```{r summarize_all, warning = FALSE, message = FALSE}
-data %>% 
-  group_by(region) %>%
-  summarize_all(mean, na.rm = T)
-```
-
-If we only want to summarize certain variables only, we can use the `summarize_at()` function. 
-
-```{r summarize_at}
-data %>%
-  group_by(region) %>%
-  summarize_at(vars(democracy, emissions), mean, na.rm = T)
-```
-
-If we only want to summarize numeric variables only, we can use the `summarize_if()` function.
-
-```{r summarize_if}
-data %>% 
-  group_by(region) %>%
-  summarize_if(is.numeric, mean, na.rm = T)
-```
-
-The `modelsummary` package allows you to produce very nice summary statistic plots for tidy data. You can read more [here](https://vincentarelbundock.github.io/modelsummary/articles/datasummary.html). 
-
-```{r exploredata_cont, warning = FALSE, message = FALSE}
-datasummary_skim(politics)
-```
-
-We need to add an argument `type = categorical` to see summary statistics for non-numeric data.
-
-```{r exploredata_cat, warning = FALSE, message = FALSE}
-datasummary_skim(data, type = "categorical")
-```
-
-# Data Visualization (ggplot2)
-
-There are functions in `{base}` R that will allows you to plot data. But we will look at the `ggplot2` package. Read this [tutorial/book](https://ggplot2-book.org/introduction.html) for an in-depth walk through. 
-
-According to Hadley Wickham, "`ggplot2` is based on the Grammar of Graphics that allows you to compose graphs by combining independent components...The grammar tells us that a graphic maps the data to the aesthetic attributes (color, shape, size) of geometric objects (points, lines, bars)."
-
-In Wickham's tutorial, he indicated that there are 3 main components for every ggplot2 plot.
-
-  1. *data*
-  2. A set of *aesthetic* mappings
-  3. At least one layer which describes how to render each observations. Layers are usually created with a *geom* function. Common layers we will use are the following:
-  
-    a. `geom_line()` for trend lines, time series, etc. 
-    b. `geom_point()` for scatter plots 
-    c. `geom_boxplot()` for boxplots 
-    d. `geom_bar()` and `geom_col()` for bar charts 
-    e. `geom_histogram()` for histograms 
-  
-## Scatterplots   
-
-Here is a simple example. The code below produces a scatterplot defined by:
-
-  1. Data: `data` (I should have named the object differently!)
-  2. Aesthetic mapping: gdp mapped to the x position, emissions to the y position
-  3. Layer: points 
-
-```{r first_plot}
-options(scipen=99999)  # turn off scientific notation like 1e+06
-
-ggplot(data, aes(x = gdp, y = emissions)) + 
-  geom_point()
-```
-
-If we want to do a log transformation, we can just add `log()` before the variable name. 
-
-```{r first_plot_log, warning = FALSE}
-ggplot(data, aes(x = log(gdp), y = log(emissions))) + 
-  geom_point()
-```
-  
-Note the syntax. The data and aesthetic mapping are inside the `ggplot()` function, and the layer is adding with a `+`.  Since most maps plots a variable to x and y, the developers have indicated that the the first two arguments of `aes()` will be mapped to x and y. The code below will generate the same plot as above. 
-
-```{r firstplot_noxy, warning = FALSE}
-ggplot(data, aes(log(gdp), log(emissions))) + 
-  geom_point()
-```
-
-We can add plot another variable to the plot by using other aesthetics such as color, shape, and size. The code below changes the color of the points based on country's region. 
-
-```{r firstplot_region, warning = FALSE}
-ggplot(data, aes(log(gdp), log(emissions), color = region)) + 
-  geom_point()
-```
-
-We can also use the pipe operator. This method can be useful if you want to make changes to the data (i.e. filter or mutate) before plotting. For example, let's calculate the average emissions and average GDP per country, and plot its relationship. This will be our *base* graph, so I am assigning it to the object `p`. We will call it again later and add more layers to it. Now, whenever you type `p` in your console, you will see the plot in the plots tab on the lower left panel of RStudio.  
-
-```{r avgplot}
-p <- data %>% 
-  group_by(country) %>%
-  mutate(avg_emissions = mean(emissions, na.rm = T),
-         avg_gdp = mean(gdp, na.rm = T)) %>%
-  ggplot(aes(log(avg_gdp), log(avg_emissions))) +
-  geom_point()
-
-p
-```
-
-We build our plots iteratively. Now, let's add a title and label the axes of `p`. Since we always want to label our graph well, let's add these layers to `p`. 
-
-```{r firstplot_labels}
-p <- p + labs(title = "Relationship between Emissions and GDP",
-              y = "Log GDP per capita", x = "Log CO2 per capita")
-p
-```
-
-We can add a fitted line using `geom_smooth()` function. 
-
-```{r firstplot_fittedline}
-p + geom_smooth()
-```
-
-If we want to add a fitted line based on a linear model, we have to specify `geom_smooth(method = "lm")`. 
-
-```{r firstplot_fittedline_lm}
-p + geom_smooth(method = "lm")
-```
-
-If we want to change the background, there are multiple themes available in the [package](https://ggplot2-book.org/polishing.html), and of course you can customize your own too. Let's say we are hapyp with this layout, we shall overwrite our `p` object again. 
-
-```{r firstplot_theme}
-p <- p + theme_classic()
-
-p
-```
-
-To save the plot, we can use the `ggsave()` function. I am saving this file in another folder called output. You can save the plots to different formats too. 
-
-```{r firstplot_ggsave, message = FALSE}
-ggsave(p, filename = here("output","emissions_gdp.png"))
-
-ggsave(p, filename = here("output","emissions_gdp.jpg"))
-
-ggsave(p, filename = here("output","emissions_gdp.pdf"))
-```
-
-## Boxplot 
-
-We can also visualize the distribution of GDP within each region in 2010. We follow the structure, but now use `geom_boxplot()`. 
-
-```{r boxplot_2010}
-bp <- data %>% 
-  filter(year == 2010) %>%
-  ggplot(aes(region, gdp)) + 
-  geom_boxplot() + 
-  labs(title = "Distribution of GDP by Region, 2010",
-              y = "GDP per capita", x = "Region") +
-  theme_classic()
-
-bp
-```
-
-We may want to edit the tick marks.
-
-```{r boxplot_2010ticks}
-bp + scale_x_discrete(labels = c("Africa", "Americas", "Mediterranean", "Europe", "SE Asia", "W Pacific"))
-```
-
-We can also flip the coordinates of the boxplot. Note that because we did not assign the tick mark labels to `bp`, as in did not use `bp + scale_x_discrete(labels = c("Africa", "Americas", "Mediterranean", "Europe", "SE Asia", "W Pacific"))`),`bp` remains unchanged. Hence the plot below shows the original labels. 
-
-```{r boxplot_2010flipped}
-bp + coord_flip()
-```
-
-### Line plots
-
-We may be interested in Canada's carbon emissions over time. To draw a line graph, we now use the `ggplot_line()` function. 
-
-```{r geomline}
-lp <- data %>% 
-  filter(country == "Canada") %>% 
-  ggplot(aes(x = year, y = emissions)) +
-  geom_line(linetype = "dashed", color = "red") +
-  theme_classic() +
-  labs(title = "Canada's CO2 emissions, 1991-2014",
-       y = "Total Emissions", 
-       x = "Year")
-
-lp
-```
-
-We can also add comma to the y-axis labels for easier reading. 
-
-```{r}
-lp + scale_y_continuous(labels = scales::comma) 
-```
-
-### Histograms
-
-```{r hist}
-ggplot(data, aes(x = gdp)) + 
-  geom_histogram() + 
-  theme_classic() + 
-  labs(title = "Income Distribution, 1991-2014",
-       y = "Count",
-       x = "GDP per capita") 
-```
-
-# Analysis
-
-Our graph earlier suggests that there may be a relationship between emissions and GDP per capita. We can take a look at the correlation between these two variables. 
-
-We will use the country's average emissions and average GDP from 1992-2014. 
-
-```{r data_modified}
-data <- data %>% 
-  group_by(country) %>%
-  mutate(avg_emissions = mean(emissions, na.rm = T),
-         avg_gdp = mean(gdp, na.rm = T))
-```
-
-Then let us calculate the correlation coefficient using the Pearson method.
-
-```{r pearson}
-cor <- cor.test(data$avg_emissions, data$avg_gdp, method = "pearson")
-cor
-```
-
-Let's say we want to estimate the following equation: 
-
-$$ 
-emissions_i = b_0 + b_1 GDP_i + \varepsilon_i 
-$$
-
-To run an OLS regression, we use the `lm()` function of the `stats` package. The syntax is `lm(y ~ x1 + x2 + x3 + ...)` Printing the object will only give you the coefficients. 
-
-```{r reg1}
-reg1 <- lm(emissions ~ gdp, data = data)
-reg1
-```
-
-To get all the details of the regression, we use the `summary()` function. The output is similar to Stata's regression output. 
-
-```{r reg1summary}
-options(scipen = 0) # to allow for scientific notation again
-summary(reg1)
-```
-
-As mentioned earlier, regressions results is a list object. We can use the `$` and `[[]]` to extract information. To know the location or the element name, you can check in `str(summary(reg1))`. For example, we can just extract the coefficients of the regression. 
-
-```{r reg1_coef}
-summary(reg1)$coefficients
-```
-
-Let's say we want to compare the GDP between USA and Canada. We can first visualize our data using box plots.
-
-```{r can_usa}
-can_usa <- data %>%
-  filter(country == "Canada" | country == "United States")
-```
-
-```{r can_usa_bp}
-can_usa %>%
-  group_by(country) %>%
-  ggplot(aes(x = country, y = gdp)) +
-  geom_boxplot()
-```
-
-Now, we can conduct a simple t-test. 
-
-```{r can_usa_ttest}
-can_usa_ttest <- t.test(gdp ~ country, data = can_usa)
-can_usa_ttest
 ```
