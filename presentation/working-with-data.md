@@ -14,7 +14,7 @@ The main objective of this R bootcamp is to introduce R programming to incoming 
 
 # Before we get started
 
-Let's load the packages we will use today.
+Let's load the packages we will use in this session.
 
 
 ```r
@@ -25,13 +25,13 @@ pacman::p_load(tidyverse, readxl, googlesheets4, readstata13, magrittr, cansim, 
 
 You will likely have to import data into R for your MFRE courses, instead of typing the data by hand like we did in the previous session. We will load data into R from 5 different sources: 
 
- * flat files (csv and txt)
+ * Flat files (csv and txt)
  * Excel files (xlsx)
  * Stata data format (dta)
  * Google Sheet 
  * API (Statistics Canada)
 
-## csv
+## Flat files
 
 It's common for people to save data in spreadsheets as comma-separated values (csv) or in text files (txt). To open a csv file in R, we use the `read_csv()` function of the `{tidyverse}` package, and the `here()` function of the `{here}` package. The `here()` function takes the folder and file names as inputs, which are enclosed by quotation marks and you wouldn't have to worry about to use back or forward slashes. 
 
@@ -46,9 +46,9 @@ carbon <- read_csv(here("data", "yearly_co2_emissions.csv"))
   
   * Note: The `read_csv` function assumes fields are delimited by comma. If you want a more flexible way of reading text files, look up the `{readr}` package for other [functions](https://readr.tidyverse.org/). 
   
-  * In FRE 501, Dr. Vercammen uses the base R `read.csv` function. It is doing the same thing as the `read_csv` function. The additional arguments you may see are `sep = ","`, which means that data is delimited by comma, and `header = TRUE`, which means that the first row will be treated as column names. 
+  * In FRE 501, Dr. Vercammen uses the base R `read.csv()` function. To load the csv file using this function, the code is `carbon <- read.csv(here("data", "yearly_co2_emissions.csv"), sep = ",", header = TRUE)`. This code will do the same thing as the `read_csv` function. The additional arguments you may see are `sep = ","`, which means that data is delimited by comma, and `header = TRUE`, which means that the first row should be treated as column names. 
 
-To load in text files, use the `read.table()` function. The `sep = "\t"` argument indicates that the data is tab-delimited. The `header = TRUE` argument indicates that the first row will be treated as column names.
+To load in text files, use the `read.table()` function. The `sep = "\t"` argument indicates that the data is tab-delimited. The `header = TRUE` argument indicates that the first row should be treated as column names.
 
 
 ```r
@@ -98,10 +98,10 @@ politics <- read.dta13(here("data", "politics.dta"), nonint.factors = TRUE)
 ```
 
   * The argument `nonint.factors = TRUE` is to keep factor labels instead of the value itself. You can try loading the data with and without that argument to see the difference. 
-  
-It is also common now to share data using Google Sheets. We will use the `read_sheet("insert_link_here")` function of the `{googlesheets4}` package. This function will prompt you to provide authorization to the tidyverse API and log in with your Gmail credentials. One way to get around this step would be to add in the function `gs4_deauth()` before you use the `read_sheet()` function. 
 
 ## Google Sheets 
+
+It is also common now to share data using Google Sheets. We will use the `read_sheet("insert_link_here")` function of the `{googlesheets4}` package. This function will prompt you to provide authorization to the tidyverse API and log in with your Gmail credentials. One way to get around this step would be to add in the function `gs4_deauth()` before you use the `read_sheet()` function. 
 
 
 ```r
@@ -114,7 +114,8 @@ disasters <- read_sheet("https://docs.google.com/spreadsheets/d/17s15o7jdDpGSKgs
 
 When you look for data online, you usually have the option to download the tables as a csv or xlsx file. You may also want to check online if someone has already written a package that connects to the data's server directly and load it into R. The advantage of doing this approach is that you can work with 'updated' data whenever you run the code, and you also save yourself time from having to save the table as a spreadsheet every time the table is updated. 
 
-For exapmle, you want to download the Estimated areas, yield, production, average farm price, and total farm value of principal field crops table from [Statistics Canada](https://www150.statcan.gc.ca/t1/tbl1/en/tv.action?pid=3210035901). A quick Google Search of "import stats can table in R" will reveal that someone already wrote the `{cansim}` package to do just that. The function we will use is called `get_cansim('insert_table_number_here'_)`. 
+For example, you want to download the Estimated areas, yield, production, average farm price, and total farm value of principal field crops table from [Statistics Canada](https://www150.statcan.gc.ca/t1/tbl1/en/tv.action?pid=3210035901). A quick Google Search of "import stats can table in R" will reveal that someone already wrote the `{cansim}` package to do just that. The function we will use is called `get_cansim('insert_table_number_here'_)`. 
+
 
 ```r
 ag <- get_cansim('32-10-0359-01')
@@ -152,9 +153,9 @@ Summary:
   * `summary(politics)` returns the summary statistics of each column
   * `glimpse(politics)` returns the dimension of the data, the names and class of each column, and previous as many values per column. 
 
-## Indexing and Subsetting Data Frames
+## Subsetting Data Frames
 
-To extract certain columns and rows from our data, we use `[]` or `[[]]` or `$` symbols. 
+As we learned from the previous session, we use `[]` or `[[]]` or `$` to extract certain columns and rows from our data, we use  
   
   * `politics[1, 2]` To extract the first element in the second column of the table as a vector
   * `politics[[1]]` To extract the first column as a vector 
@@ -168,83 +169,21 @@ To extract certain columns and rows from our data, we use `[]` or `[[]]` or `$` 
 
 As you can see, there are so many different ways to extract values. The most common way we extract values in MFRE classes would be last point, `politics$country`. Most of the time, however, we'll just want to see the results from `table(politics$country_name)`
 
-## Factors
-
-To be added 
-
 # Data Wrangling
 
-From this point on, we will only work with 3 data frames: `carbon`, `politics`, and `gdp`. 
+From this point on, we will only work with 3 data frames: `carbon`, `gdp` and `politics`. 
 
-There are many packages you can use to wrangle data. In this case study, I will mostly use packages in the `{tidyverse}` library, but I will also show you alternatives that you might encounter in some MFRE courses. 
-
-You will see that I will use the pipe operator `%>%` frequently. The operator allows us to chain functions together. It takes the function specified to the left of the operator and allows you to pass the intermediate output to the function specified to the right of the operator. You can read more about it [here](https://www.datacamp.com/community/tutorials/pipe-r-tutorial).
-
-## Selecting and Filtering
-
-In the `politics` data frame, let's say I only want to keep the `country`, `year`, `v2x_libdem`, `v2x_regime`, and `region` variables. We will use the `select(col1, col2, ...)` function. 
-
-
-```r
-politics %>% select(country_name, year, v2x_libdem, v2x_regime, region)
-```
-
-Alternatively, we can also drop the columns we do not want by adding a `-` symbol before the column name/s. 
-
-
-```r
-politics %>% select(-v2psnatpar_ord)
-```
-
-The output from the two codes above is a dataframe of all the rows of the columns we selected But the original data `politics` remains unchanged. To "save" this new dataframe, we have to use the assignment operator `<-`. In the code below, we will just overwrite the original `politics` data.
-
-
-```r
-politics <- politics %>% select(country_name, year, v2x_libdem, v2x_regime, region)
-```
-
-Running the command `dim(politics)`, you will notice that we only have 5 columns left in our dataframe. 
-
-If we want to keep observations to those from years 1991 onwards, we use the `filter()` function. 
-
-
-```r
-politics <- politics %>% filter(year > 1991)
-
-# To filter observations where region = Africa
-# politics %>% filter(region == "Africa") 
-```
-
-We can use the pipe operator to chain the `select()` and `filter()` functions. Running this code will not change anything anymore because we already used the assignment operator. But it may be something you may want to do in the future and save yourself a few lines of code. 
-
-
-```r
-politics <- politics %>% 
-  select(country_name, year, v2x_libdem, v2x_regime, region) %>%
-  filter(year > 1991)
-```
-
-## Renaming columns
-
-Let's say we want to rename the `country` column to `country`, `v2x_libdem` to `democracy`, and `v2x_regime` to regime. The function is `rename(new_name = old_name)`.
-
-
-```r
-politics <- politics %>% 
-  rename(country = country_name,
-         democracy = v2x_libdem,
-         regime = v2x_regime)
-```
-
-  * In Dr. Vercammen's code, you will see that he renames variables using the `names()` and `which()` functions -- `names(politics)[which(names(politics) == "country")] = "country"`. 
+Now that we have loaded the data in R and know what it looks like, we want to tidy the data before we proceed with our analysis. Tidy data allows us to use analyze the data more efficiently. Tidy data deals with the shape and structure of the data. You can read more about tidy data [here](https://vita.had.co.nz/papers/tidy-data.pdf) and [here](https://www.openscapes.org/blog/2020/10/12/tidy-data/). In summary, tidy data means that
   
+  * each variable forms a column
+  * each observation forms a row
+  * each cell is a single measurement
+
 ## Reshaping Data
 
-In the `politics` data, each row contains the values of variables associated with each country and year. This dataframe is said to be in the "long" data format. 
+In the `politics` data, each row contains the values of variables associated with each country and year. This data frame is said to be in the "long" data format. If you look at the `carbon` and `gdp` data frames, you will notice that they are in the wide format. Each row is a country, and the columns are the different years we have observations for. We would not consider the `carbon` and `gdp` as tidy data. 
 
-If you look at the `carbon` and `gdp` dataframes, you will notice that they are in the wide format. Each row is a country, and the columns are the different years we have observations for. 
-
-Most R functions expect your data to be in the "long" data format because it is more machine readable and is closer to the formatting of databases. In the `tidyr` package, we can use the `pivot_longer()` and `pivot_wider` columns to reshape our data. 
+Most R functions expect your data to be in the "long" data format because it is more machine readable and is closer to the formatting of databases. In the `tidyr` package, we can use the `pivot_longer()` and `pivot_wider` columns to reshape our data. These functions are the equivalent of the `reshape long` and `reshape wide` in Stata. 
 
 
 ```r
@@ -254,11 +193,11 @@ carbon %>%
 
 ```
 ## # A tibble: 3 x 265
-##   country  `1751` `1752` `1753` `1754` `1755` `1756` `1757` `1758` `1759` `1760`
-##   <chr>     <dbl>  <dbl>  <dbl>  <dbl>  <dbl>  <dbl>  <dbl>  <dbl>  <dbl>  <dbl>
-## 1 Peru         NA     NA     NA     NA     NA     NA     NA     NA     NA     NA
-## 2 Israel       NA     NA     NA     NA     NA     NA     NA     NA     NA     NA
-## 3 Madagas~     NA     NA     NA     NA     NA     NA     NA     NA     NA     NA
+##   country `1751` `1752` `1753` `1754` `1755` `1756` `1757` `1758` `1759` `1760`
+##   <chr>    <dbl>  <dbl>  <dbl>  <dbl>  <dbl>  <dbl>  <dbl>  <dbl>  <dbl>  <dbl>
+## 1 Belgium     NA     NA     NA     NA     NA     NA     NA     NA     NA     NA
+## 2 Somalia     NA     NA     NA     NA     NA     NA     NA     NA     NA     NA
+## 3 Malta       NA     NA     NA     NA     NA     NA     NA     NA     NA     NA
 ## # ... with 254 more variables: 1761 <dbl>, 1762 <dbl>, 1763 <dbl>, 1764 <dbl>,
 ## #   1765 <dbl>, 1766 <dbl>, 1767 <dbl>, 1768 <dbl>, 1769 <dbl>, 1770 <dbl>,
 ## #   1771 <dbl>, 1772 <dbl>, 1773 <dbl>, 1774 <dbl>, 1775 <dbl>, 1776 <dbl>,
@@ -292,9 +231,11 @@ head(carbon$`2014`)
 
 ### Pivoting longer
 
+We will now convert `carbon` to a long format. We want to collapse all emissions across the years into one column called "emissions." We then identify the year the data point comes from by creating a "year" variable. 
+
 The `pivot_longer()` function takes four main arguments:
   * the (wide) data
-  * *cols* are the names of the columns we use to fill the new values variable (or to drop)
+  * *cols* are the names of the columns we use (or drop) to fill the new values variable
   * the *names_to* column variable we wish to create the *cols* provided
   * the *values_to* column variable we wish to create and fill with values associated with the *cols* provided
   
@@ -342,18 +283,18 @@ carbon_long %>%
 
 ```
 ## # A tibble: 10 x 3
-##    country        year  emissions
-##    <chr>          <chr>     <dbl>
-##  1 New Zealand    1783         NA
-##  2 Czech Republic 1964     126000
-##  3 France         1818       2380
-##  4 Gambia         1866         NA
-##  5 Chad           1980        209
-##  6 Moldova        1898        359
-##  7 Czech Republic 1854         NA
-##  8 Nauru          1888         NA
-##  9 United States  1758         NA
-## 10 Jordan         1887         NA
+##    country      year  emissions
+##    <chr>        <chr>     <dbl>
+##  1 Cape Verde   1816         NA
+##  2 Philippines  1754         NA
+##  3 Turkey       1898        524
+##  4 Sierra Leone 1947         NA
+##  5 Haiti        1840         NA
+##  6 Netherlands  1780         NA
+##  7 Costa Rica   1972       1760
+##  8 Guyana       1999       1680
+##  9 Cyprus       1935         NA
+## 10 Suriname     1912         NA
 ```
 
 ```r
@@ -366,15 +307,18 @@ str(carbon_long)
 ##  $ year     : chr [1:50688] "1751" "1752" "1753" "1754" ...
 ##  $ emissions: num [1:50688] NA NA NA NA NA NA NA NA NA NA ...
 ```
+
 Notice that the `year` variable is of the `character (chr)` type, so we want to recode that variable to numeric. To create or modify columns as a function of existing columns, we use the `mutate(new_var_name = function_of_existing_vars)` function. To change the data type to numeric, we use the `as.numeric()` function.  
 
 
 ```r
 carbon_long <- carbon_long %>%
   mutate(year = as.numeric(year))
+
+# Alternatively, you an also use carbon_long$year <- as.numeric(carbon_long$year)
 ```
 
-The `gdp` data is in the same format, so let's do reshape that one too.
+The `gdp` data is in the same format, so let's reshape that one too. Notice how I used `%>%` to chain the commands together. 
 
 
 ```r
@@ -406,7 +350,6 @@ head(gdp_long)
 ## 6 Aruba    1964    NA
 ```
 
-
 ### Pivoting wider
 
 In the case that we want to reshape the `carbon_long` back to its original "wide" data format, we can use the `pivot_wider()` function. This function takes three main arguments. 
@@ -420,42 +363,71 @@ In the case that we want to reshape the `carbon_long` back to its original "wide
 carbon_wide <- carbon_long %>%
   pivot_wider(names_from = "year",
               values_from = "emissions")
-
-head(carbon)
 ```
 
-```
-## # A tibble: 6 x 265
-##   country  `1751` `1752` `1753` `1754` `1755` `1756` `1757` `1758` `1759` `1760`
-##   <chr>     <dbl>  <dbl>  <dbl>  <dbl>  <dbl>  <dbl>  <dbl>  <dbl>  <dbl>  <dbl>
-## 1 Afghani~     NA     NA     NA     NA     NA     NA     NA     NA     NA     NA
-## 2 Albania      NA     NA     NA     NA     NA     NA     NA     NA     NA     NA
-## 3 Algeria      NA     NA     NA     NA     NA     NA     NA     NA     NA     NA
-## 4 Andorra      NA     NA     NA     NA     NA     NA     NA     NA     NA     NA
-## 5 Angola       NA     NA     NA     NA     NA     NA     NA     NA     NA     NA
-## 6 Antigua~     NA     NA     NA     NA     NA     NA     NA     NA     NA     NA
-## # ... with 254 more variables: 1761 <dbl>, 1762 <dbl>, 1763 <dbl>, 1764 <dbl>,
-## #   1765 <dbl>, 1766 <dbl>, 1767 <dbl>, 1768 <dbl>, 1769 <dbl>, 1770 <dbl>,
-## #   1771 <dbl>, 1772 <dbl>, 1773 <dbl>, 1774 <dbl>, 1775 <dbl>, 1776 <dbl>,
-## #   1777 <dbl>, 1778 <dbl>, 1779 <dbl>, 1780 <dbl>, 1781 <dbl>, 1782 <dbl>,
-## #   1783 <dbl>, 1784 <dbl>, 1785 <dbl>, 1786 <dbl>, 1787 <dbl>, 1788 <dbl>,
-## #   1789 <dbl>, 1790 <dbl>, 1791 <dbl>, 1792 <dbl>, 1793 <dbl>, 1794 <dbl>,
-## #   1795 <dbl>, 1796 <dbl>, 1797 <dbl>, 1798 <dbl>, 1799 <dbl>, 1800 <dbl>,
-## #   1801 <dbl>, 1802 <dbl>, 1803 <dbl>, 1804 <dbl>, 1805 <dbl>, 1806 <dbl>,
-## #   1807 <dbl>, 1808 <dbl>, 1809 <dbl>, 1810 <dbl>, 1811 <dbl>, 1812 <dbl>,
-## #   1813 <dbl>, 1814 <dbl>, 1815 <dbl>, 1816 <dbl>, 1817 <dbl>, 1818 <dbl>,
-## #   1819 <dbl>, 1820 <dbl>, 1821 <dbl>, 1822 <dbl>, 1823 <dbl>, 1824 <dbl>,
-## #   1825 <dbl>, 1826 <dbl>, 1827 <dbl>, 1828 <dbl>, 1829 <dbl>, 1830 <dbl>,
-## #   1831 <dbl>, 1832 <dbl>, 1833 <dbl>, 1834 <dbl>, 1835 <dbl>, 1836 <dbl>,
-## #   1837 <dbl>, 1838 <dbl>, 1839 <dbl>, 1840 <dbl>, 1841 <dbl>, 1842 <dbl>,
-## #   1843 <dbl>, 1844 <dbl>, 1845 <dbl>, 1846 <dbl>, 1847 <dbl>, 1848 <dbl>,
-## #   1849 <dbl>, 1850 <dbl>, 1851 <dbl>, 1852 <dbl>, 1853 <dbl>, 1854 <dbl>,
-## #   1855 <dbl>, 1856 <dbl>, 1857 <dbl>, 1858 <dbl>, 1859 <dbl>, 1860 <dbl>, ...
+If you inspect the `carbon_wide` data frame, you will notice that this data frame is equivalent to the `carbon` data frame. 
+
+## Selecting and Filtering
+
+In the `politics` data frame, let's say I only want to keep the `country`, `year`, `v2x_libdem`, `v2x_regime`, and `region` variables. We will use the `select(col1, col2, ...)` function. 
+
+
+```r
+politics %>% select(country_name, year, v2x_libdem, v2x_regime, region)
 ```
 
+Alternatively, we can also drop the columns we do not want by adding a `-` symbol before the column name/s. 
+
+
+```r
+politics %>% select(-v2psnatpar_ord)
+```
+
+The output from the two codes above is a data frame of all the rows of the columns we selected, but the original data `politics` remains unchanged. To "save" this new data frame, we have to use the assignment operator `<-`. In the code below, we will just overwrite the original `politics` data.
+
+
+```r
+politics <- politics %>% select(country_name, year, v2x_libdem, v2x_regime, region)
+```
+
+Running the command `dim(politics)`, you will notice that we only have 5 columns left in our data frame. 
+
+If we want to keep observations to those from years 1991-2014 only, we use the `filter()` function. 
+
+
+```r
+politics <- politics %>% filter(year >= 1991 & year <= 2014)
+
+# To filter observations where region = Africa
+# politics %>% filter(region == "Africa") 
+```
+
+We can use the pipe operator to chain the `select()` and `filter()` functions. Running this code will not change anything anymore because we already used the assignment operator. But it may be something you may want to do in the future and save yourself a few lines of code. 
+
+
+```r
+politics <- politics %>% 
+  select(country_name, year, v2x_libdem, v2x_regime, region) %>%
+  filter(year >= 1991 & year <= 2014)
+```
+
+## Renaming columns
+
+Let's say we want to rename the `country_name` column to `country`, `v2x_libdem` to `democracy`, and `v2x_regime` to regime. The function is `rename(new_name = old_name)`.
+
+
+```r
+politics <- politics %>% 
+  rename(country = country_name,
+         democracy = v2x_libdem,
+         regime = v2x_regime)
+```
+
+  * In Dr. Vercammen's code, you will see that he renames variables using the `names()` and `which()` functions -- `names(politics)[which(names(politics) == "country")] = "country"`. 
+  
 ## Joining our data together
 
-Now we will join the three data frames together. I want to keep all observations in the `carbon` data, and only add in the `politics` and `gdp` data. So, this time, I will do a `left_join()`.
+Now we will join the three data frames together. I want to keep all observations in the `carbon_long` data, and only add in the `politics` and `gdp_long` data. So, this time, I will do a `left_join()`.
 
 
 ```r
@@ -463,7 +435,7 @@ data <- carbon_long %>%
   left_join(gdp_long, by = c("country", "year")) %>%
   left_join(politics, by = c("country", "year")) %>% 
   filter(!is.na(emissions) & !is.na(region) & !is.na(gdp)) %>%
-  filter(year > 1990 & year <= 2014)
+  filter(year >= 1991 & year <= 2014)
 
 head(data)
 ```
@@ -478,6 +450,18 @@ head(data)
 ## 4 Afghanistan  2004       950   357     0.105 Electoral Autoc~ Eastern Mediterr~
 ## 5 Afghanistan  2005      1330   365     0.13  Electoral Autoc~ Eastern Mediterr~
 ## 6 Afghanistan  2006      1650   406     0.225 Electoral Autoc~ Eastern Mediterr~
+```
+
+You can also join data frames together using the base R `merge()` function, but you have to run this function twice because it only merges two data frames at once. You indicate `all.x = TRUE` for a left join, `all.y = TRUE` for a right join, and `all.x = TRUE, all.y = TRUE` for a full join.  
+
+
+```r
+carbon_gdp <- merge(carbon_long, gdp_long, by = c("country", "year"), all.x = TRUE)
+merged <- merge(carbon_gdp, politics, by = c("country", "year"), all.x = TRUE)
+
+merged <- merged %>%
+  filter(!is.na(emissions) & !is.na(region) & !is.na(gdp)) %>%
+  filter(year >= 1991 & year <= 2014)
 ```
 
 ## Creating new variables
@@ -516,12 +500,12 @@ data %>% group_by(region) %>%
 ## # A tibble: 6 x 4
 ##   region                    n avg_emissions median_gdp
 ##   <chr>                 <int>         <dbl>      <dbl>
-## 1 Europe                 1064       145754.      14750
-## 2 Americas                620       273001.       5545
-## 3 Eastern Mediterranean   391        94934.       4540
-## 4 Western Pacific         345       538052.       3090
-## 5 South-East Asia         218       200235.       1340
-## 6 Africa                  971        16681.        891
+## 1 Europe                 1102       147858.      14800
+## 2 Americas                647       271280.       5530
+## 3 Eastern Mediterranean   405        93729.       4490
+## 4 Western Pacific         359       529355.       3060
+## 5 South-East Asia         226       197409.       1280
+## 6 Africa                 1011        16529.        887
 ```
 
 We use the `summarize_all()` to apply a particular function to all variables. For example, if we put `mean, na.rm = T` inside the parentheses, we will get the mean of all variables, and it will return `NA` for categorical variables. 
@@ -537,12 +521,12 @@ data %>%
 ## # A tibble: 6 x 8
 ##   region              country  year emissions    gdp democracy regime     gdp_sq
 ##   <chr>                 <dbl> <dbl>     <dbl>  <dbl>     <dbl>  <dbl>      <dbl>
-## 1 Africa                   NA 2003.    16681.  2162.     0.298     NA     1.39e7
-## 2 Americas                 NA 2003.   273001.  9052.     0.514     NA     1.99e8
-## 3 Eastern Mediterran~      NA 2004.    94934. 13529.     0.146     NA     5.07e8
-## 4 Europe                   NA 2003.   145754. 23436.     0.592     NA     1.07e9
-## 5 South-East Asia          NA 2003.   200235.  2096.     0.295     NA     7.96e6
-## 6 Western Pacific          NA 2003    538052. 13701.     0.428     NA     4.80e8
+## 1 Africa                   NA 2003.    16529.  2143.     0.294     NA     1.37e7
+## 2 Americas                 NA 2002.   271280.  8970      0.511     NA     1.95e8
+## 3 Eastern Mediterran~      NA 2003.    93729. 13411.     0.145     NA     5.03e8
+## 4 Europe                   NA 2003.   147858. 23340.     0.592     NA     1.06e9
+## 5 South-East Asia          NA 2003.   197409.  2059.     0.292     NA     7.74e6
+## 6 Western Pacific          NA 2003.   529355. 13585.     0.428     NA     4.73e8
 ```
 
 If we only want to summarize certain variables only, we can use the `summarize_at()` function. 
@@ -558,12 +542,12 @@ data %>%
 ## # A tibble: 6 x 3
 ##   region                democracy emissions
 ##   <chr>                     <dbl>     <dbl>
-## 1 Africa                    0.298    16681.
-## 2 Americas                  0.514   273001.
-## 3 Eastern Mediterranean     0.146    94934.
-## 4 Europe                    0.592   145754.
-## 5 South-East Asia           0.295   200235.
-## 6 Western Pacific           0.428   538052.
+## 1 Africa                    0.294    16529.
+## 2 Americas                  0.511   271280.
+## 3 Eastern Mediterranean     0.145    93729.
+## 4 Europe                    0.592   147858.
+## 5 South-East Asia           0.292   197409.
+## 6 Western Pacific           0.428   529355.
 ```
 
 If we only want to summarize numeric variables only, we can use the `summarize_if()` function.
@@ -579,12 +563,12 @@ data %>%
 ## # A tibble: 6 x 6
 ##   region                 year emissions    gdp democracy      gdp_sq
 ##   <chr>                 <dbl>     <dbl>  <dbl>     <dbl>       <dbl>
-## 1 Africa                2003.    16681.  2162.     0.298   13935487.
-## 2 Americas              2003.   273001.  9052.     0.514  198779759.
-## 3 Eastern Mediterranean 2004.    94934. 13529.     0.146  507495399.
-## 4 Europe                2003.   145754. 23436.     0.592 1065083408.
-## 5 South-East Asia       2003.   200235.  2096.     0.295    7956161.
-## 6 Western Pacific       2003    538052. 13701.     0.428  480089967.
+## 1 Africa                2003.    16529.  2143.     0.294   13692679.
+## 2 Americas              2002.   271280.  8970      0.511  195496085.
+## 3 Eastern Mediterranean 2003.    93729. 13411.     0.145  502797491.
+## 4 Europe                2003.   147858. 23340.     0.592 1055022640.
+## 5 South-East Asia       2003.   197409.  2059.     0.292    7739719.
+## 6 Western Pacific       2003.   529355. 13585.     0.428  472733490.
 ```
 
 The `modelsummary` package allows you to produce very nice summary statistic plots for tidy data. You can read more [here](https://vincentarelbundock.github.io/modelsummary/articles/datasummary.html). 
@@ -611,13 +595,13 @@ datasummary_skim(politics)
 <tbody>
   <tr>
    <td style="text-align:left;"> year </td>
-   <td style="text-align:right;"> 29 </td>
+   <td style="text-align:right;"> 24 </td>
    <td style="text-align:right;"> 0 </td>
-   <td style="text-align:right;"> 2006.0 </td>
-   <td style="text-align:right;"> 8.4 </td>
-   <td style="text-align:right;"> 1992.0 </td>
-   <td style="text-align:right;"> 2006.0 </td>
-   <td style="text-align:right;"> 2020.0 </td>
+   <td style="text-align:right;"> 2002.5 </td>
+   <td style="text-align:right;"> 6.9 </td>
+   <td style="text-align:right;"> 1991.0 </td>
+   <td style="text-align:right;"> 2003.0 </td>
+   <td style="text-align:right;"> 2014.0 </td>
    <td style="text-align:right;">  <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" class="svglite" width="48.00pt" height="12.00pt" viewBox="0 0 48.00 12.00"><defs><style type="text/css">
     .svglite line, .svglite polyline, .svglite polygon, .svglite path, .svglite rect, .svglite circle {
       fill: none;
@@ -627,17 +611,17 @@ datasummary_skim(politics)
       stroke-miterlimit: 10.00;
     }
   </style></defs><rect width="100%" height="100%" style="stroke: none; fill: none;"></rect><defs><clipPath id="cpMC4wMHw0OC4wMHwwLjAwfDEyLjAw"><rect x="0.00" y="0.00" width="48.00" height="12.00"></rect></clipPath></defs><g clip-path="url(#cpMC4wMHw0OC4wMHwwLjAwfDEyLjAw)">
-</g><defs><clipPath id="cpMC4wMHw0OC4wMHwyLjg4fDEyLjAw"><rect x="0.00" y="2.88" width="48.00" height="9.12"></rect></clipPath></defs><g clip-path="url(#cpMC4wMHw0OC4wMHwyLjg4fDEyLjAw)"><rect x="1.78" y="3.22" width="3.17" height="8.44" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="4.95" y="6.02" width="3.17" height="5.64" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="8.13" y="6.01" width="3.17" height="5.66" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="11.30" y="5.96" width="3.17" height="5.71" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="14.48" y="5.96" width="3.17" height="5.71" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="17.65" y="5.96" width="3.17" height="5.71" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="20.83" y="5.96" width="3.17" height="5.71" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="24.00" y="5.96" width="3.17" height="5.71" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="27.17" y="5.96" width="3.17" height="5.71" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="30.35" y="5.92" width="3.17" height="5.74" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="33.52" y="5.92" width="3.17" height="5.74" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="36.70" y="5.92" width="3.17" height="5.74" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="39.87" y="5.92" width="3.17" height="5.74" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="43.05" y="5.92" width="3.17" height="5.74" style="stroke-width: 0.38; fill: #000000;"></rect></g></svg>
+</g><defs><clipPath id="cpMC4wMHw0OC4wMHwyLjg4fDEyLjAw"><rect x="0.00" y="2.88" width="48.00" height="9.12"></rect></clipPath></defs><g clip-path="url(#cpMC4wMHw0OC4wMHwyLjg4fDEyLjAw)"><rect x="-0.15" y="3.43" width="3.86" height="8.23" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="3.71" y="3.36" width="3.86" height="8.30" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="7.57" y="3.36" width="3.86" height="8.30" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="11.44" y="3.34" width="3.86" height="8.33" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="15.30" y="3.27" width="3.86" height="8.40" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="19.17" y="3.27" width="3.86" height="8.40" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="23.03" y="3.27" width="3.86" height="8.40" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="26.90" y="3.27" width="3.86" height="8.40" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="30.76" y="3.27" width="3.86" height="8.40" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="34.63" y="3.27" width="3.86" height="8.40" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="38.49" y="3.22" width="3.86" height="8.44" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="42.36" y="3.22" width="3.86" height="8.44" style="stroke-width: 0.38; fill: #000000;"></rect></g></svg>
 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> democracy </td>
-   <td style="text-align:right;"> 858 </td>
-   <td style="text-align:right;"> 0 </td>
+   <td style="text-align:right;"> 833 </td>
+   <td style="text-align:right;"> 1 </td>
    <td style="text-align:right;"> 0.4 </td>
    <td style="text-align:right;"> 0.3 </td>
    <td style="text-align:right;"> 0.0 </td>
-   <td style="text-align:right;"> 0.4 </td>
+   <td style="text-align:right;"> 0.3 </td>
    <td style="text-align:right;"> 0.9 </td>
    <td style="text-align:right;">  <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" class="svglite" width="48.00pt" height="12.00pt" viewBox="0 0 48.00 12.00"><defs><style type="text/css">
     .svglite line, .svglite polyline, .svglite polygon, .svglite path, .svglite rect, .svglite circle {
@@ -648,7 +632,7 @@ datasummary_skim(politics)
       stroke-miterlimit: 10.00;
     }
   </style></defs><rect width="100%" height="100%" style="stroke: none; fill: none;"></rect><defs><clipPath id="cpMC4wMHw0OC4wMHwwLjAwfDEyLjAw"><rect x="0.00" y="0.00" width="48.00" height="12.00"></rect></clipPath></defs><g clip-path="url(#cpMC4wMHw0OC4wMHwwLjAwfDEyLjAw)">
-</g><defs><clipPath id="cpMC4wMHw0OC4wMHwyLjg4fDEyLjAw"><rect x="0.00" y="2.88" width="48.00" height="9.12"></rect></clipPath></defs><g clip-path="url(#cpMC4wMHw0OC4wMHwyLjg4fDEyLjAw)"><rect x="1.53" y="7.14" width="2.51" height="4.52" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="4.03" y="3.92" width="2.51" height="7.74" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="6.54" y="3.22" width="2.51" height="8.44" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="9.04" y="5.88" width="2.51" height="5.78" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="11.55" y="6.18" width="2.51" height="5.48" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="14.05" y="6.43" width="2.51" height="5.23" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="16.56" y="6.62" width="2.51" height="5.04" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="19.06" y="7.21" width="2.51" height="4.46" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="21.57" y="6.40" width="2.51" height="5.26" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="24.08" y="8.78" width="2.51" height="2.88" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="26.58" y="8.24" width="2.51" height="3.42" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="29.09" y="9.17" width="2.51" height="2.50" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="31.59" y="8.01" width="2.51" height="3.65" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="34.10" y="8.36" width="2.51" height="3.30" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="36.60" y="9.70" width="2.51" height="1.96" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="39.11" y="6.28" width="2.51" height="5.38" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="41.61" y="4.04" width="2.51" height="7.62" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="44.12" y="9.22" width="2.51" height="2.45" style="stroke-width: 0.38; fill: #000000;"></rect></g></svg>
+</g><defs><clipPath id="cpMC4wMHw0OC4wMHwyLjg4fDEyLjAw"><rect x="0.00" y="2.88" width="48.00" height="9.12"></rect></clipPath></defs><g clip-path="url(#cpMC4wMHw0OC4wMHwyLjg4fDEyLjAw)"><rect x="1.53" y="7.10" width="2.51" height="4.56" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="4.03" y="3.44" width="2.51" height="8.22" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="6.54" y="3.22" width="2.51" height="8.44" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="9.04" y="5.43" width="2.51" height="6.23" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="11.55" y="6.23" width="2.51" height="5.43" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="14.05" y="6.80" width="2.51" height="4.87" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="16.56" y="6.78" width="2.51" height="4.89" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="19.06" y="7.10" width="2.51" height="4.56" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="21.57" y="6.76" width="2.51" height="4.91" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="24.08" y="9.23" width="2.51" height="2.43" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="26.58" y="8.18" width="2.51" height="3.48" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="29.09" y="9.51" width="2.51" height="2.15" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="31.59" y="8.22" width="2.51" height="3.44" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="34.10" y="8.26" width="2.51" height="3.40" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="36.60" y="10.07" width="2.51" height="1.59" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="39.11" y="6.41" width="2.51" height="5.25" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="41.61" y="3.76" width="2.51" height="7.90" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="44.12" y="9.23" width="2.51" height="2.43" style="stroke-width: 0.38; fill: #000000;"></rect></g></svg>
 </td>
   </tr>
 </tbody>
@@ -674,61 +658,61 @@ datasummary_skim(data, type = "categorical")
   <tr>
    <td style="text-align:left;"> regime </td>
    <td style="text-align:left;"> Closed Autocracy </td>
-   <td style="text-align:right;"> 504 </td>
-   <td style="text-align:right;"> 14.0 </td>
+   <td style="text-align:right;"> 539 </td>
+   <td style="text-align:right;"> 14.4 </td>
   </tr>
   <tr>
    <td style="text-align:left;">  </td>
    <td style="text-align:left;"> Electoral Autocracy </td>
-   <td style="text-align:right;"> 1150 </td>
-   <td style="text-align:right;"> 31.9 </td>
+   <td style="text-align:right;"> 1194 </td>
+   <td style="text-align:right;"> 31.8 </td>
   </tr>
   <tr>
    <td style="text-align:left;">  </td>
    <td style="text-align:left;"> Electoral Democracy </td>
-   <td style="text-align:right;"> 1109 </td>
-   <td style="text-align:right;"> 30.7 </td>
+   <td style="text-align:right;"> 1140 </td>
+   <td style="text-align:right;"> 30.4 </td>
   </tr>
   <tr>
    <td style="text-align:left;">  </td>
    <td style="text-align:left;"> Liberal Democracy </td>
-   <td style="text-align:right;"> 844 </td>
-   <td style="text-align:right;"> 23.4 </td>
+   <td style="text-align:right;"> 874 </td>
+   <td style="text-align:right;"> 23.3 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> region </td>
    <td style="text-align:left;"> Africa </td>
-   <td style="text-align:right;"> 971 </td>
-   <td style="text-align:right;"> 26.9 </td>
+   <td style="text-align:right;"> 1011 </td>
+   <td style="text-align:right;"> 27.0 </td>
   </tr>
   <tr>
    <td style="text-align:left;">  </td>
    <td style="text-align:left;"> Americas </td>
-   <td style="text-align:right;"> 620 </td>
-   <td style="text-align:right;"> 17.2 </td>
+   <td style="text-align:right;"> 647 </td>
+   <td style="text-align:right;"> 17.3 </td>
   </tr>
   <tr>
    <td style="text-align:left;">  </td>
    <td style="text-align:left;"> Eastern Mediterranean </td>
-   <td style="text-align:right;"> 391 </td>
+   <td style="text-align:right;"> 405 </td>
    <td style="text-align:right;"> 10.8 </td>
   </tr>
   <tr>
    <td style="text-align:left;">  </td>
    <td style="text-align:left;"> Europe </td>
-   <td style="text-align:right;"> 1064 </td>
-   <td style="text-align:right;"> 29.5 </td>
+   <td style="text-align:right;"> 1102 </td>
+   <td style="text-align:right;"> 29.4 </td>
   </tr>
   <tr>
    <td style="text-align:left;">  </td>
    <td style="text-align:left;"> South-East Asia </td>
-   <td style="text-align:right;"> 218 </td>
+   <td style="text-align:right;"> 226 </td>
    <td style="text-align:right;"> 6.0 </td>
   </tr>
   <tr>
    <td style="text-align:left;">  </td>
    <td style="text-align:left;"> Western Pacific </td>
-   <td style="text-align:right;"> 345 </td>
+   <td style="text-align:right;"> 359 </td>
    <td style="text-align:right;"> 9.6 </td>
   </tr>
 </tbody>
@@ -759,11 +743,11 @@ datasummary_skim(data,
 <tbody>
   <tr>
    <td style="text-align:left;"> year </td>
-   <td style="text-align:right;"> 23 </td>
+   <td style="text-align:right;"> 24 </td>
    <td style="text-align:right;"> 0 </td>
-   <td style="text-align:right;"> 2003.2 </td>
-   <td style="text-align:right;"> 6.6 </td>
-   <td style="text-align:right;"> 1992.0 </td>
+   <td style="text-align:right;"> 2002.7 </td>
+   <td style="text-align:right;"> 6.9 </td>
+   <td style="text-align:right;"> 1991.0 </td>
    <td style="text-align:right;"> 2003.0 </td>
    <td style="text-align:right;"> 2014.0 </td>
    <td style="text-align:right;">  <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" class="svglite" width="48.00pt" height="12.00pt" viewBox="0 0 48.00 12.00"><defs><style type="text/css">
@@ -775,15 +759,15 @@ datasummary_skim(data,
       stroke-miterlimit: 10.00;
     }
   </style></defs><rect width="100%" height="100%" style="stroke: none; fill: none;"></rect><defs><clipPath id="cpMC4wMHw0OC4wMHwwLjAwfDEyLjAw"><rect x="0.00" y="0.00" width="48.00" height="12.00"></rect></clipPath></defs><g clip-path="url(#cpMC4wMHw0OC4wMHwwLjAwfDEyLjAw)">
-</g><defs><clipPath id="cpMC4wMHw0OC4wMHwyLjg4fDEyLjAw"><rect x="0.00" y="2.88" width="48.00" height="9.12"></rect></clipPath></defs><g clip-path="url(#cpMC4wMHw0OC4wMHwyLjg4fDEyLjAw)"><rect x="1.78" y="3.22" width="4.04" height="8.44" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="5.82" y="5.82" width="4.04" height="5.85" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="9.86" y="5.78" width="4.04" height="5.88" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="13.90" y="5.64" width="4.04" height="6.02" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="17.94" y="5.57" width="4.04" height="6.09" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="21.98" y="5.55" width="4.04" height="6.11" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="26.02" y="5.55" width="4.04" height="6.11" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="30.06" y="5.55" width="4.04" height="6.11" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="34.10" y="5.53" width="4.04" height="6.13" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="38.14" y="5.57" width="4.04" height="6.09" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="42.18" y="5.57" width="4.04" height="6.09" style="stroke-width: 0.38; fill: #000000;"></rect></g></svg>
+</g><defs><clipPath id="cpMC4wMHw0OC4wMHwyLjg4fDEyLjAw"><rect x="0.00" y="2.88" width="48.00" height="9.12"></rect></clipPath></defs><g clip-path="url(#cpMC4wMHw0OC4wMHwyLjg4fDEyLjAw)"><rect x="-0.15" y="4.16" width="3.86" height="7.50" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="3.71" y="3.82" width="3.86" height="7.84" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="7.57" y="3.61" width="3.86" height="8.05" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="11.44" y="3.56" width="3.86" height="8.10" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="15.30" y="3.38" width="3.86" height="8.29" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="19.17" y="3.27" width="3.86" height="8.39" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="23.03" y="3.24" width="3.86" height="8.42" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="26.90" y="3.24" width="3.86" height="8.42" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="30.76" y="3.24" width="3.86" height="8.42" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="34.63" y="3.22" width="3.86" height="8.44" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="38.49" y="3.27" width="3.86" height="8.39" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="42.36" y="3.27" width="3.86" height="8.39" style="stroke-width: 0.38; fill: #000000;"></rect></g></svg>
 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> emissions </td>
-   <td style="text-align:right;"> 1801 </td>
+   <td style="text-align:right;"> 1828 </td>
    <td style="text-align:right;"> 0 </td>
-   <td style="text-align:right;"> 168173.7 </td>
-   <td style="text-align:right;"> 685560.4 </td>
+   <td style="text-align:right;"> 167408.4 </td>
+   <td style="text-align:right;"> 679823.1 </td>
    <td style="text-align:right;"> 33.0 </td>
    <td style="text-align:right;"> 15000.0 </td>
    <td style="text-align:right;"> 10300000.0 </td>
@@ -796,17 +780,17 @@ datasummary_skim(data,
       stroke-miterlimit: 10.00;
     }
   </style></defs><rect width="100%" height="100%" style="stroke: none; fill: none;"></rect><defs><clipPath id="cpMC4wMHw0OC4wMHwwLjAwfDEyLjAw"><rect x="0.00" y="0.00" width="48.00" height="12.00"></rect></clipPath></defs><g clip-path="url(#cpMC4wMHw0OC4wMHwwLjAwfDEyLjAw)">
-</g><defs><clipPath id="cpMC4wMHw0OC4wMHwyLjg4fDEyLjAw"><rect x="0.00" y="2.88" width="48.00" height="9.12"></rect></clipPath></defs><g clip-path="url(#cpMC4wMHw0OC4wMHwyLjg4fDEyLjAw)"><rect x="1.78" y="3.22" width="4.32" height="8.44" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="6.09" y="11.52" width="4.32" height="0.14" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="10.41" y="11.65" width="4.32" height="0.014" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="14.72" y="11.64" width="4.32" height="0.022" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="19.04" y="11.66" width="4.32" height="0.0048" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="23.35" y="11.60" width="4.32" height="0.058" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="27.67" y="11.66" width="4.32" height="0.0024" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="31.98" y="11.65" width="4.32" height="0.0072" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="36.30" y="11.66" width="4.32" height="0.0024" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="40.61" y="11.66" width="4.32" height="0.0048" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="44.93" y="11.66" width="4.32" height="0.0048" style="stroke-width: 0.38; fill: #000000;"></rect></g></svg>
+</g><defs><clipPath id="cpMC4wMHw0OC4wMHwyLjg4fDEyLjAw"><rect x="0.00" y="2.88" width="48.00" height="9.12"></rect></clipPath></defs><g clip-path="url(#cpMC4wMHw0OC4wMHwyLjg4fDEyLjAw)"><rect x="1.78" y="3.22" width="4.32" height="8.44" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="6.09" y="11.53" width="4.32" height="0.13" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="10.41" y="11.64" width="4.32" height="0.019" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="14.72" y="11.64" width="4.32" height="0.021" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="19.04" y="11.66" width="4.32" height="0.0070" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="23.35" y="11.61" width="4.32" height="0.056" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="27.67" y="11.66" width="4.32" height="0.0023" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="31.98" y="11.66" width="4.32" height="0.0070" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="36.30" y="11.66" width="4.32" height="0.0023" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="40.61" y="11.66" width="4.32" height="0.0046" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="44.93" y="11.66" width="4.32" height="0.0046" style="stroke-width: 0.38; fill: #000000;"></rect></g></svg>
 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> gdp </td>
-   <td style="text-align:right;"> 1664 </td>
+   <td style="text-align:right;"> 1693 </td>
    <td style="text-align:right;"> 0 </td>
-   <td style="text-align:right;"> 11948.1 </td>
-   <td style="text-align:right;"> 17623.6 </td>
-   <td style="text-align:right;"> 179.0 </td>
-   <td style="text-align:right;"> 3960.0 </td>
+   <td style="text-align:right;"> 11857.3 </td>
+   <td style="text-align:right;"> 17520.5 </td>
+   <td style="text-align:right;"> 164.0 </td>
+   <td style="text-align:right;"> 3925.0 </td>
    <td style="text-align:right;"> 112000.0 </td>
    <td style="text-align:right;">  <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" class="svglite" width="48.00pt" height="12.00pt" viewBox="0 0 48.00 12.00"><defs><style type="text/css">
     .svglite line, .svglite polyline, .svglite polygon, .svglite path, .svglite rect, .svglite circle {
@@ -817,12 +801,12 @@ datasummary_skim(data,
       stroke-miterlimit: 10.00;
     }
   </style></defs><rect width="100%" height="100%" style="stroke: none; fill: none;"></rect><defs><clipPath id="cpMC4wMHw0OC4wMHwwLjAwfDEyLjAw"><rect x="0.00" y="0.00" width="48.00" height="12.00"></rect></clipPath></defs><g clip-path="url(#cpMC4wMHw0OC4wMHwwLjAwfDEyLjAw)">
-</g><defs><clipPath id="cpMC4wMHw0OC4wMHwyLjg4fDEyLjAw"><rect x="0.00" y="2.88" width="48.00" height="9.12"></rect></clipPath></defs><g clip-path="url(#cpMC4wMHw0OC4wMHwyLjg4fDEyLjAw)"><rect x="1.71" y="3.22" width="3.97" height="8.44" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="5.68" y="10.52" width="3.97" height="1.14" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="9.66" y="11.11" width="3.97" height="0.56" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="13.63" y="11.04" width="3.97" height="0.63" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="17.61" y="11.02" width="3.97" height="0.65" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="21.58" y="11.45" width="3.97" height="0.21" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="25.55" y="11.51" width="3.97" height="0.15" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="29.53" y="11.59" width="3.97" height="0.070" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="33.50" y="11.61" width="3.97" height="0.053" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="37.48" y="11.64" width="3.97" height="0.023" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="41.45" y="11.63" width="3.97" height="0.033" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="45.43" y="11.66" width="3.97" height="0.0033" style="stroke-width: 0.38; fill: #000000;"></rect></g></svg>
+</g><defs><clipPath id="cpMC4wMHw0OC4wMHwyLjg4fDEyLjAw"><rect x="0.00" y="2.88" width="48.00" height="9.12"></rect></clipPath></defs><g clip-path="url(#cpMC4wMHw0OC4wMHwyLjg4fDEyLjAw)"><rect x="1.71" y="3.22" width="3.97" height="8.44" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="5.69" y="10.54" width="3.97" height="1.12" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="9.66" y="11.09" width="3.97" height="0.57" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="13.63" y="11.03" width="3.97" height="0.64" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="17.61" y="11.04" width="3.97" height="0.62" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="21.58" y="11.46" width="3.97" height="0.20" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="25.56" y="11.51" width="3.97" height="0.16" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="29.53" y="11.59" width="3.97" height="0.070" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="33.51" y="11.61" width="3.97" height="0.051" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="37.48" y="11.64" width="3.97" height="0.022" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="41.45" y="11.63" width="3.97" height="0.032" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="45.43" y="11.66" width="3.97" height="0.0032" style="stroke-width: 0.38; fill: #000000;"></rect></g></svg>
 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> democracy </td>
-   <td style="text-align:right;"> 812 </td>
+   <td style="text-align:right;"> 814 </td>
    <td style="text-align:right;"> 0 </td>
    <td style="text-align:right;"> 0.4 </td>
    <td style="text-align:right;"> 0.3 </td>
@@ -838,17 +822,17 @@ datasummary_skim(data,
       stroke-miterlimit: 10.00;
     }
   </style></defs><rect width="100%" height="100%" style="stroke: none; fill: none;"></rect><defs><clipPath id="cpMC4wMHw0OC4wMHwwLjAwfDEyLjAw"><rect x="0.00" y="0.00" width="48.00" height="12.00"></rect></clipPath></defs><g clip-path="url(#cpMC4wMHw0OC4wMHwwLjAwfDEyLjAw)">
-</g><defs><clipPath id="cpMC4wMHw0OC4wMHwyLjg4fDEyLjAw"><rect x="0.00" y="2.88" width="48.00" height="9.12"></rect></clipPath></defs><g clip-path="url(#cpMC4wMHw0OC4wMHwyLjg4fDEyLjAw)"><rect x="1.48" y="8.32" width="2.51" height="3.34" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="3.98" y="4.81" width="2.51" height="6.85" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="6.49" y="4.35" width="2.51" height="7.32" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="9.00" y="6.05" width="2.51" height="5.61" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="11.51" y="6.49" width="2.51" height="5.17" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="14.02" y="7.11" width="2.51" height="4.55" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="16.53" y="7.48" width="2.51" height="4.18" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="19.03" y="7.20" width="2.51" height="4.47" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="21.54" y="6.47" width="2.51" height="5.19" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="24.05" y="9.23" width="2.51" height="2.43" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="26.56" y="8.24" width="2.51" height="3.43" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="29.07" y="9.47" width="2.51" height="2.19" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="31.57" y="8.01" width="2.51" height="3.65" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="34.08" y="8.32" width="2.51" height="3.34" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="36.59" y="10.23" width="2.51" height="1.44" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="39.10" y="6.36" width="2.51" height="5.31" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="41.61" y="3.22" width="2.51" height="8.44" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="44.12" y="9.08" width="2.51" height="2.59" style="stroke-width: 0.38; fill: #000000;"></rect></g></svg>
+</g><defs><clipPath id="cpMC4wMHw0OC4wMHwyLjg4fDEyLjAw"><rect x="0.00" y="2.88" width="48.00" height="9.12"></rect></clipPath></defs><g clip-path="url(#cpMC4wMHw0OC4wMHwyLjg4fDEyLjAw)"><rect x="1.48" y="8.31" width="2.51" height="3.35" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="3.98" y="4.55" width="2.51" height="7.11" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="6.49" y="4.21" width="2.51" height="7.46" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="9.00" y="5.86" width="2.51" height="5.80" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="11.51" y="6.46" width="2.51" height="5.20" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="14.02" y="7.06" width="2.51" height="4.60" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="16.53" y="7.54" width="2.51" height="4.13" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="19.03" y="7.13" width="2.51" height="4.53" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="21.54" y="6.55" width="2.51" height="5.11" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="24.05" y="9.19" width="2.51" height="2.47" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="26.56" y="8.27" width="2.51" height="3.39" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="29.07" y="9.43" width="2.51" height="2.23" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="31.57" y="8.03" width="2.51" height="3.63" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="34.08" y="8.35" width="2.51" height="3.31" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="36.59" y="10.20" width="2.51" height="1.46" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="39.10" y="6.25" width="2.51" height="5.41" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="41.61" y="3.22" width="2.51" height="8.44" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="44.12" y="9.06" width="2.51" height="2.60" style="stroke-width: 0.38; fill: #000000;"></rect></g></svg>
 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> gdp_sq </td>
-   <td style="text-align:right;"> 1664 </td>
+   <td style="text-align:right;"> 1693 </td>
    <td style="text-align:right;"> 0 </td>
-   <td style="text-align:right;"> 453261218.5 </td>
-   <td style="text-align:right;"> 1207240649.1 </td>
-   <td style="text-align:right;"> 32041.0 </td>
-   <td style="text-align:right;"> 15681600.0 </td>
+   <td style="text-align:right;"> 447482052.8 </td>
+   <td style="text-align:right;"> 1194402547.0 </td>
+   <td style="text-align:right;"> 26896.0 </td>
+   <td style="text-align:right;"> 15405650.0 </td>
    <td style="text-align:right;"> 12544000000.0 </td>
    <td style="text-align:right;">  <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" class="svglite" width="48.00pt" height="12.00pt" viewBox="0 0 48.00 12.00"><defs><style type="text/css">
     .svglite line, .svglite polyline, .svglite polygon, .svglite path, .svglite rect, .svglite circle {
@@ -859,7 +843,7 @@ datasummary_skim(data,
       stroke-miterlimit: 10.00;
     }
   </style></defs><rect width="100%" height="100%" style="stroke: none; fill: none;"></rect><defs><clipPath id="cpMC4wMHw0OC4wMHwwLjAwfDEyLjAw"><rect x="0.00" y="0.00" width="48.00" height="12.00"></rect></clipPath></defs><g clip-path="url(#cpMC4wMHw0OC4wMHwwLjAwfDEyLjAw)">
-</g><defs><clipPath id="cpMC4wMHw0OC4wMHwyLjg4fDEyLjAw"><rect x="0.00" y="2.88" width="48.00" height="9.12"></rect></clipPath></defs><g clip-path="url(#cpMC4wMHw0OC4wMHwyLjg4fDEyLjAw)"><rect x="1.78" y="3.22" width="3.54" height="8.44" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="5.32" y="10.94" width="3.54" height="0.72" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="8.86" y="11.28" width="3.54" height="0.39" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="12.41" y="11.55" width="3.54" height="0.11" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="15.95" y="11.60" width="3.54" height="0.066" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="19.49" y="11.62" width="3.54" height="0.044" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="23.04" y="11.65" width="3.54" height="0.016" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="26.58" y="11.63" width="3.54" height="0.030" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="30.12" y="11.65" width="3.54" height="0.016" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="33.67" y="11.65" width="3.54" height="0.0082" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="37.21" y="11.65" width="3.54" height="0.011" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="40.75" y="11.65" width="3.54" height="0.016" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="44.29" y="11.66" width="3.54" height="0.0027" style="stroke-width: 0.38; fill: #000000;"></rect></g></svg>
+</g><defs><clipPath id="cpMC4wMHw0OC4wMHwyLjg4fDEyLjAw"><rect x="0.00" y="2.88" width="48.00" height="9.12"></rect></clipPath></defs><g clip-path="url(#cpMC4wMHw0OC4wMHwyLjg4fDEyLjAw)"><rect x="1.78" y="3.22" width="3.54" height="8.44" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="5.32" y="10.94" width="3.54" height="0.72" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="8.86" y="11.29" width="3.54" height="0.37" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="12.41" y="11.55" width="3.54" height="0.11" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="15.95" y="11.59" width="3.54" height="0.068" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="19.49" y="11.62" width="3.54" height="0.045" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="23.04" y="11.65" width="3.54" height="0.016" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="26.58" y="11.63" width="3.54" height="0.029" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="30.12" y="11.65" width="3.54" height="0.016" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="33.67" y="11.65" width="3.54" height="0.0079" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="37.21" y="11.65" width="3.54" height="0.011" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="40.75" y="11.65" width="3.54" height="0.016" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="44.29" y="11.66" width="3.54" height="0.0026" style="stroke-width: 0.38; fill: #000000;"></rect></g></svg>
 </td>
   </tr>
 </tbody>
@@ -1117,13 +1101,13 @@ cor
 ## 	Pearson's product-moment correlation
 ## 
 ## data:  data$avg_emissions and data$avg_gdp
-## t = 8.4759, df = 3607, p-value < 0.00000000000000022
+## t = 8.7595, df = 3748, p-value < 0.00000000000000022
 ## alternative hypothesis: true correlation is not equal to 0
 ## 95 percent confidence interval:
-##  0.1076060 0.1715877
+##  0.1101285 0.1728614
 ## sample estimates:
 ##       cor 
-## 0.1397427
+## 0.1416371
 ```
 
 Let's say we want to estimate the following equation: 
@@ -1147,7 +1131,7 @@ reg1
 ## 
 ## Coefficients:
 ## (Intercept)          gdp  
-##  105757.604        5.224
+##  104890.121        5.273
 ```
 
 To get all the details of the regression, we use the `summary()` function. The output is similar to Stata's regression output. 
@@ -1165,18 +1149,18 @@ summary(reg1)
 ## 
 ## Residuals:
 ##      Min       1Q   Median       3Q      Max 
-##  -679538  -127215  -107452   -74489 10162376 
+##  -684116  -125992  -106644   -73282 10162947 
 ## 
 ## Coefficients:
 ##              Estimate Std. Error t value Pr(>|t|)    
-## (Intercept) 1.058e+05  1.366e+04   7.739 1.29e-14 ***
-## gdp         5.224e+00  6.418e-01   8.139 5.43e-16 ***
+## (Intercept) 1.049e+05  1.328e+04   7.897 3.73e-15 ***
+## gdp         5.273e+00  6.279e-01   8.397  < 2e-16 ***
 ## ---
 ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 ## 
-## Residual standard error: 679400 on 3607 degrees of freedom
-## Multiple R-squared:  0.01803,	Adjusted R-squared:  0.01776 
-## F-statistic: 66.24 on 1 and 3607 DF,  p-value: 5.431e-16
+## Residual standard error: 673600 on 3748 degrees of freedom
+## Multiple R-squared:  0.01846,	Adjusted R-squared:  0.0182 
+## F-statistic: 70.51 on 1 and 3748 DF,  p-value: < 2.2e-16
 ```
 
 As mentioned earlier, regressions results is a list object. We can use the `$` and `[[]]` to extract information. To know the location or the element name, you can check in `str(summary(reg1))`. For example, we can just extract the coefficients of the regression. 
@@ -1188,8 +1172,8 @@ summary(reg1)$coefficients
 
 ```
 ##                 Estimate   Std. Error  t value     Pr(>|t|)
-## (Intercept) 1.057576e+05 1.366473e+04 7.739456 1.287314e-14
-## gdp         5.223937e+00 6.418401e-01 8.139000 5.431350e-16
+## (Intercept) 104890.12055 1.328282e+04 7.896677 3.732477e-15
+## gdp              5.27255 6.279173e-01 8.396887 6.420416e-17
 ```
 
 Let's say we want to compare the GDP between USA and Canada. We can first visualize our data using box plots.
@@ -1223,13 +1207,17 @@ can_usa_ttest
 ## 	Welch Two Sample t-test
 ## 
 ## data:  gdp by country
-## t = -1.9956, df = 41.391, p-value = 0.05259
+## t = -1.9638, df = 43.731, p-value = 0.05593
 ## alternative hypothesis: true difference in means between group Canada and group United States is not equal to 0
 ## 95 percent confidence interval:
-##  -6280.02564    36.54738
+##  -6383.25977    83.25977
 ## sample estimates:
 ##        mean in group Canada mean in group United States 
-##                    42578.26                    45700.00
+##                    42158.33                    45308.33
 ```
 
-# Working with Dates
+# To be added
+  
+  * Dates
+  * Factors
+  

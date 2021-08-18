@@ -27,13 +27,13 @@ pacman::p_load(tidyverse, readxl, googlesheets4, readstata13, magrittr, cansim, 
 
 You will likely have to import data into R for your MFRE courses, instead of typing the data by hand like we did in the previous session. We will load data into R from 5 different sources: 
 
- * flat files (csv and txt)
+ * Flat files (csv and txt)
  * Excel files (xlsx)
  * Stata data format (dta)
  * Google Sheet 
  * API (Statistics Canada)
 
-## csv
+## Flat files
 
 It's common for people to save data in spreadsheets as comma-separated values (csv) or in text files (txt). To open a csv file in R, we use the `read_csv()` function of the `{tidyverse}` package, and the `here()` function of the `{here}` package. The `here()` function takes the folder and file names as inputs, which are enclosed by quotation marks and you wouldn't have to worry about to use back or forward slashes. 
 
@@ -47,9 +47,9 @@ carbon <- read_csv(here("data", "yearly_co2_emissions.csv"))
   
   * Note: The `read_csv` function assumes fields are delimited by comma. If you want a more flexible way of reading text files, look up the `{readr}` package for other [functions](https://readr.tidyverse.org/). 
   
-  * In FRE 501, Dr. Vercammen uses the base R `read.csv` function. It is doing the same thing as the `read_csv` function. The additional arguments you may see are `sep = ","`, which means that data is delimited by comma, and `header = TRUE`, which means that the first row will be treated as column names. 
+  * In FRE 501, Dr. Vercammen uses the base R `read.csv()` function. To load the csv file using this function, the code is `carbon <- read.csv(here("data", "yearly_co2_emissions.csv"), sep = ",", header = TRUE)`. This code will do the same thing as the `read_csv` function. The additional arguments you may see are `sep = ","`, which means that data is delimited by comma, and `header = TRUE`, which means that the first row should be treated as column names. 
 
-To load in text files, use the `read.table()` function. The `sep = "\t"` argument indicates that the data is tab-delimited. The `header = TRUE` argument indicates that the first row will be treated as column names.
+To load in text files, use the `read.table()` function. The `sep = "\t"` argument indicates that the data is tab-delimited. The `header = TRUE` argument indicates that the first row should be treated as column names.
 
 ```{r loaddata1_txt, message = FALSE, warning = FALSE}
 provinces <- read.table(here("data", "province.txt"), sep = "\t", header = TRUE)
@@ -93,10 +93,10 @@ politics <- read.dta13(here("data", "politics.dta"), nonint.factors = TRUE)
 ```
 
   * The argument `nonint.factors = TRUE` is to keep factor labels instead of the value itself. You can try loading the data with and without that argument to see the difference. 
-  
-It is also common now to share data using Google Sheets. We will use the `read_sheet("insert_link_here")` function of the `{googlesheets4}` package. This function will prompt you to provide authorization to the tidyverse API and log in with your Gmail credentials. One way to get around this step would be to add in the function `gs4_deauth()` before you use the `read_sheet()` function. 
 
 ## Google Sheets 
+
+It is also common now to share data using Google Sheets. We will use the `read_sheet("insert_link_here")` function of the `{googlesheets4}` package. This function will prompt you to provide authorization to the tidyverse API and log in with your Gmail credentials. One way to get around this step would be to add in the function `gs4_deauth()` before you use the `read_sheet()` function. 
 
 ```{r loaddata5, message = FALSE, warning = FALSE}
 gs4_deauth() # so no need to sign in
@@ -108,7 +108,8 @@ disasters <- read_sheet("https://docs.google.com/spreadsheets/d/17s15o7jdDpGSKgs
 
 When you look for data online, you usually have the option to download the tables as a csv or xlsx file. You may also want to check online if someone has already written a package that connects to the data's server directly and load it into R. The advantage of doing this approach is that you can work with 'updated' data whenever you run the code, and you also save yourself time from having to save the table as a spreadsheet every time the table is updated. 
 
-For exapmle, you want to download the Estimated areas, yield, production, average farm price, and total farm value of principal field crops table from [Statistics Canada](https://www150.statcan.gc.ca/t1/tbl1/en/tv.action?pid=3210035901). A quick Google Search of "import stats can table in R" will reveal that someone already wrote the `{cansim}` package to do just that. The function we will use is called `get_cansim('insert_table_number_here'_)`. 
+For example, you want to download the Estimated areas, yield, production, average farm price, and total farm value of principal field crops table from [Statistics Canada](https://www150.statcan.gc.ca/t1/tbl1/en/tv.action?pid=3210035901). A quick Google Search of "import stats can table in R" will reveal that someone already wrote the `{cansim}` package to do just that. The function we will use is called `get_cansim('insert_table_number_here'_)`. 
+
 ```{r loaddata6_statscan, message = FALSE, warning = FALSE}
 ag <- get_cansim('32-10-0359-01')
 ```
@@ -145,9 +146,9 @@ Summary:
   * `summary(politics)` returns the summary statistics of each column
   * `glimpse(politics)` returns the dimension of the data, the names and class of each column, and previous as many values per column. 
 
-## Indexing and Subsetting Data Frames
+## Subsetting Data Frames
 
-To extract certain columns and rows from our data, we use `[]` or `[[]]` or `$` symbols. 
+As we learned from the previous session, we use `[]` or `[[]]` or `$` to extract certain columns and rows from our data, we use  
   
   * `politics[1, 2]` To extract the first element in the second column of the table as a vector
   * `politics[[1]]` To extract the first column as a vector 
@@ -161,77 +162,21 @@ To extract certain columns and rows from our data, we use `[]` or `[[]]` or `$` 
 
 As you can see, there are so many different ways to extract values. The most common way we extract values in MFRE classes would be last point, `politics$country`. Most of the time, however, we'll just want to see the results from `table(politics$country_name)`
 
-## Factors
-
-To be added 
-
 # Data Wrangling
 
-From this point on, we will only work with 3 data frames: `carbon`, `politics`, and `gdp`. 
+From this point on, we will only work with 3 data frames: `carbon`, `gdp` and `politics`. 
 
-There are many packages you can use to wrangle data. In this case study, I will mostly use packages in the `{tidyverse}` library, but I will also show you alternatives that you might encounter in some MFRE courses. 
-
-You will see that I will use the pipe operator `%>%` frequently. The operator allows us to chain functions together. It takes the function specified to the left of the operator and allows you to pass the intermediate output to the function specified to the right of the operator. You can read more about it [here](https://www.datacamp.com/community/tutorials/pipe-r-tutorial).
-
-## Selecting and Filtering
-
-In the `politics` data frame, let's say I only want to keep the `country`, `year`, `v2x_libdem`, `v2x_regime`, and `region` variables. We will use the `select(col1, col2, ...)` function. 
-
-```{r select, eval = FALSE}
-politics %>% select(country_name, year, v2x_libdem, v2x_regime, region)
-```
-
-Alternatively, we can also drop the columns we do not want by adding a `-` symbol before the column name/s. 
-
-```{r select_drop, eval = FALSE}
-politics %>% select(-v2psnatpar_ord)
-```
-
-The output from the two codes above is a dataframe of all the rows of the columns we selected But the original data `politics` remains unchanged. To "save" this new dataframe, we have to use the assignment operator `<-`. In the code below, we will just overwrite the original `politics` data.
-
-```{r select_overwrite}
-politics <- politics %>% select(country_name, year, v2x_libdem, v2x_regime, region)
-```
-
-Running the command `dim(politics)`, you will notice that we only have 5 columns left in our dataframe. 
-
-If we want to keep observations to those from years 1991 onwards, we use the `filter()` function. 
-
-```{r filter}
-politics <- politics %>% filter(year > 1991)
-
-# To filter observations where region = Africa
-# politics %>% filter(region == "Africa") 
-```
-
-We can use the pipe operator to chain the `select()` and `filter()` functions. Running this code will not change anything anymore because we already used the assignment operator. But it may be something you may want to do in the future and save yourself a few lines of code. 
-
-```{r pipe, eval = FALSE}
-politics <- politics %>% 
-  select(country_name, year, v2x_libdem, v2x_regime, region) %>%
-  filter(year > 1991)
-```
-
-## Renaming columns
-
-Let's say we want to rename the `country` column to `country`, `v2x_libdem` to `democracy`, and `v2x_regime` to regime. The function is `rename(new_name = old_name)`.
-
-```{r rename}
-politics <- politics %>% 
-  rename(country = country_name,
-         democracy = v2x_libdem,
-         regime = v2x_regime)
-```
-
-  * In Dr. Vercammen's code, you will see that he renames variables using the `names()` and `which()` functions -- `names(politics)[which(names(politics) == "country")] = "country"`. 
+Now that we have loaded the data in R and know what it looks like, we want to tidy the data before we proceed with our analysis. Tidy data allows us to use analyze the data more efficiently. Tidy data deals with the shape and structure of the data. You can read more about tidy data [here](https://vita.had.co.nz/papers/tidy-data.pdf) and [here](https://www.openscapes.org/blog/2020/10/12/tidy-data/). In summary, tidy data means that
   
+  * each variable forms a column
+  * each observation forms a row
+  * each cell is a single measurement
+
 ## Reshaping Data
 
-In the `politics` data, each row contains the values of variables associated with each country and year. This dataframe is said to be in the "long" data format. 
+In the `politics` data, each row contains the values of variables associated with each country and year. This data frame is said to be in the "long" data format. If you look at the `carbon` and `gdp` data frames, you will notice that they are in the wide format. Each row is a country, and the columns are the different years we have observations for. We would not consider the `carbon` and `gdp` as tidy data. 
 
-If you look at the `carbon` and `gdp` dataframes, you will notice that they are in the wide format. Each row is a country, and the columns are the different years we have observations for. 
-
-Most R functions expect your data to be in the "long" data format because it is more machine readable and is closer to the formatting of databases. In the `tidyr` package, we can use the `pivot_longer()` and `pivot_wider` columns to reshape our data. 
+Most R functions expect your data to be in the "long" data format because it is more machine readable and is closer to the formatting of databases. In the `tidyr` package, we can use the `pivot_longer()` and `pivot_wider` columns to reshape our data. These functions are the equivalent of the `reshape long` and `reshape wide` in Stata. 
 
 ```{r carbon_sample}
 carbon %>% 
@@ -245,11 +190,13 @@ carbon %>%
 head(carbon$`2014`)
 ```
 
-### Pivoting longer
+## Pivoting longer
+
+We will now convert `carbon` to a long format. We want to collapse all emissions across the years into one column called "emissions." We then identify the year the data point comes from by creating a "year" variable. 
 
 The `pivot_longer()` function takes four main arguments:
   * the (wide) data
-  * *cols* are the names of the columns we use to fill the new values variable (or to drop)
+  * *cols* are the names of the columns we use (or drop) to fill the new values variable
   * the *names_to* column variable we wish to create the *cols* provided
   * the *values_to* column variable we wish to create and fill with values associated with the *cols* provided
   
@@ -280,14 +227,17 @@ carbon_long %>%
 
 str(carbon_long)
 ```
+
 Notice that the `year` variable is of the `character (chr)` type, so we want to recode that variable to numeric. To create or modify columns as a function of existing columns, we use the `mutate(new_var_name = function_of_existing_vars)` function. To change the data type to numeric, we use the `as.numeric()` function.  
 
 ```{r to_numeric}
 carbon_long <- carbon_long %>%
   mutate(year = as.numeric(year))
+
+# Alternatively, you an also use carbon_long$year <- as.numeric(carbon_long$year)
 ```
 
-The `gdp` data is in the same format, so let's do reshape that one too.
+The `gdp` data is in the same format, so let's reshape that one too. Notice how I used `%>%` to chain the commands together. 
 
 ```{r pivot_long_gdp}
 gdp_long <- gdp %>%
@@ -299,8 +249,7 @@ gdp_long <- gdp %>%
 head(gdp_long)
 ```
 
-
-### Pivoting wider
+## Pivoting wider
 
 In the case that we want to reshape the `carbon_long` back to its original "wide" data format, we can use the `pivot_wider()` function. This function takes three main arguments. 
 
@@ -312,22 +261,85 @@ In the case that we want to reshape the `carbon_long` back to its original "wide
 carbon_wide <- carbon_long %>%
   pivot_wider(names_from = "year",
               values_from = "emissions")
-
-head(carbon)
 ```
 
+If you inspect the `carbon_wide` data frame, you will notice that this data frame is equivalent to the `carbon` data frame. 
+
+## Selecting and Filtering
+
+In the `politics` data frame, let's say I only want to keep the `country`, `year`, `v2x_libdem`, `v2x_regime`, and `region` variables. We will use the `select(col1, col2, ...)` function. 
+
+```{r select, eval = FALSE}
+politics %>% select(country_name, year, v2x_libdem, v2x_regime, region)
+```
+
+Alternatively, we can also drop the columns we do not want by adding a `-` symbol before the column name/s. 
+
+```{r select_drop, eval = FALSE}
+politics %>% select(-v2psnatpar_ord)
+```
+
+The output from the two codes above is a data frame of all the rows of the columns we selected, but the original data `politics` remains unchanged. To "save" this new data frame, we have to use the assignment operator `<-`. In the code below, we will just overwrite the original `politics` data.
+
+```{r select_overwrite}
+politics <- politics %>% select(country_name, year, v2x_libdem, v2x_regime, region)
+```
+
+Running the command `dim(politics)`, you will notice that we only have 5 columns left in our data frame. 
+
+If we want to keep observations to those from years 1991-2014 only, we use the `filter()` function. 
+
+```{r filter}
+politics <- politics %>% filter(year >= 1991 & year <= 2014)
+
+# To filter observations where region = Africa
+# politics %>% filter(region == "Africa") 
+```
+
+We can use the pipe operator to chain the `select()` and `filter()` functions. Running this code will not change anything anymore because we already used the assignment operator. But it may be something you may want to do in the future and save yourself a few lines of code. 
+
+```{r pipe, eval = FALSE}
+politics <- politics %>% 
+  select(country_name, year, v2x_libdem, v2x_regime, region) %>%
+  filter(year >= 1991 & year <= 2014)
+```
+
+## Renaming columns
+
+Let's say we want to rename the `country_name` column to `country`, `v2x_libdem` to `democracy`, and `v2x_regime` to regime. The function is `rename(new_name = old_name)`.
+
+```{r rename}
+politics <- politics %>% 
+  rename(country = country_name,
+         democracy = v2x_libdem,
+         regime = v2x_regime)
+```
+
+  * In Dr. Vercammen's code, you will see that he renames variables using the `names()` and `which()` functions -- `names(politics)[which(names(politics) == "country")] = "country"`. 
+  
 ## Joining our data together
 
-Now we will join the three data frames together. I want to keep all observations in the `carbon` data, and only add in the `politics` and `gdp` data. So, this time, I will do a `left_join()`.
+Now we will join the three data frames together. I want to keep all observations in the `carbon_long` data, and only add in the `politics` and `gdp_long` data. So, this time, I will do a `left_join()`.
 
 ```{r join_all}
 data <- carbon_long %>%
   left_join(gdp_long, by = c("country", "year")) %>%
   left_join(politics, by = c("country", "year")) %>% 
   filter(!is.na(emissions) & !is.na(region) & !is.na(gdp)) %>%
-  filter(year > 1990 & year <= 2014)
+  filter(year >= 1991 & year <= 2014)
 
 head(data)
+```
+
+You can also join data frames together using the base R `merge()` function, but you have to run this function twice because it only merges two data frames at once. You indicate `all.x = TRUE` for a left join, `all.y = TRUE` for a right join, and `all.x = TRUE, all.y = TRUE` for a full join.  
+
+```{r merge, eval = FALSE}
+carbon_gdp <- merge(carbon_long, gdp_long, by = c("country", "year"), all.x = TRUE)
+merged <- merge(carbon_gdp, politics, by = c("country", "year"), all.x = TRUE)
+
+merged <- merged %>%
+  filter(!is.na(emissions) & !is.na(region) & !is.na(gdp)) %>%
+  filter(year >= 1991 & year <= 2014)
 ```
 
 ## Creating new variables
@@ -341,14 +353,14 @@ data <- data %>%
 
 The `{base}` function to create a new column would be to run the following command: `data$gdp_sq <- data$gdp * data$gdp`
 
-# Summary Statistics
+# Descriptive Statistics
 
 To take a look at some summary statistics, we can use the built-in R functions.
 
-  * `mean(joindata$emissions, na.rm = T)` - mean of `emissions`
-  * `table(joindata$country)` to know the number of observations per country
-  * `summary(joindata)` - summary statistics of the columns
-  * `summary(joindata$emissions)` - summary statistics of the `emissions` variable
+  * `mean(data$emissions, na.rm = T)` - mean of `emissions`
+  * `table(data$country)` to know the number of observations per country
+  * `summary(data)` - summary statistics of the columns
+  * `summary(data$emissions)` - summary statistics of the `emissions` variable
   
 We can also look at some summary statistics by region. We use the `group_by()` function to group the observations. To calculate multiple summary statistics, we can use the `summarize()` function.
 
@@ -405,7 +417,7 @@ datasummary_skim(data,
 
 # Data Visualization (ggplot2)
 
-There are functions in `{base}` R that will allows you to plot data. But we will look at the `ggplot2` package. Read this [tutorial/book](https://ggplot2-book.org/introduction.html) for an in-depth walk through. 
+There are functions in `{base}` R that will allows you to plot data. But in this session, we will look at the `ggplot2` package. Read this [tutorial/book](https://ggplot2-book.org/introduction.html) for an in-depth walk through. 
 
 According to Hadley Wickham, "`ggplot2` is based on the Grammar of Graphics that allows you to compose graphs by combining independent components...The grammar tells us that a graphic maps the data to the aesthetic attributes (color, shape, size) of geometric objects (points, lines, bars)."
 
@@ -490,7 +502,7 @@ If we want to add a fitted line based on a linear model, we have to specify `geo
 p + geom_smooth(method = "lm")
 ```
 
-If we want to change the background, there are multiple themes available in the [package](https://ggplot2-book.org/polishing.html), and of course you can customize your own too. Let's say we are hapyp with this layout, we shall overwrite our `p` object again. 
+If we want to change the background, there are multiple themes available in the [package](https://ggplot2.tidyverse.org/reference/ggtheme.html), and of course you can customize your own too. Let's say we want to use `theme_classic()` theme, we just add it as another layer and overwrite our `p` object again. 
 
 ```{r firstplot_theme}
 p <- p + theme_classic()
@@ -498,7 +510,7 @@ p <- p + theme_classic()
 p
 ```
 
-To save the plot, we can use the `ggsave()` function. I am saving this file in another folder called output. You can save the plots to different formats too. 
+To save the plot, we can use the `ggsave()` function. I am saving this file in another folder called output. You can save the plots to different formats too. You can also click the 'Export' button available in the 'Plots' tab, but this action is not good for reproducibility. Please do not take screenshots of the image and use that in your reports!
 
 ```{r firstplot_ggsave, message = FALSE}
 ggsave(p, filename = here("output","emissions_gdp.png"))
@@ -637,4 +649,8 @@ can_usa_ttest <- t.test(gdp ~ country, data = can_usa)
 can_usa_ttest
 ```
 
-# Working with Dates
+# To be added
+  
+  * Dates
+  * Factors
+  
