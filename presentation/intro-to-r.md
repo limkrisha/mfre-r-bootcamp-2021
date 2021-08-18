@@ -10,14 +10,16 @@ output:
 
 
 
-The main objective of this R bootcamp is to introduce R programming to incoming MFRE students. The content of this session is adapted from [Software Carpentry](https://datacarpentry.org/r-socialsci/) and Dr. Nick Huntington-Klein's Teaching Econometrics with R [slides](https://rpubs.com/NickCHK/RTeach2020). If you spot any errors or issues, please send me a message on Canvas or at krisha.lim[at]ubc.ca. 
+The main objective of this R bootcamp is to introduce R programming to incoming MFRE students. The content of this session is adapted from [Software Carpentry](https://datacarpentry.org/r-socialsci/) and Dr. Nick Huntington-Klein's Teaching Econometrics with R [slides](https://rpubs.com/NickCHK/RTeach2020). If you spot any errors or issues or any feedback, please send me a message on Canvas or at krisha.lim[at]ubc.ca. 
+
+To learn more about R, you can refer to Jenny Bryan's [STAT545](https://stat545.com/) course notes and Hadley Wickham's [R for Data Science](https://r4ds.had.co.nz/) books. If you are used to Stata, here's some [notes](https://www.matthieugomez.com/statar/) on the different syntax between Stata and R. 
 
 # Before we get started
 
 * Programming in R is one of the tools taught in the MFRE program to support econometrics, economics, and business analysis applications. 
 * R is the language. RStudio is the IDE. If I say let's use R, I mean let's run R using RStudio. 
-* Stay organized. It is good to have one working directory per project. You can check for the working directory using the `getwd()` command. The best practice is to use R projects and the `{here}` package. 
-  * The `{here}` package will determine the top-level of your current project, which is your working directory. In my case it is "H:/Workshops/2021-r-bootcamp". The `here()` function allows me to build the path relative to this directory. So instead of typing "H:/Workshops/2021-r-bootcamp/data/emissions.csv" to refer to the emissions.csv file saved in the data folder (or "data/emission.csv" if I set the working directory), I can use `here("data", "emissions.csv")`.  
+* Stay organized. It is good to have one working directory per project. You can check for the working directory using the `getwd()` command. The best practice is to use R projects and the `{here}` package. We will talk about this topic in person.
+  * The `{here}` package will determine the top-level of your current project, which is your working directory. In my case it is "H:/Workshops/2021-r-bootcamp". The `here()` function allows me to build the path relative to this directory. So instead of typing "H:/Workshops/2021-r-bootcamp/data/emissions.csv" to refer to the "emissions.csv" file saved in the "data" folder of my working directory (or "data/emission.csv" if I set the working directory), I can use `here("data", "emissions.csv")`.  
   * I discourage you from using`setwd("insert_file_path_here")` because this file path will only work on your computer. Read more about this issue [here](https://www.tidyverse.org/blog/2017/12/workflow-vs-script/). 
 
 
@@ -29,7 +31,7 @@ To install a package, use the command `install.package("package_name")`. Do not 
 
 A big difference between R and Stata is that you have to load the package you will (or plan to use) use every time you start a new R session. To load a package, use the command `library(package_name)`. The quotation marks are now optional. You can also write a function to load multiple libraries at once.
 
-Sometimes, you may encounter the code `require(package_name)`. Like `library(package_name)`, it will load the already installed package. The main difference between `require()` and `library()` is that `library()` returns an error if the package you are calling is not yet installed, whereas `require()` will return only a warning. More info on the difference [here](https://www.r-bloggers.com/2016/12/difference-between-library-and-require-in-r/#:~:text=The%20require()%20is%20designed,if%20the%20package%20is%20loaded.&text=It%20is%20better%20to%20use,during%20the%20package%20loading%20time). 
+Sometimes, you may encounter the code `require(package_name)`. Like `library(package_name)`, it will load the already installed package. The main difference between `require()` and `library()` is that `library()` returns an error if the package you are calling is not yet installed, whereas `require()` will return only a warning. More information on the difference [here](https://www.r-bloggers.com/2016/12/difference-between-library-and-require-in-r/#:~:text=The%20require()%20is%20designed,if%20the%20package%20is%20loaded.&text=It%20is%20better%20to%20use,during%20the%20package%20loading%20time). 
 
 The `pacman` package allows you to install and load packages in R more efficiently. The function `p_load()` checks whether a package is already installed, and if not, installs the package and loads it. The function can also be applied to several package at once, so you save a few (or many) lines of codes. 
 
@@ -40,7 +42,7 @@ Let's now load the packages we will use for the rest of the bootcamp!
 install.packages("pacman")
 library(pacman)
 # require(pacman)
-p_load(tidyverse, readxl, googlesheets4, readstata13, magrittr, cansim, stats, broom, modelsummary, flextable, here)
+p_load(tidyverse, readxl, googlesheets4, readstata13, magrittr, cansim, stats, broom, modelsummary, flextable, here, lubridate)
 ```
  
 
@@ -67,7 +69,7 @@ We can also get output from R by typing logic statements in the console.
 3 + 4 != 4 + 3 # The "!" is negation
 ```
 
-To do useful things, we assign values to objects. `<-` is the assignment operator in R. Objects are one of the main differences of R with Stata. 
+To do useful things, we assign values to objects. `<-` is the assignment operator in R. Objects are one of the main differences of R with Stata. In R, you can work with many objects in the same session.
 
 To create an object, the syntax is `object_name <- value`. When assigning values to an object, R does not automatically print the object; you will have to print this object to see the value or output. 
 
@@ -286,11 +288,208 @@ emissions %in% c(14300, 50000)
 ## [1] FALSE  TRUE FALSE
 ```
 
+# Factors
+
+Factors deal with categorical data. They are stored as integers with labels, which can be ordered (e.g. birth order, high/medium/low) or unordered (e.g. color, country). Factors create a structured relation between the different levels or values of a categorical variable. While factors look like character vectors, R treats them as integer vectors. 
+
+The pre-defined set of values are called levels. By default, R sorts these levels in alphabetical order. For example, we specify a factor called `regions` with 3 levels. R will assign `1` to the level `"Africa"`, `2` to `"Americas"`, and `3` to "`Europe"`, even though the first element in the vector is `"Americas"`. You can see the levels with the function `levels()`. To determine the number of levels, you can use the function `nlevels()`. 
+
+
+```r
+regions <- factor(c("Americas", "Americas", "Europe", "Africa", "Europe"))
+levels(regions) 
+```
+
+```
+## [1] "Africa"   "Americas" "Europe"
+```
+
+```r
+nlevels(regions)
+```
+
+```
+## [1] 3
+```
+
+Sometimes, the order of the factors matters, such as when you have a rating of low, medium, or high. To order the values, you would have to use the `levels()` argument inside `factor()`. Specifying the levels is helpful when you plot since R will organize the plots according to the specified levels, instead of arranging it alphabetically. 
+
+
+```r
+responses <- factor(c("low", "low", "high", "medium", "high", "low"))
+responses # current order 
+```
+
+```
+## [1] low    low    high   medium high   low   
+## Levels: high low medium
+```
+
+```r
+plot(responses)
+```
+
+![](intro-to-r_files/figure-html/factors_levels-1.png)<!-- -->
+
+```r
+responses <- factor(responses, 
+  levels = c("low", "medium", "high"))
+responses # after re=ordering 
+```
+
+```
+## [1] low    low    high   medium high   low   
+## Levels: low medium high
+```
+
+```r
+plot(responses)
+```
+
+![](intro-to-r_files/figure-html/factors_levels-2.png)<!-- -->
+
+To make the factor an ordered factor, we have to add the `ordered = TRUE` argument inside the `factor()` function. When you print the factor, you will see the sign `<` to denote ranking. 
+
+
+```r
+responses_ordered <- factor(responses, 
+                            ordered = TRUE)
+responses_ordered
+```
+
+```
+## [1] low    low    high   medium high   low   
+## Levels: low < medium < high
+```
+
+On the back end, the factor levels "low", "medium", and "high" are represented by integers 1, 2, and 3. The advantage of using factors is that factors are more informative than just integers. From one look at the data, you know which one is "high" instead of guessing if 1 or 3 represents "high". This advantage is especially seen when you have many levels. 
+
+Let's say for some reason you want to recode "medium" to "not sure", you use the `levels()` function and indicate the level you want to recode inside square brackets.
+
+
+```r
+levels(responses)[2] <- "not sure"
+responses
+```
+
+```
+## [1] low      low      high     not sure high     low     
+## Levels: low not sure high
+```
+
+When your data is stored in factors, you can use the `plot()` function to see the number of observations at each factor level. 
+
+
+```r
+plot(responses)
+```
+
+![](intro-to-r_files/figure-html/factorsplot-1.png)<!-- -->
+
+# Dates
+
+We will not go into detail with handling dates in R in this session but here are some notes. Last year, when working with time series data, we used the `{xts}` and `{zoo}` packages.
+
+When we load data with dates, R will not always recognize the date column as dates. For example, R may read that column as a character or numeric vector. We will need to convert that column into dates using functions like `as_date()` from the `{lubridate}` package. Once the vector is recognized as dates, we can use other functions such as `day()`, `month()`, and `year()` to extract information from the vector. The argument `format()` tells the function how to parse the characters and identify the month, day, and year. Specifying the wrong format can lead to parsing errors or incorrect results. You can read more about handling date formats [here](https://www.r-bloggers.com/2013/08/date-formats-in-r/).
+
+
+
+```r
+dates <- c("2021-08-01", "2021-08-02", "2021-08-03")
+str(dates)
+```
+
+```
+##  chr [1:3] "2021-08-01" "2021-08-02" "2021-08-03"
+```
+
+```r
+dates_converted <- as_date(dates, format = "%Y-%m-%d")
+class(dates_converted)
+```
+
+```
+## [1] "Date"
+```
+
+```r
+months(dates_converted)
+```
+
+```
+## [1] "August" "August" "August"
+```
+
+```r
+year(dates_converted)
+```
+
+```
+## [1] 2021 2021 2021
+```
+
+We can also create a Date class object using the `seq()` function, which generates a sequence of dates starting from the date we provided (`2021/08/01`) with increments indicated in the `by =` option and ends once the length of the sequence indicated in the `length =` option is achieved.
+
+
+```r
+dates_seq <- seq(as.Date("2021/08/01"), length = 5, by = "days")
+dates_seq
+```
+
+```
+## [1] "2021-08-01" "2021-08-02" "2021-08-03" "2021-08-04" "2021-08-05"
+```
+
 # Matrices
 
-So far we have looked at one-dimensional objects. Matrices are two-dimensional objects in R and another common R object you will work with. Elements must be of the same data type and are arranged in rows and columns.
+So far we have looked at one-dimensional objects. Matrices are two-dimensional objects in R and another common R object we will work with. Elements must be of the same data type and are arranged in rows and columns.
 
-You can construct a matrix using the `matrix()` function.
+We can construct a matrix using the `matrix()` function. We can check the attributes of a matrix using the `class()` and `dim()` functions.  
+
+
+```r
+k <- matrix(nrow = 3, ncol = 2)
+k
+```
+
+```
+##      [,1] [,2]
+## [1,]   NA   NA
+## [2,]   NA   NA
+## [3,]   NA   NA
+```
+
+```r
+class(k)
+```
+
+```
+## [1] "matrix" "array"
+```
+
+```r
+dim(k)
+```
+
+```
+## [1] 3 2
+```
+
+Matrices are filled column-wise. The code below creates a 2x3 matrix called `l` filled the values 1 to 6. 
+
+
+```r
+l <- matrix(1:6, nrow = 2, ncol = 3)
+l 
+```
+
+```
+##      [,1] [,2] [,3]
+## [1,]    1    3    5
+## [2,]    2    4    6
+```
+
+We can also create a matrix using existing vectors. 
 
 
 ```r
@@ -309,15 +508,7 @@ m
 ## [3,] "5250000" "United States"
 ```
 
-```r
-class(m)
-```
-
-```
-## [1] "matrix" "array"
-```
-
-The `nrow = 3` argument tells R that your matrix has 3 rows. If you don't specify `nrow = 3`, then it will just create 1 column with the number of rows equal to the number of elements of your vectors. 
+The `nrow = 3` argument tells R that the matrix has 3 rows. If we don't specify `nrow = 3`, then it will just create 1 column with the number of rows equal to the number of elements of the vectors. 
 
 
 ```r
@@ -335,7 +526,8 @@ m_1
 ## [6,] "United States"
 ```
 
-If you specify `nrow = 5` for example, your object will have 5 rows, and the values of some elements will repeat. 
+If we specify `nrow = 5` for example, the matrix will have 5 rows, and the values of some elements will repeat. You will also get a warning. 
+
 
 ```r
 m_5 <- matrix(c(emissions, countries), nrow = 5)
@@ -359,7 +551,7 @@ m_5
 ## [5,] "Kenya"   "Canada"
 ```
 
-You can also add column and rownames to your matrix using the `colnames()` and `rownames()` functions, respectively
+We can also add column and row names to the matrix using the `colnames()` and `rownames()` functions, respectively
 
 
 ```r
@@ -375,7 +567,7 @@ m
 ## c3 "5250000" "United States"
 ```
 
-You can also construct a matrix using the `cbind()` function. In FRE501, Dr. Vercammen uses this function to construct a matrix.
+We can also construct a matrix using the `cbind()` function. In FRE501, Dr. Vercammen uses this function to construct a matrix.
   
 
 ```r
@@ -398,7 +590,7 @@ class(matrix)
 ## [1] "matrix" "array"
 ```
 
-If you use the `cbind()` function to create a matrix, the columns in the matrix takes the names of the R objects. You can also change the column and row names using the `colnames()` and `rownames()` functions. If you want to change a specific column (or row) number, you can specify the index number in brackets. 
+If you use the `cbind()` function to create a matrix, the columns in the matrix takes the names of the R objects. We can also change the column and row names using the `colnames()` and `rownames()` functions. If we want to change a specific column (or row) number, we can specify the index number in brackets. 
 
 
 ```r
@@ -424,16 +616,7 @@ rownames(matrix)
 ## [1] "c1" "c2" "c3"
 ```
 
-```r
-# dimension of the matrix
-dim(matrix) # 3 rows and 2 columns
-```
-
-```
-## [1] 3 2
-```
-
-Just like vectors, we use brackets to subset matrices. Because matrices are two dimensional objects (rows and columns) while vectors are only one dimensional, we now need to indicate the row and column positions of the values we want to extract. The sytax would be `matrix[row_position, column_position]`. If you leave row position blank, R assumes that you are asking for the whole row. 
+Just like vectors, we use brackets to subset matrices. Because matrices are two dimensional objects (rows and columns) while vectors are only one dimensional, we now need to indicate the row and column positions of the values we want to extract. The sytax would be `matrix[row_position, column_position]`. If we leave row position blank, R assumes that we are asking for the whole row. 
 
 
 ```r
@@ -495,7 +678,7 @@ matrix[1:2, 1]
 ## "53700" "14300"
 ```
 
-You will get an error if you combine two vectors of different size.
+We will get an error if you combine two vectors of different size.
 
 
 ```r
@@ -509,7 +692,7 @@ will_not_work <- cbind(emissions, countries)
 ## multiple of vector length (arg 1)
 ```
 
-You will also get an error if you attempt to create a matrix using 2 vectors of different types (i.e. one is numeric and another is character).
+We will also get an error if we attempt to create a matrix using 2 vectors of different types (i.e. one is numeric and another is character).
 
 
 ```r
@@ -523,7 +706,7 @@ will_not_work_too <- cbind(emissions, emission_type)
 ## multiple of vector length (arg 2)
 ```
 
-## Lists
+# Lists
 
 A list is a flexible R object that is a collection of different objects.
 
@@ -555,7 +738,7 @@ str(first_list)
 ##  $ c: chr [1:3] "food" "resource" "economics"
 ```
 
-You can extract sub-objects using `[]` or `[[]]` or `$`. A common example of a list object you will interact with often is regression objects (more on this later!). 
+We can extract sub-objects using `[]` or `[[]]` or `$`. A common example of a list object we will interact with often is regression objects (more on this later!). 
 
 
 ```r
@@ -585,9 +768,9 @@ first_list$c #output is character vector
 
 # Data Frames
 
-In MFRE, we will work a lot with data frames. A data frame is a list composed of vectors of equal length. You can think of a data frame as an Excel spreadsheet that contains columns of different data types, and all columns have the same number of rows. Data frames can store different data types in each column. For example, the first column can be a character vector, and the second column is a numeric vector. 
+In MFRE, we will work a lot with data frames. A data frame is a list composed of vectors of equal length. We can think of a data frame as an Excel spreadsheet that contains columns of different data types, and all columns have the same number of rows. Data frames can store different data types in each column. For example, the first column can be a character vector, and the second column is a numeric vector. 
 
-You can create a data frame object using the function `data.frame()`.
+We can create a data frame object using the function `data.frame()`.
 
 
 ```r
@@ -612,6 +795,7 @@ matrix_df <- as.data.frame(matrix)
 ```
 
 Here are some functions to inspect the elements of a data frame. 
+
   * `dim()` to know the dimension of a data frame (can also be used in a matrix)
   * `str()` to know the structure of a data frame
   * `head()` and `tail()` to view the first or last 5 rows of the data frame 
@@ -685,6 +869,8 @@ first_df$countries #output is a character vector
 ## [1] "Canada"        "Kenya"         "United States"
 ```
 
+I would say `data_frame$variable` is the most common syntax you will encounter in most MFRE courses. Because you can work with multiple objects in R, you will have to specify which data frame the variable you want is located in. 
+
 ## Tibbles
 
 A special type of data frame you may encounter is tibbles. You can read more about it [here](https://r4ds.had.co.nz/tibbles.html). 
@@ -721,7 +907,9 @@ second_tibble <- tibble(countries = c("Peru", "Mexico", "China"),
 
 # Functions
 
-Functions are scripts that automate complicated commands. You can write your own function, or you can also use functions that are available in R packages. A function gets one or more inputs called *arguments*. Functions often, but not always, return a value. One example of a function is the `sqrt()`. If you type in `?sqrt()` in the console, you will the documentation on the lower right panel under the 'Help` tab. You learn that the input (argument) must be numeric, and running the function will return the square root of the number. 
+Functions are scripts that automate complicated commands. We can write your own function, or we can also use functions that are available in R packages. A function gets one or more inputs called *arguments*. Functions often, but not always, return a value. 
+
+One example of a function is the `sqrt()`. If we type in `?sqrt()` in the console, we will see the documentation on the lower right panel under the 'Help` tab. We learn that the input (argument) must be numeric, and running the function will return the square root of the number. 
 
 
 ```r
@@ -735,7 +923,7 @@ a
 
 In the example above, the value 100 is given to the `sqrt()` function. The `sqrt()` function calculates the square root, and returns the value assigned to the object `a`. 
 
-Arguments differ per function, and you can look up the documentation using the `?function_name` command in your console. Some functions take arguments that must be specified by the user, and if not, will use a default value - these are called options. Options are ways to change how the function works. 
+Arguments differ per function, and we can look up the documentation using the `?function_name` command in the console. Some functions take arguments that must be specified by the user, and if not, will use a default value. These are called options. Options are ways to change how the function works. If working with a new function, it is useful to learn the defaults and how the author of the package programmed the functions.
 
 Let's try a function that takes multiple arguments -- `round()`. 
 
@@ -759,7 +947,7 @@ round(3.14159, digits = 2)
 ## [1] 3.14
 ```
 
-If you provide the arguments in the same order as they are defined, i.e. `round(x, digits = 0)`, then you don't need to include `digits =` anymore. 
+If we provide the arguments in the same order as they are defined, i.e. `round(x, digits = 0)`, then we don't need to include `digits =` anymore. 
 
 
 ```r
@@ -770,7 +958,7 @@ round(3.14159, 2)
 ## [1] 3.14
 ```
 
-You can find some built in R functions [here](https://www.statmethods.net/management/functions.html). Common ones we will use are `summary()`, `mean()`, `median()`, `min()`, `max()`. The code below shows you can take the mean of the emissions variable in the `first_df` data frame.  
+You can find some built in R functions [here](https://www.statmethods.net/management/functions.html). Common ones we will use are `summary()`, `mean()`, `median()`, `min()`, `max()`. The code below shows how one can take the mean of the emissions variable in the `first_df` data frame.  
 
 
 ```r
@@ -781,9 +969,9 @@ mean(first_df$emissions)
 ## [1] 1772667
 ```
 
-For these statistical functions, you will have to indicate how the function will treat missing values. In R, missing data are represented in vectors as `NA`. If you don't specify how the function will treat missing values, the function will return NA. 
+For these statistical functions, we will have to indicate how the function will treat missing values. In R, missing data are represented in vectors as `NA`. If we don't specify how the function will treat missing values, the function will return `NA`. 
 
-Let's return to our `first_df` object. Let's say we want to add Peru's emissions, but we don't have the data yet. We can use the `add_row()` function to do this step. Notice that I also have a `%>%` operator there. It is called the pipe operator. The pipe operator allows you to express a series of operators clearly (more info [here](https://r4ds.had.co.nz/pipes.html)). It takes the output on the left of the `%>%` and pass it to the function on the right. In the code below, `first_df` (left of the `%>%`) is passed on to another function, which is the `add_row` function. Then we are assigning it back to `first_df`, overwriting our initial data. If we don't use the assignment operator `<-`, then we have not overwritten `first_df` and Peru will not appear when we print `first_df`. 
+Let's return to our `first_df` object. Let's say we want to add Peru's emissions, but we don't have the data yet. We can use the `add_row()` function to do this step. Notice that I also have a `%>%` operator there. It is called the pipe operator. The pipe operator allows us to express a series of operators clearly (more info [here](https://r4ds.had.co.nz/pipes.html)). It takes the output on the left of the `%>%` and pass it to the function on the right. In the code below, `first_df` (left of the `%>%`) is passed on to another function, which is the `add_row` function. Then we are assigning it back to `first_df`, overwriting our initial data. If we don't use the assignment operator `<-`, then we have not overwritten `first_df` and Peru will not appear when we print `first_df`. 
 
 
 ```r
@@ -825,7 +1013,7 @@ first_df
 ## 3 United States   5250000
 ## 4          Peru        NA
 ```
-
+  
 Now, let's try to take the mean of emissions. 
 
 
@@ -837,7 +1025,7 @@ mean(first_df$emissions)
 ## [1] NA
 ```
 
-Notice that you `NA` as the output. This feature makes it harder to overlook cases where you are dealing with missing data. If you take a look at the documentation (`?mean`), you can see that the default is `na.rm = FALSE`. By adding in `na.rm = TRUE`, then you are asking R to calculate the mean and that NA values should be ignored. Now the output will show 1.7726667\times 10^{6}
+Notice that you `NA` as the output. This feature makes it harder to overlook cases where you are dealing with missing data. If you take a look at the documentation (`?mean`), you can see that the default is `na.rm = FALSE`. By adding in `na.rm = TRUE`, then you are asking R to calculate the mean and that NA values should be ignored. 
 
 
 ```r
@@ -846,6 +1034,31 @@ mean(first_df$emissions, na.rm = T)
 
 ```
 ## [1] 1772667
+```
+
+If you want to count the number of missing values for emissions, we can run the code `sum(is.na(first_df$emissions))`. If we want to count the number of non-missing values for emissions, we can run the code `sum(!is.na(first_df$emissions))`. 
+
+Let's say we now know Peru's emissions and want to modify the value. We can use the `mutate()` and `ifelse()` functions. Because we do not use the assignment operator, if we print `first_df`, Peru will still have a missing value in  `first_df`.
+
+
+```r
+first_df %>% 
+  mutate(emissions = ifelse(countries == "Peru", 100, emissions))
+```
+
+```
+##       countries emissions
+## 1        Canada     53700
+## 2         Kenya     14300
+## 3 United States   5250000
+## 4          Peru       100
+```
+
+Alternatively, we can also use the fact that Peru's emissions is missing. We can read the code below as follows: For the emissions variable in the `first_df` data frame (`first_df$emissions`), if the emissions variable is missing (`[is.na(first_df$emissions)]`), then replace it with 100. Because we have the assignment operator, when we print `first_df`, we will see that Peru's emissions is now 100. *Note: You may see this coding style more often in FRE 501.*
+
+
+```r
+first_df$emissions[is.na(first_df$emissions)] <- 100 
 ```
 
 ## Writing your own functions
@@ -880,7 +1093,7 @@ sqrt(var(first_df$emissions, na.rm = T) / length(first_df$emissions))
 ```
 
 ```
-## [1] 1505762
+## [1] 1306874
 ```
 
 Not too bad! But what if you want to calculate the standard error for multiple variables, then you'd have to write the code above multiple times. Even if you copy paste the code and change the variable names, this process may be prone to errors. A better approach would be to make it a function. Following the syntax, we can write the standard error function as follows. 
@@ -894,7 +1107,7 @@ std_error <- function(x){
 
 Here, `std_error` is the function name. It takes `x` as the argument, which in our case would be a vector. Then every time we pass a vector to this function, it will calculate the formula provided in the body. 
 
-Now let's add the GDP of these countries, and use the `std_error()` function we just created to compute the standard deviation. 
+Now let's add a new column that contains the GDP of these countries. Then let's use the `std_error()` function to compute the standard deviation. 
 
 
 ```r
@@ -906,7 +1119,7 @@ std_error(first_df$emissions)
 ```
 
 ```
-## [1] 1505762
+## [1] 1306874
 ```
 
 ```r
@@ -919,9 +1132,9 @@ std_error(first_df$gdp)
 
 ## Importing a function
 
-In some cases, you may write a function and save it in a different script. You can then import that script into your current script using the `source()` function.
+In some cases, we may write a function and save it in a different script. We can then import that script into your current script using the `source()` function. 
 
-In this example below, we first specify the model parameters (a, b, m0, etc.). Then we call the function get_delta saved in the `price_function.R` script saved in the `code` folder in my working directory using the `source()` and `here()` commands. You will notice a `get_delta()` function appear in your `Environment` tab. Then you can run the function as if you wrote it in this script. 
+In this example below, we first specify the model parameters (a, b, m0, etc.). Then we call the function get_delta saved in the `price_function.R` script saved in the `code` folder in my working directory using the `source()` and `here()` commands. You will notice a `get_delta()` function appear in your `Environment` tab. Now, you can run the function as if you wrote it in this script. 
 
 Other times `source()` may be helpful is when you have a "main" or "master" script that will run all the scripts in your project. For example, you might have a cleaning script, analysis script, figures script, and then a "main" script that runs all of these individual scripts. 
 

@@ -10,7 +10,7 @@ output:
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
-pacman::p_load(tidyverse, readxl, googlesheets4, readstata13, magrittr, cansim, stats, broom, modelsummary, flextable, here)
+pacman::p_load(tidyverse, readxl, googlesheets4, readstata13, magrittr, cansim, stats, broom, modelsummary, flextable, here, lubridate)
 ```
 
 The main objective of this R bootcamp is to introduce R programming to incoming MFRE students. The content of this session is adapted from [Open Case Studies](https://www.opencasestudies.org/ocs-bp-co2-emissions/#Data_Analysis). If you spot any errors or issues or any other feedback, please send me a message on Canvas or at krisha.lim[at]ubc.ca. 
@@ -20,7 +20,7 @@ The main objective of this R bootcamp is to introduce R programming to incoming 
 Let's load the packages we will use in this session.
 
 ```{r pacman, eval = FALSE}
-pacman::p_load(tidyverse, readxl, googlesheets4, readstata13, magrittr, cansim, stats, broom, modelsummary, flextable, here)
+pacman::p_load(tidyverse, readxl, googlesheets4, readstata13, magrittr, cansim, stats, broom, modelsummary, flextable, here, lubridate)
 ```
 
 # Data Import
@@ -35,9 +35,9 @@ You will likely have to import data into R for your MFRE courses, instead of typ
 
 ## Flat files
 
-It's common for people to save data in spreadsheets as comma-separated values (csv) or in text files (txt). To open a csv file in R, we use the `read_csv()` function of the `{tidyverse}` package, and the `here()` function of the `{here}` package. The `here()` function takes the folder and file names as inputs, which are enclosed by quotation marks and you wouldn't have to worry about to use back or forward slashes. 
+It's common for people to save data in spreadsheets as comma-separated values (csv) or as text files (txt). To open a csv file in R, we use the `read_csv()` function of the `{tidyverse}` package, and the `here()` function of the `{here}` package. The `here()` function takes the folder and file names as inputs, which are enclosed by quotation marks and you wouldn't have to worry about to use back or forward slashes. 
 
-The code below shows that we are reading the file "yearly_co2_emissions.csv" saved in our data folder and assigning it to the data object called `carbon`. Assigning data to objects is one of the big difference between R and Stata, as R allows you to work with multiple data sets at once. 
+The code below shows that we are reading the file "yearly_co2_emissions.csv" saved in the "data" sub-folder (relative to my working directory) and assigning it to the data object called `carbon`. Assigning data to objects is one of the big difference between R and Stata, as R allows you to work with multiple data sets at once. 
 
 ```{r loaddata1, message = FALSE, warning = FALSE}
 carbon <- read_csv(here("data", "yearly_co2_emissions.csv"))
@@ -47,7 +47,7 @@ carbon <- read_csv(here("data", "yearly_co2_emissions.csv"))
   
   * Note: The `read_csv` function assumes fields are delimited by comma. If you want a more flexible way of reading text files, look up the `{readr}` package for other [functions](https://readr.tidyverse.org/). 
   
-  * In FRE 501, Dr. Vercammen uses the base R `read.csv()` function. To load the csv file using this function, the code is `carbon <- read.csv(here("data", "yearly_co2_emissions.csv"), sep = ",", header = TRUE)`. This code will do the same thing as the `read_csv` function. The additional arguments you may see are `sep = ","`, which means that data is delimited by comma, and `header = TRUE`, which means that the first row should be treated as column names. 
+  * In FRE 501, Dr. Vercammen uses the base R `read.csv()` function. To load the csv file using this function, the code is `carbon <- read.csv(here("data", "yearly_co2_emissions.csv"), sep = ",", header = TRUE)`. This code will do the same thing as the `read_csv` function. The arguments `sep = ","` means that data is delimited by comma, and `header = TRUE` means that the first row should be treated as column names. 
 
 To load in text files, use the `read.table()` function. The `sep = "\t"` argument indicates that the data is tab-delimited. The `header = TRUE` argument indicates that the first row should be treated as column names.
 
@@ -57,7 +57,7 @@ provinces <- read.table(here("data", "province.txt"), sep = "\t", header = TRUE)
 
 ## Excel xlsx format
 
-Another way that spreadsheets are stored is in the Excel xlsx format. Sometimes, there are multiple sheets in one Excel file. The `read_xlsx()` function of the `{readxl}` package allows us to read files in xlsx format. 
+Another way that spreadsheets are stored is in the Excel xlsx format. The `read_xlsx()` function of the `{readxl}` package allows us to read files in xlsx format. 
 
 ```{r loaddata3_nosheet, message = FALSE, warning = FALSE}
 gdp <- read_xlsx(here("data", "gdp_pc.xlsx"))
@@ -70,20 +70,16 @@ energy_hist <- read_xlsx(here("data", "energy_use_per_person.xlsx"), sheet = 1)
 energy_recent <- read_xlsx(here("data", "energy_use_per_person.xlsx"), sheet = 2)
 ```
 
-If you look at the two imported sheets (either by typing `View(energy_hist)` or clicking the `energy_hist` object in the Environment tab in the upper right panel of RStudio), they contain data for the same countries. The only difference is that in the first sheet (`energy_hist`), the data is from 1960-1999, and the data in the second sheet (`energy_recent`) is from 2000-2015. We want to join `energy_hist` and `energy_recent`. There are many types of [joins](https://dplyr.tidyverse.org/reference/join.html), but for now we will do a full join, meaning the new data frame called `energy` will include all rows and columns in both `energy_hist` and `energy_recent`. The variable `country` is the common variable in both data frames that I used to link them together. 
+We talk about joins later on, but just in case you are eager, here is how you can join these two sheets into one data frame. 
 
-```{r loaddata3_join}
+```{r loaddata3_join, eval = FALSE}
+# using the full_join function of dplyr package
 energy <- full_join(energy_hist, energy_recent, by = c("country"))
-```
 
-There are many ways to do the same thing in R. In FRE 501, Dr. Vercammen's uses the base R `merge` function. You can look at the full documentation for more details (`?merge`). The syntax is `merge(x, y)` where `x` and `y` are both the names of your dataframes. If you want to keep all observations in `x` and only merge `y` based on a common variable (`country`), I will use the `all.x = TRUE` argument. Since we want to do a full join (although the output would be the same anyway), we will use the `all.x = TRUE, all.y = TRUE` arguments to indicate that we want all rows in `x` and all rows in `y` in the output. 
-  
-```{r loaddata3_merge}
+# using the merge function of the base package
 energy_basemerge <- merge(energy_hist, energy_recent, by = c("country"), all.x = TRUE, all.y = TRUE)
 ```
 
-  * If you look at `energy` and `energy_basemerge` in your Environment tab, you will notice that both of them have the same dimensions. 
-  
 ## Stata dta format
 
 Because you will use Stata in some of your classes, you may read in a Stata data format into R as well. We will use the `read.dta13` of the `{readstata13}` package. This function allows you to read Stata file formats from version 17 and older. 
@@ -96,19 +92,19 @@ politics <- read.dta13(here("data", "politics.dta"), nonint.factors = TRUE)
 
 ## Google Sheets 
 
-It is also common now to share data using Google Sheets. We will use the `read_sheet("insert_link_here")` function of the `{googlesheets4}` package. This function will prompt you to provide authorization to the tidyverse API and log in with your Gmail credentials. One way to get around this step would be to add in the function `gs4_deauth()` before you use the `read_sheet()` function. 
+It is also common to share data using Google Sheets. We will use the `read_sheet("insert_link_here")` function of the `{googlesheets4}` package. This function will prompt you to provide authorization to the `{tidyverse}` API and log in with your Gmail credentials. One way to get around this step would be to add in the function `gs4_deauth()` before you use the `read_sheet()` function. 
 
 ```{r loaddata5, message = FALSE, warning = FALSE}
 gs4_deauth() # so no need to sign in
 disasters <- read_sheet("https://docs.google.com/spreadsheets/d/17s15o7jdDpGSKgsIboZdnYU2UxHtU9DHKNRmYVVgwJo/edit#gid=0", skip = 2) 
 ```
-* When you open the Google sheet link in your browser, you will notice that the first two rows are the notes or the title of the table. The data actually starts in row 3. Because of this reason, we add the argument `skip = 2` to tell R to start reading the data from the third row.
+* When you open the Google sheet link in your browser, you will notice that the first two rows are the notes or the title of the table. The data actually starts in row 3. Because of this reason, we add the argument `skip = 2` to tell R to start reading the data from the third row. You can use this argument in other functions such as `read_csv` too.
 
 ## API - Statistics Canada
 
 When you look for data online, you usually have the option to download the tables as a csv or xlsx file. You may also want to check online if someone has already written a package that connects to the data's server directly and load it into R. The advantage of doing this approach is that you can work with 'updated' data whenever you run the code, and you also save yourself time from having to save the table as a spreadsheet every time the table is updated. 
 
-For example, you want to download the Estimated areas, yield, production, average farm price, and total farm value of principal field crops table from [Statistics Canada](https://www150.statcan.gc.ca/t1/tbl1/en/tv.action?pid=3210035901). A quick Google Search of "import stats can table in R" will reveal that someone already wrote the `{cansim}` package to do just that. The function we will use is called `get_cansim('insert_table_number_here'_)`. 
+For example, you want to download the Estimated areas, yield, production, average farm price, and total farm value of principal field crops table from [Statistics Canada](https://www150.statcan.gc.ca/t1/tbl1/en/tv.action?pid=3210035901). A quick Google Search of "import stats can table in R" will reveal that someone already wrote the `{cansim}` package to do just that. The function we will use is called `get_cansim('insert_table_number_here')`. 
 
 ```{r loaddata6_statscan, message = FALSE, warning = FALSE}
 ag <- get_cansim('32-10-0359-01')
@@ -118,7 +114,7 @@ There are other many other ways to import data into R, but these are the ones yo
 
 # Data Exploration
 
-You can view your data with the command `View(dataframe_name)` or click the data object in the Environment tab in the upper right panel of RStudio. These two actions will open a new tab in the upper left panel of RStudio. If you want to see your data in the console, simply type in the name of the data object into your console. 
+You can view your data with the command `View(dataframe_name)`, or you can click the data object in the Environment tab in the upper right panel of RStudio. These two actions will open a new tab in the upper left panel of RStudio. If you want to see your data in the console, simply type in the name of the data object into your console. 
 
 Here are a few functions to inspect your data. We will use the  `politics` data as an example. 
 
@@ -176,7 +172,7 @@ Now that we have loaded the data in R and know what it looks like, we want to ti
 
 In the `politics` data, each row contains the values of variables associated with each country and year. This data frame is said to be in the "long" data format. If you look at the `carbon` and `gdp` data frames, you will notice that they are in the wide format. Each row is a country, and the columns are the different years we have observations for. We would not consider the `carbon` and `gdp` as tidy data. 
 
-Most R functions expect your data to be in the "long" data format because it is more machine readable and is closer to the formatting of databases. In the `tidyr` package, we can use the `pivot_longer()` and `pivot_wider` columns to reshape our data. These functions are the equivalent of the `reshape long` and `reshape wide` in Stata. 
+Most R functions expect your data to be in the "long" data format because it is more machine readable and is closer to the formatting of databases. In the `tidyr` package, we can use the `pivot_longer()` and `pivot_wider()` functions to reshape our data. These functions are the equivalent of the `reshape long` and `reshape wide` in Stata. 
 
 ```{r carbon_sample}
 carbon %>% 
@@ -195,6 +191,7 @@ head(carbon$`2014`)
 We will now convert `carbon` to a long format. We want to collapse all emissions across the years into one column called "emissions." We then identify the year the data point comes from by creating a "year" variable. 
 
 The `pivot_longer()` function takes four main arguments:
+
   * the (wide) data
   * *cols* are the names of the columns we use (or drop) to fill the new values variable
   * the *names_to* column variable we wish to create the *cols* provided
@@ -202,7 +199,8 @@ The `pivot_longer()` function takes four main arguments:
   
 Let's now reshape the `carbon` data longer to create new columns for `year` and `emissions`. 
 
-To create a long format of the `carbon` data, we use the following
+To create a long format of the `carbon` data, we use the following information
+
   * the (wide) data - `carbon` 
   * *cols* include all columns except the country variable, so we can just put `-country`. Usually you can put the column names of interest as in `cols = col1:col5` or `cols = c(col1, col2, col5)`, but because our variable names start as numbers, it is not allowing us to use this format. 
   * the *names_to* column variable will be a character string of the name the column names these columns (1762:2014) will collapse into - `"year"`
@@ -296,7 +294,7 @@ politics <- politics %>% filter(year >= 1991 & year <= 2014)
 # politics %>% filter(region == "Africa") 
 ```
 
-We can use the pipe operator to chain the `select()` and `filter()` functions. Running this code will not change anything anymore because we already used the assignment operator. But it may be something you may want to do in the future and save yourself a few lines of code. 
+We can use the pipe operator to chain the `select()` and `filter()` functions. Running this code will not change anything anymore because we already used the assignment operator earlier. But it may be something you may want to do in the future.
 
 ```{r pipe, eval = FALSE}
 politics <- politics %>% 
@@ -315,11 +313,12 @@ politics <- politics %>%
          regime = v2x_regime)
 ```
 
-  * In Dr. Vercammen's code, you will see that he renames variables using the `names()` and `which()` functions -- `names(politics)[which(names(politics) == "country")] = "country"`. 
+  * In FRE501, Dr. Vercammen uses `names()` and `which()` to rename variables. Here's how we might rename the variable `country_name` to `country`: `names(politics)[which(names(politics) == "country")] = "country"`. 
   
 ## Joining our data together
 
-Now we will join the three data frames together. I want to keep all observations in the `carbon_long` data, and only add in the `politics` and `gdp_long` data. So, this time, I will do a `left_join()`.
+Now we will join the three data frames together. There are many different types of joins, and you can read more about it [here](https://dplyr.tidyverse.org/reference/join.html). Let's say I want to keep all observations in the `carbon_long` data, and only add in the `politics` and `gdp_long` data for the countries and years that appear in `carbon_long`. If you are familiar with database terms, what I want to do is a left join. We can use the `left_join()` function of the `{dplyr}` package. The variable inside the `by = c()` option indicates the vector of variables to join the two dataframes by. In our particular example, we have two variables to join the data frames by, which are `country` and `year`. 
+
 
 ```{r join_all}
 data <- carbon_long %>%
@@ -331,7 +330,9 @@ data <- carbon_long %>%
 head(data)
 ```
 
-You can also join data frames together using the base R `merge()` function, but you have to run this function twice because it only merges two data frames at once. You indicate `all.x = TRUE` for a left join, `all.y = TRUE` for a right join, and `all.x = TRUE, all.y = TRUE` for a full join.  
+The `filter()` removes the data that I'm not interested in. In the code above, The first filter drops observations where `emissions`, `region`, and `gdp` are all missing. This practice is not recommended and only done in this case to simplify the analysis later on. The second filter keeps observations for years 1991-2014 only. 
+
+As you have observed, there are many ways to do the same thing in R. In FRE501, Dr. Vercammen's uses the base R `merge` function to merge data frames. Using this function, we will need to indicate `all.x = TRUE` for a left join, `all.y = TRUE` for a right join, and `all.x = TRUE, all.y = TRUE` for a full join. 
 
 ```{r merge, eval = FALSE}
 carbon_gdp <- merge(carbon_long, gdp_long, by = c("country", "year"), all.x = TRUE)
@@ -417,7 +418,7 @@ datasummary_skim(data,
 
 # Data Visualization (ggplot2)
 
-There are functions in `{base}` R that will allows you to plot data. But in this session, we will look at the `ggplot2` package. Read this [tutorial/book](https://ggplot2-book.org/introduction.html) for an in-depth walk through. 
+There are functions in `{base}` R that will allows you to plot data. But in this session, we will look at the `ggplot2` package. Read this [book](https://ggplot2-book.org/introduction.html) for an in-depth walk through. 
 
 According to Hadley Wickham, "`ggplot2` is based on the Grammar of Graphics that allows you to compose graphs by combining independent components...The grammar tells us that a graphic maps the data to the aesthetic attributes (color, shape, size) of geometric objects (points, lines, bars)."
 
@@ -426,19 +427,18 @@ In Wickham's tutorial, he indicated that there are 3 main components for every g
   1. *data*
   2. A set of *aesthetic* mappings
   3. At least one layer which describes how to render each observations. Layers are usually created with a *geom* function. Common layers we will use are the following:
-  
-    a. `geom_line()` for trend lines, time series, etc. 
-    b. `geom_point()` for scatter plots 
-    c. `geom_boxplot()` for boxplots 
-    d. `geom_bar()` and `geom_col()` for bar charts 
-    e. `geom_histogram()` for histograms 
+    * `geom_line()` for trend lines, time series, etc. 
+    * `geom_point()` for scatter plots 
+    * `geom_boxplot()` for boxplots 
+    * `geom_bar()` and `geom_col()` for bar charts 
+    * `geom_histogram()` for histograms 
   
 ## Scatterplots   
 
 Here is a simple example. The code below produces a scatterplot defined by:
 
   1. Data: `data` (I should have named the object differently!)
-  2. Aesthetic mapping: gdp mapped to the x position, emissions to the y position
+  2. Aesthetic mapping: `gdp` mapped to the x position, `emissions` to the y position
   3. Layer: points 
 
 ```{r first_plot}
@@ -455,7 +455,7 @@ ggplot(data, aes(x = log(gdp), y = log(emissions))) +
   geom_point()
 ```
   
-Note the syntax. The data and aesthetic mapping are inside the `ggplot()` function, and the layer is adding with a `+`.  Since most maps plots a variable to x and y, the developers have indicated that the the first two arguments of `aes()` will be mapped to x and y. The code below will generate the same plot as above. 
+Note the syntax. The data and aesthetic mapping are inside the `ggplot()` function, and the layer is adding with a `+`.  Since most maps plots a variable to x and y, the developers have indicated that the the first two arguments of `aes()` will be mapped to x and y, respectively. The code below will generate the same plot as above. 
 
 ```{r firstplot_noxy, warning = FALSE}
 ggplot(data, aes(log(gdp), log(emissions))) + 
@@ -469,7 +469,7 @@ ggplot(data, aes(log(gdp), log(emissions), color = region)) +
   geom_point()
 ```
 
-We can also use the pipe operator. This method can be useful if you want to make changes to the data (i.e. filter or mutate) before plotting. For example, let's calculate the average emissions and average GDP per country, and plot its relationship. This will be our *base* graph, so I am assigning it to the object `p`. We will call it again later and add more layers to it. Now, whenever you type `p` in your console, you will see the plot in the plots tab on the lower left panel of RStudio.  
+We can also use the pipe operator. This method can be useful if you want to make changes to the data (i.e. filter or mutate) before plotting. For example, let's calculate the average emissions and average GDP per country, and plot its relationship. This plot will be our *base* graph, so I am assigning it to the object `p`. We can call it again later on and add more layers to it. Now, whenever you type `p` in your console, you will see the plot in the plots tab on the lower left panel of RStudio.  
 
 ```{r avgplot}
 p <- data %>% 
@@ -482,7 +482,7 @@ p <- data %>%
 p
 ```
 
-We build our plots iteratively. Now, let's add a title and label the axes of `p`. Since we always want to label our graph well, let's add these layers to `p`. 
+Now, let's add a title and label the axes of `p`. Since we always want to label our graph well, let's add these layers to `p`. 
 
 ```{r firstplot_labels}
 p <- p + labs(title = "Relationship between Emissions and GDP",
@@ -510,7 +510,21 @@ p <- p + theme_classic()
 p
 ```
 
-To save the plot, we can use the `ggsave()` function. I am saving this file in another folder called output. You can save the plots to different formats too. You can also click the 'Export' button available in the 'Plots' tab, but this action is not good for reproducibility. Please do not take screenshots of the image and use that in your reports!
+You can also put all these commands together. 
+
+```{r firstplot_oneline}
+data %>% 
+  group_by(country) %>%
+  mutate(avg_emissions = mean(emissions, na.rm = T),
+         avg_gdp = mean(gdp, na.rm = T)) %>%
+  ggplot(aes(log(avg_gdp), log(avg_emissions))) +
+  geom_point() + 
+  labs(title = "Relationship between Emissions and GDP",
+       y = "Log GDP per capita", x = "Log CO2 per capita") + 
+  geom_smooth(method = "lm")
+```
+
+To save the plot `p`, we can use the `ggsave()` function. I am saving this file in another sub-folder in my working directory called "output". You can save the plots to different formats too. You can also click the 'Export' button available in the 'Plots' tab, but this action is not good for reproducibility. Please do not take screenshots of the image and use that in your reports!
 
 ```{r firstplot_ggsave, message = FALSE}
 ggsave(p, filename = here("output","emissions_gdp.png"))
@@ -536,13 +550,13 @@ bp <- data %>%
 bp
 ```
 
-We may want to edit the labels of the tick marks.
+We can edit the labels of the tick marks.
 
 ```{r boxplot_2010ticks}
 bp + scale_x_discrete(labels = c("Africa", "Americas", "Mediterranean", "Europe", "SE Asia", "W Pacific"))
 ```
 
-We can also flip the coordinates of the boxplot. Note that because we did not assign the tick mark labels to `bp`, as in did not use `bp + scale_x_discrete(labels = c("Africa", "Americas", "Mediterranean", "Europe", "SE Asia", "W Pacific"))`),`bp` remains unchanged. Hence the plot below shows the original labels. 
+We can also flip the coordinates of the boxplot. Note that because we did not assign the tick mark labels to `bp`, as in did not use `bp <- bp + scale_x_discrete(labels = c("Africa", "Americas", "Mediterranean", "Europe", "SE Asia", "W Pacific"))`),`bp` remains unchanged. Hence the plot below shows the original labels. 
 
 ```{r boxplot_2010flipped}
 bp + coord_flip()
@@ -657,10 +671,29 @@ To get all the details of the regression, we use the `summary()` function. The o
 summary(reg1)
 ```
 
-As mentioned earlier, regressions results is a list object. We can use the `$` and `[[]]` to extract information. To know the location or the element name, you can check in `str(summary(reg1))`. For example, we can just extract the coefficients of the regression. 
+As mentioned earlier, regressions results is a list object. We can use the `$` and `[[]]` to extract information. To know the element name, you can check in `str(summary(reg1))`. The code below extracts the coefficients of the regression.
 
 ```{r reg1_coef}
 summary(reg1)$coefficients
 ```
 
+To tidy the regression results, you can also use the `tidy()` function of the `{broom}` package. 
+
+```{r broom}
+tidy_reg1 <- tidy(reg1)
+
+# to export to csv
+# write_csv(tidy_reg1, file = here("output", "tidy_reg1.csv"))
+```
+  
+To generate a nice table for your report, you can also use the `modelsummary()` function introduced earlier. Refer [here](https://vincentarelbundock.github.io/modelsummary/articles/appearance.html) for more information on how to customize the look of your tables.
+
+```{r modelsummary_reg1, warning = F, message = F}
+modelsummary(reg1, 
+             coef_rename = c("gdp" = "GDP", "(Intercept)" = "Intercept"), 
+             stars = TRUE, statistic = 'std.error',
+             fmt= '%.4f',
+             gof_omit = 'DF|AIC|BIC|Log|R2 Adj.',
+             output = 'flextable')
+```
   
