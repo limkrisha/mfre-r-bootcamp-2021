@@ -21,7 +21,7 @@ library(broom)
 library(readstata13)
 ```
 
-The main objective of this R bootcamp is to introduce R programming to incoming MFRE students. The content of this session is adapted from [Software Carpentry](https://datacarpentry.org/r-socialsci/) and Dr. Nick Huntington-Klein's Teaching Econometrics with R [slides](https://rpubs.com/NickCHK/RTeach2020). If you spot any errors or issues, please send me a message on Canvas or at krisha.lim[at]ubc.ca. 
+The main objective of this R bootcamp is to introduce R programming to incoming MFRE students. The content of this session is adapted from [Software Carpentry](https://datacarpentry.org/r-socialsci/) and Dr. Nick Huntington-Klein's Teaching Econometrics with R [slides](https://rpubs.com/NickCHK/RTeach2020). If you spot any errors or issues or any feedback, please send me a message on Canvas or at krisha.lim[at]ubc.ca. 
 
 # Before we get started
 

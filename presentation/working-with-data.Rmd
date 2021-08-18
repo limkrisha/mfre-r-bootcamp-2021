@@ -13,7 +13,7 @@ knitr::opts_chunk$set(echo = TRUE)
 pacman::p_load(tidyverse, readxl, googlesheets4, readstata13, magrittr, cansim, stats, broom, modelsummary, flextable, here)
 ```
 
-The main objective of this R bootcamp is to introduce R programming to incoming MFRE students. The content of this session is adapted from [Open Case Studies](https://www.opencasestudies.org/ocs-bp-co2-emissions/#Data_Analysis). If you spot any errors or issues, please send me a message on Canvas or at krisha.lim[at]ubc.ca. 
+The main objective of this R bootcamp is to introduce R programming to incoming MFRE students. The content of this session is adapted from [Open Case Studies](https://www.opencasestudies.org/ocs-bp-co2-emissions/#Data_Analysis). If you spot any errors or issues or any other feedback, please send me a message on Canvas or at krisha.lim[at]ubc.ca. 
 
 # Before we get started
 
@@ -239,7 +239,7 @@ carbon_long <- carbon_long %>%
 
 The `gdp` data is in the same format, so let's reshape that one too. Notice how I used `%>%` to chain the commands together. 
 
-```{r pivot_long_gdp}
+```{r pivot_long_gdp, message = F, warning = F}
 gdp_long <- gdp %>%
   pivot_longer(cols = -country, 
                names_to = "year",
@@ -536,7 +536,7 @@ bp <- data %>%
 bp
 ```
 
-We may want to edit the tick marks.
+We may want to edit the labels of the tick marks.
 
 ```{r boxplot_2010ticks}
 bp + scale_x_discrete(labels = c("Africa", "Americas", "Mediterranean", "Europe", "SE Asia", "W Pacific"))
@@ -548,7 +548,7 @@ We can also flip the coordinates of the boxplot. Note that because we did not as
 bp + coord_flip()
 ```
 
-### Line plots
+## Line graphs
 
 We may be interested in Canada's carbon emissions over time. To draw a line graph, we now use the `ggplot_line()` function. 
 
@@ -571,9 +571,9 @@ We can also add comma to the y-axis labels for easier reading.
 lp + scale_y_continuous(labels = scales::comma) 
 ```
 
-### Histograms
+## Histograms
 
-```{r hist}
+```{r hist, message = F, warning = F}
 ggplot(data, aes(x = gdp)) + 
   geom_histogram() + 
   theme_classic() + 
@@ -584,9 +584,38 @@ ggplot(data, aes(x = gdp)) +
 
 # Analysis
 
+## Pairwise t-test
+Let's say we want to compare the carbon emissions of Canada and Australia. We can visualize the distribution using a box plot. 
+
+```{r can_usa}
+data %>%
+  filter(country == "Canada" | country == "Australia") %>% 
+  group_by(country) %>%
+  ggplot(aes(x = country, y = emissions)) +
+  geom_boxplot() +
+  scale_y_continuous(labels = scales::comma) + 
+  labs(title = "Comparing Canada and Australia's emissions, 1991-2014",
+       y = "Emissions",
+       x = "Country")
+```
+
+The graph suggests some difference in the carbon emissions of the two countries. To formally test that the carbon emissions differ for these two countries, we can conduct a t-test using the `t.test()` function. We specify the formula `emissions ~ country` to test whether the emissions distribution is significantly different across the two countries. The test suggests that the mean emissions of the two countries are statistically different. 
+
+```{r can_usa_ttest}
+# filter data 
+can_aus <- data %>%
+  filter(country == "Canada" | country == "Australia")
+
+options(scipen = 0) # to allow for scientific notation again 
+can_aus_ttest <- t.test(emissions ~ country, data = can_aus)
+can_aus_ttest
+```
+
+## Correlation
+
 Our graph earlier suggests that there may be a relationship between emissions and GDP per capita. We can take a look at the correlation between these two variables. 
 
-We will use the country's average emissions and average GDP from 1992-2014. 
+We will create 2 new variables - the country's average emissions and average GDP. 
 
 ```{r data_modified}
 data <- data %>% 
@@ -600,7 +629,14 @@ Then let us calculate the correlation coefficient using the Pearson method.
 ```{r pearson}
 cor <- cor.test(data$avg_emissions, data$avg_gdp, method = "pearson")
 cor
+
+# cor$estimate will print the correlation coefficient 
+str(cor) # to know how to extract list elements
 ```
+
+The coefficient of `r round(cor$estimate, 2)` suggests that there is a weak correlation between these two variables. 
+
+## Ordinary Least Squares 
 
 Let's say we want to estimate the following equation: 
 
@@ -608,7 +644,7 @@ $$
 emissions_i = b_0 + b_1 GDP_i + \varepsilon_i 
 $$
 
-To run an OLS regression, we use the `lm()` function of the `stats` package. The syntax is `lm(y ~ x1 + x2 + x3 + ...)` Printing the object will only give you the coefficients. 
+To run an OLS regression, we use the `lm()` function of the `stats` package. The syntax is `lm(y ~ x1 + x2 + x3 + ...)`. Printing the object will only give you the coefficients. 
 
 ```{r reg1}
 reg1 <- lm(emissions ~ gdp, data = data)
@@ -618,7 +654,6 @@ reg1
 To get all the details of the regression, we use the `summary()` function. The output is similar to Stata's regression output. 
 
 ```{r reg1summary}
-options(scipen = 0) # to allow for scientific notation again
 summary(reg1)
 ```
 
@@ -628,29 +663,4 @@ As mentioned earlier, regressions results is a list object. We can use the `$` a
 summary(reg1)$coefficients
 ```
 
-Let's say we want to compare the GDP between USA and Canada. We can first visualize our data using box plots.
-
-```{r can_usa}
-can_usa <- data %>%
-  filter(country == "Canada" | country == "United States")
-```
-
-```{r can_usa_bp}
-can_usa %>%
-  group_by(country) %>%
-  ggplot(aes(x = country, y = gdp)) +
-  geom_boxplot()
-```
-
-Now, we can conduct a simple t-test. 
-
-```{r can_usa_ttest}
-can_usa_ttest <- t.test(gdp ~ country, data = can_usa)
-can_usa_ttest
-```
-
-# To be added
-  
-  * Dates
-  * Factors
   

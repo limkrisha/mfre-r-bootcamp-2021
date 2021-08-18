@@ -193,11 +193,11 @@ carbon %>%
 
 ```
 ## # A tibble: 3 x 265
-##   country `1751` `1752` `1753` `1754` `1755` `1756` `1757` `1758` `1759` `1760`
-##   <chr>    <dbl>  <dbl>  <dbl>  <dbl>  <dbl>  <dbl>  <dbl>  <dbl>  <dbl>  <dbl>
-## 1 Belgium     NA     NA     NA     NA     NA     NA     NA     NA     NA     NA
-## 2 Somalia     NA     NA     NA     NA     NA     NA     NA     NA     NA     NA
-## 3 Malta       NA     NA     NA     NA     NA     NA     NA     NA     NA     NA
+##   country  `1751` `1752` `1753` `1754` `1755` `1756` `1757` `1758` `1759` `1760`
+##   <chr>     <dbl>  <dbl>  <dbl>  <dbl>  <dbl>  <dbl>  <dbl>  <dbl>  <dbl>  <dbl>
+## 1 Madagas~     NA     NA     NA     NA     NA     NA     NA     NA     NA     NA
+## 2 Slovak ~     NA     NA     NA     NA     NA     NA     NA     NA     NA     NA
+## 3 Gabon        NA     NA     NA     NA     NA     NA     NA     NA     NA     NA
 ## # ... with 254 more variables: 1761 <dbl>, 1762 <dbl>, 1763 <dbl>, 1764 <dbl>,
 ## #   1765 <dbl>, 1766 <dbl>, 1767 <dbl>, 1768 <dbl>, 1769 <dbl>, 1770 <dbl>,
 ## #   1771 <dbl>, 1772 <dbl>, 1773 <dbl>, 1774 <dbl>, 1775 <dbl>, 1776 <dbl>,
@@ -229,7 +229,7 @@ head(carbon$`2014`)
 ## [1]   9810   5720 145000    462  34800    532
 ```
 
-### Pivoting longer
+## Pivoting longer
 
 We will now convert `carbon` to a long format. We want to collapse all emissions across the years into one column called "emissions." We then identify the year the data point comes from by creating a "year" variable. 
 
@@ -283,18 +283,18 @@ carbon_long %>%
 
 ```
 ## # A tibble: 10 x 3
-##    country      year  emissions
-##    <chr>        <chr>     <dbl>
-##  1 Cape Verde   1816         NA
-##  2 Philippines  1754         NA
-##  3 Turkey       1898        524
-##  4 Sierra Leone 1947         NA
-##  5 Haiti        1840         NA
-##  6 Netherlands  1780         NA
-##  7 Costa Rica   1972       1760
-##  8 Guyana       1999       1680
-##  9 Cyprus       1935         NA
-## 10 Suriname     1912         NA
+##    country            year  emissions
+##    <chr>              <chr>     <dbl>
+##  1 Argentina          1986   104000  
+##  2 Argentina          1868       NA  
+##  3 Sweden             1935    22900  
+##  4 Jamaica            1831       NA  
+##  5 Gabon              1990     4500  
+##  6 China              1997  3470000  
+##  7 Papua New Guinea   1758       NA  
+##  8 Dominican Republic 1979     6810  
+##  9 St. Lucia          1961       18.3
+## 10 Zambia             1809       NA
 ```
 
 ```r
@@ -350,7 +350,7 @@ head(gdp_long)
 ## 6 Aruba    1964    NA
 ```
 
-### Pivoting wider
+## Pivoting wider
 
 In the case that we want to reshape the `carbon_long` back to its original "wide" data format, we can use the `pivot_wider()` function. This function takes three main arguments. 
 
@@ -476,14 +476,14 @@ data <- data %>%
 
 The `{base}` function to create a new column would be to run the following command: `data$gdp_sq <- data$gdp * data$gdp`
 
-# Summary Statistics
+# Descriptive Statistics
 
 To take a look at some summary statistics, we can use the built-in R functions.
 
-  * `mean(joindata$emissions, na.rm = T)` - mean of `emissions`
-  * `table(joindata$country)` to know the number of observations per country
-  * `summary(joindata)` - summary statistics of the columns
-  * `summary(joindata$emissions)` - summary statistics of the `emissions` variable
+  * `mean(data$emissions, na.rm = T)` - mean of `emissions`
+  * `table(data$country)` to know the number of observations per country
+  * `summary(data)` - summary statistics of the columns
+  * `summary(data$emissions)` - summary statistics of the `emissions` variable
   
 We can also look at some summary statistics by region. We use the `group_by()` function to group the observations. To calculate multiple summary statistics, we can use the `summarize()` function.
 
@@ -851,7 +851,7 @@ datasummary_skim(data,
 
 # Data Visualization (ggplot2)
 
-There are functions in `{base}` R that will allows you to plot data. But we will look at the `ggplot2` package. Read this [tutorial/book](https://ggplot2-book.org/introduction.html) for an in-depth walk through. 
+There are functions in `{base}` R that will allows you to plot data. But in this session, we will look at the `ggplot2` package. Read this [tutorial/book](https://ggplot2-book.org/introduction.html) for an in-depth walk through. 
 
 According to Hadley Wickham, "`ggplot2` is based on the Grammar of Graphics that allows you to compose graphs by combining independent components...The grammar tells us that a graphic maps the data to the aesthetic attributes (color, shape, size) of geometric objects (points, lines, bars)."
 
@@ -968,7 +968,7 @@ p + geom_smooth(method = "lm")
 
 ![](working-with-data_files/figure-html/firstplot_fittedline_lm-1.png)<!-- -->
 
-If we want to change the background, there are multiple themes available in the [package](https://ggplot2-book.org/polishing.html), and of course you can customize your own too. Let's say we are hapyp with this layout, we shall overwrite our `p` object again. 
+If we want to change the background, there are multiple themes available in the [package](https://ggplot2.tidyverse.org/reference/ggtheme.html), and of course you can customize your own too. Let's say we want to use `theme_classic()` theme, we just add it as another layer and overwrite our `p` object again. 
 
 
 ```r
@@ -979,7 +979,7 @@ p
 
 ![](working-with-data_files/figure-html/firstplot_theme-1.png)<!-- -->
 
-To save the plot, we can use the `ggsave()` function. I am saving this file in another folder called output. You can save the plots to different formats too. 
+To save the plot, we can use the `ggsave()` function. I am saving this file in another folder called output. You can save the plots to different formats too. You can also click the 'Export' button available in the 'Plots' tab, but this action is not good for reproducibility. Please do not take screenshots of the image and use that in your reports!
 
 
 ```r
@@ -1027,7 +1027,7 @@ bp + coord_flip()
 
 ![](working-with-data_files/figure-html/boxplot_2010flipped-1.png)<!-- -->
 
-### Line plots
+## Line graphs
 
 We may be interested in Canada's carbon emissions over time. To draw a line graph, we now use the `ggplot_line()` function. 
 
@@ -1056,7 +1056,7 @@ lp + scale_y_continuous(labels = scales::comma)
 
 ![](working-with-data_files/figure-html/unnamed-chunk-1-1.png)<!-- -->
 
-### Histograms
+## Histograms
 
 
 ```r
@@ -1068,17 +1068,60 @@ ggplot(data, aes(x = gdp)) +
        x = "GDP per capita") 
 ```
 
-```
-## `stat_bin()` using `bins = 30`. Pick better value with `binwidth`.
-```
-
 ![](working-with-data_files/figure-html/hist-1.png)<!-- -->
 
 # Analysis
 
+## Pairwise t-test
+Let's say we want to compare the carbon emissions of Canada and Australia. We can visualize the distribution using a box plot. 
+
+
+```r
+data %>%
+  filter(country == "Canada" | country == "Australia") %>% 
+  group_by(country) %>%
+  ggplot(aes(x = country, y = emissions)) +
+  geom_boxplot() +
+  scale_y_continuous(labels = scales::comma) + 
+  labs(title = "Comparing Canada and Australia's emissions, 1991-2014",
+       y = "Emissions",
+       x = "Country")
+```
+
+![](working-with-data_files/figure-html/can_usa-1.png)<!-- -->
+
+The graph suggests some difference in the carbon emissions of the two countries. To formally test that the carbon emissions differ for these two countries, we can conduct a t-test using the `t.test()` function. We specify the formula `emissions ~ country` to test whether the emissions distribution is significantly different across the two countries. The test suggests that the mean emissions of the two countries are statistically different. 
+
+
+```r
+# filter data 
+can_aus <- data %>%
+  filter(country == "Canada" | country == "Australia")
+
+options(scipen = 0) # to allow for scientific notation again 
+can_aus_ttest <- t.test(emissions ~ country, data = can_aus)
+can_aus_ttest
+```
+
+```
+## 
+## 	Welch Two Sample t-test
+## 
+## data:  emissions by country
+## t = -14.858, df = 45.8, p-value < 2.2e-16
+## alternative hypothesis: true difference in means between group Australia and group Canada is not equal to 0
+## 95 percent confidence interval:
+##  -201312.4 -153270.9
+## sample estimates:
+## mean in group Australia    mean in group Canada 
+##                335916.7                513208.3
+```
+
+## Correlation
+
 Our graph earlier suggests that there may be a relationship between emissions and GDP per capita. We can take a look at the correlation between these two variables. 
 
-We will use the country's average emissions and average GDP from 1992-2014. 
+We will create 2 new variables - the country's average emissions and average GDP. 
 
 
 ```r
@@ -1101,7 +1144,7 @@ cor
 ## 	Pearson's product-moment correlation
 ## 
 ## data:  data$avg_emissions and data$avg_gdp
-## t = 8.7595, df = 3748, p-value < 0.00000000000000022
+## t = 8.7595, df = 3748, p-value < 2.2e-16
 ## alternative hypothesis: true correlation is not equal to 0
 ## 95 percent confidence interval:
 ##  0.1101285 0.1728614
@@ -1110,13 +1153,44 @@ cor
 ## 0.1416371
 ```
 
+```r
+str(cor) # to know how to extract list elements
+```
+
+```
+## List of 9
+##  $ statistic  : Named num 8.76
+##   ..- attr(*, "names")= chr "t"
+##  $ parameter  : Named int 3748
+##   ..- attr(*, "names")= chr "df"
+##  $ p.value    : num 2.92e-18
+##  $ estimate   : Named num 0.142
+##   ..- attr(*, "names")= chr "cor"
+##  $ null.value : Named num 0
+##   ..- attr(*, "names")= chr "correlation"
+##  $ alternative: chr "two.sided"
+##  $ method     : chr "Pearson's product-moment correlation"
+##  $ data.name  : chr "data$avg_emissions and data$avg_gdp"
+##  $ conf.int   : num [1:2] 0.11 0.173
+##   ..- attr(*, "conf.level")= num 0.95
+##  - attr(*, "class")= chr "htest"
+```
+
+```r
+# cor$estimate will print the correlation coefficient 
+```
+
+The coefficient of 0.14 suggests that there is a weak correlation between these two variables. 
+
+## Ordinary Least Squares 
+
 Let's say we want to estimate the following equation: 
 
 $$ 
 emissions_i = b_0 + b_1 GDP_i + \varepsilon_i 
 $$
 
-To run an OLS regression, we use the `lm()` function of the `stats` package. The syntax is `lm(y ~ x1 + x2 + x3 + ...)` Printing the object will only give you the coefficients. 
+To run an OLS regression, we use the `lm()` function of the `stats` package. The syntax is `lm(y ~ x1 + x2 + x3 + ...)`. Printing the object will only give you the coefficients. 
 
 
 ```r
@@ -1131,14 +1205,13 @@ reg1
 ## 
 ## Coefficients:
 ## (Intercept)          gdp  
-##  104890.121        5.273
+##   1.049e+05    5.273e+00
 ```
 
 To get all the details of the regression, we use the `summary()` function. The output is similar to Stata's regression output. 
 
 
 ```r
-options(scipen = 0) # to allow for scientific notation again
 summary(reg1)
 ```
 
@@ -1174,46 +1247,6 @@ summary(reg1)$coefficients
 ##                 Estimate   Std. Error  t value     Pr(>|t|)
 ## (Intercept) 104890.12055 1.328282e+04 7.896677 3.732477e-15
 ## gdp              5.27255 6.279173e-01 8.396887 6.420416e-17
-```
-
-Let's say we want to compare the GDP between USA and Canada. We can first visualize our data using box plots.
-
-
-```r
-can_usa <- data %>%
-  filter(country == "Canada" | country == "United States")
-```
-
-
-```r
-can_usa %>%
-  group_by(country) %>%
-  ggplot(aes(x = country, y = gdp)) +
-  geom_boxplot()
-```
-
-![](working-with-data_files/figure-html/can_usa_bp-1.png)<!-- -->
-
-Now, we can conduct a simple t-test. 
-
-
-```r
-can_usa_ttest <- t.test(gdp ~ country, data = can_usa)
-can_usa_ttest
-```
-
-```
-## 
-## 	Welch Two Sample t-test
-## 
-## data:  gdp by country
-## t = -1.9638, df = 43.731, p-value = 0.05593
-## alternative hypothesis: true difference in means between group Canada and group United States is not equal to 0
-## 95 percent confidence interval:
-##  -6383.25977    83.25977
-## sample estimates:
-##        mean in group Canada mean in group United States 
-##                    42158.33                    45308.33
 ```
 
 # To be added
